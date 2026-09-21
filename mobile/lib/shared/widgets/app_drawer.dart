@@ -60,47 +60,50 @@ class _AppDrawerState extends State<AppDrawer> {
   Widget build(BuildContext context) {
     return Drawer(
       backgroundColor: const Color(0xFF181818),
-      child: SafeArea(
-        top: false,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            // Drawer Header
-            Container(
-              padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).viewPadding.top + 20, 20, 20),
-              decoration: const BoxDecoration(
-                color: Color(0xFF1E1E1E),
-                border: Border(bottom: BorderSide(color: Color(0xFF252525))),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GymLogoView(
-                    size: 64,
-                    logoPath: _gymInfo?.logoPath,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    _gymInfo?.name ?? 'Elite Fitness Gym',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '$_greeting, ${_adminInfo?.name ?? 'Admin'}',
-                    style: const TextStyle(color: Color(0xFFD4FF00), fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
+      child: Column(
+        children: [
+          // Fixed Drawer Header
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).viewPadding.top + 20, 20, 20),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1E1E1E),
+              border: Border(bottom: BorderSide(color: Color(0xFF252525))),
             ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GymLogoView(
+                  size: 64,
+                  logoPath: _gymInfo?.logoPath,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _gymInfo?.name ?? 'Elite Fitness Gym',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$_greeting, ${_adminInfo?.name ?? 'Admin'}',
+                  style: const TextStyle(color: Color(0xFFD4FF00), fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
 
-            // Main Destinations
+          // Scrollable Menu Items Below Header
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(0, 8, 0, MediaQuery.of(context).viewPadding.bottom + 20),
+              children: [
+                // Main Destinations
             _buildDrawerTile(
               icon: Icons.dashboard_outlined,
               selectedIcon: Icons.dashboard,
@@ -242,7 +245,9 @@ class _AppDrawerState extends State<AppDrawer> {
           ],
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 
   Widget _buildDrawerTile({
