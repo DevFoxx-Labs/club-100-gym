@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/repositories/settings_repository.dart';
+import '../../core/notifications/notification_service.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -32,6 +33,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   Future<void> _update(String key, bool val) async {
     setState(() => _settings[key] = val);
     await _repository.saveNotificationSettings(_settings);
+    if (key.startsWith('event') && val) {
+      NotificationService().syncAllUpcomingEventNotifications();
+    }
   }
 
   @override
@@ -118,6 +122,27 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                     ],
                   ),
                 ),
+                const SizedBox(height: 24),
+                _buildSectionHeader('GYM EVENT & CLASS REMINDERS'),
+                Card(
+                  child: Column(
+                    children: [
+                      _buildSwitch(
+                        title: 'Event Reminders',
+                        subtitle: 'Scheduled classes, bootcamps, and gym events',
+                        value: _settings['eventReminders'] ?? true,
+                        onChanged: (v) => _update('eventReminders', v),
+                      ),
+                      const Divider(height: 1, color: Color(0xFF252525)),
+                      _buildSwitch(
+                        title: 'Alert 30 Minutes Before',
+                        subtitle: 'Timely reminder before class or event commences',
+                        value: _settings['event30m'] ?? true,
+                        onChanged: (v) => _update('event30m', v),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
     );
@@ -149,4 +174,3 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     );
   }
 }
-

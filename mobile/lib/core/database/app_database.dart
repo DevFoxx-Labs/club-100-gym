@@ -44,6 +44,15 @@ class AppDatabase {
       await db.execute('ALTER TABLE receipts ADD COLUMN personalTrainingFee REAL DEFAULT 0.0;');
     } catch (_) {}
 
+    // Self-heal any memberships where feeAmount was corrupted to <= personalTrainingFee
+    try {
+      await db.execute('''
+        UPDATE memberships
+        SET feeAmount = (SELECT defaultFee FROM membership_plans WHERE membership_plans.id = memberships.planId) + personalTrainingFee
+        WHERE personalTrainingFee > 0 AND feeAmount <= personalTrainingFee AND EXISTS (SELECT 1 FROM membership_plans WHERE membership_plans.id = memberships.planId);
+      ''');
+    } catch (_) {}
+
     return db;
   }
 

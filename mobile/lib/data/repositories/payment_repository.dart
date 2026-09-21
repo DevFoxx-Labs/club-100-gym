@@ -6,31 +6,39 @@ import '../models/receipt_model.dart';
 class PaymentRepository {
   Future<List<PaymentModel>> getPayments() async {
     final db = await AppDatabase.instance.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'payments',
-      orderBy: 'paymentDate DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT p.*, COALESCE(r.memberName, m.name) AS memberName, r.planName AS planName
+      FROM payments p
+      LEFT JOIN receipts r ON p.id = r.paymentId
+      LEFT JOIN members m ON p.memberId = m.id
+      ORDER BY p.paymentDate DESC
+    ''');
     return maps.map((map) => PaymentModel.fromMap(map)).toList();
   }
 
   Future<List<PaymentModel>> getPaymentsByMember(String memberId) async {
     final db = await AppDatabase.instance.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'payments',
-      where: 'memberId = ?',
-      whereArgs: [memberId],
-      orderBy: 'paymentDate DESC',
-    );
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT p.*, COALESCE(r.memberName, m.name) AS memberName, r.planName AS planName
+      FROM payments p
+      LEFT JOIN receipts r ON p.id = r.paymentId
+      LEFT JOIN members m ON p.memberId = m.id
+      WHERE p.memberId = ?
+      ORDER BY p.paymentDate DESC
+    ''', [memberId]);
     return maps.map((map) => PaymentModel.fromMap(map)).toList();
   }
 
   Future<List<PaymentModel>> getRecentPayments({int limit = 5}) async {
     final db = await AppDatabase.instance.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'payments',
-      orderBy: 'paymentDate DESC',
-      limit: limit,
-    );
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT p.*, COALESCE(r.memberName, m.name) AS memberName, r.planName AS planName
+      FROM payments p
+      LEFT JOIN receipts r ON p.id = r.paymentId
+      LEFT JOIN members m ON p.memberId = m.id
+      ORDER BY p.paymentDate DESC
+      LIMIT ?
+    ''', [limit]);
     return maps.map((map) => PaymentModel.fromMap(map)).toList();
   }
 

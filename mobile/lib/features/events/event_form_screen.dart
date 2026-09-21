@@ -7,6 +7,7 @@ import '../../data/repositories/event_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
 import '../../core/utils/form_validators.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/notifications/notification_service.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
@@ -165,6 +166,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
         updatedAt: now,
       );
       await _eventRepository.updateEvent(updated);
+      await NotificationService().scheduleEventNotification(updated);
     } else {
       final newEvent = EventModel(
         id: const Uuid().v4(),
@@ -179,6 +181,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
         updatedAt: now,
       );
       await _eventRepository.insertEvent(newEvent);
+      await NotificationService().scheduleEventNotification(newEvent);
     }
 
     AppStateService.instance.notifyEventsChanged();
@@ -200,6 +203,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
       ),
     );
     if (confirm == true) {
+      await NotificationService().cancelEventNotification(widget.event!.id);
       await _eventRepository.deleteEvent(widget.event!.id);
       AppStateService.instance.notifyEventsChanged();
       if (mounted) Navigator.pop(context, true);
@@ -223,12 +227,13 @@ class _EventFormScreenState extends State<EventFormScreen> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CustomTextField(
                 label: 'EVENT / CLASS TITLE *',
@@ -357,13 +362,16 @@ class _EventFormScreenState extends State<EventFormScreen> {
                 text: widget.isEdit ? 'Save Changes' : 'Schedule Event',
                 icon: Icons.check,
                 isLoading: _isLoading,
+                width: double.infinity,
                 onPressed: _saveEvent,
               ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 

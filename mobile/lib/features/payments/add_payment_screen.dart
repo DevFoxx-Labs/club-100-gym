@@ -13,6 +13,7 @@ import '../../data/models/trainer_model.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
+import '../../data/repositories/plan_repository.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 import '../receipts/receipt_preview_screen.dart';
@@ -36,6 +37,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
   final _paymentRepo = PaymentRepository();
   final _memberRepo = MemberRepository();
   final _trainerRepo = TrainerRepository();
+  final _planRepo = PlanRepository();
 
   late TextEditingController _amountController;
   late TextEditingController _notesController;
@@ -55,12 +57,13 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
   @override
   void initState() {
     super.initState();
-    final defaultAmount = widget.membership?.feeAmount ?? 1500.0;
-    _amountController = TextEditingController(text: defaultAmount.toStringAsFixed(0));
-    _notesController = TextEditingController();
-
     _ptFee = widget.membership?.personalTrainingFee ?? 0.0;
-    _baseFee = (defaultAmount >= _ptFee) ? (defaultAmount - _ptFee) : defaultAmount;
+    final totalFee = widget.membership?.feeAmount ?? 1500.0;
+    _baseFee = (totalFee > _ptFee) ? (totalFee - _ptFee) : 0.0;
+
+    _amountController = TextEditingController(text: totalFee.toStringAsFixed(0));
+    _amountController.addListener(_onAmountChanged);
+    _notesController = TextEditingController();
 
     if (widget.membership != null) {
       _startDate = widget.membership!.endDate.isBefore(DateTime.now())
@@ -71,13 +74,43 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
       if (widget.membership!.trainerId != null && widget.membership!.trainerId!.isNotEmpty) {
         _loadTrainer(widget.membership!.trainerId!);
       }
+      _resolveBasePlanFee();
     }
 
     _loadReceiptNumber();
   }
 
+  void _onAmountChanged() {
+    final enteredAmount = double.tryParse(_amountController.text.trim()) ?? 0.0;
+    if (_ptFee > 0) {
+      final updatedBase = (enteredAmount >= _ptFee) ? (enteredAmount - _ptFee) : 0.0;
+      if (updatedBase != _baseFee && mounted) {
+        setState(() {
+          _baseFee = updatedBase;
+        });
+      }
+    }
+  }
+
+  Future<void> _resolveBasePlanFee() async {
+    if (widget.membership == null) return;
+    if (_baseFee <= 0) {
+      final plan = await _planRepo.getPlanById(widget.membership!.planId);
+      if (plan != null && plan.defaultFee > 0) {
+        if (mounted) {
+          setState(() {
+            _baseFee = plan.defaultFee;
+            final correctedTotal = _baseFee + _ptFee;
+            _amountController.text = correctedTotal.toStringAsFixed(0);
+          });
+        }
+      }
+    }
+  }
+
   @override
   void dispose() {
+    _amountController.removeListener(_onAmountChanged);
     _amountController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -112,6 +145,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
       final paymentId = uuid.v4();
       final receiptId = uuid.v4();
       final amount = double.parse(_amountController.text.trim());
+      final effectivePtFee = (_ptFee <= amount) ? _ptFee : amount;
 
       final receipt = ReceiptModel(
         id: receiptId,
@@ -121,7 +155,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         memberPhone: widget.member.phone,
         planName: widget.membership?.planName ?? 'Monthly Membership',
         trainerName: _trainerName ?? _trainer?.name,
-        personalTrainingFee: _ptFee,
+        personalTrainingFee: effectivePtFee,
         amount: amount,
         paymentMethod: _paymentMethod,
         paymentDate: _paymentDate,
@@ -142,11 +176,12 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         amount: amount,
         paymentDate: _paymentDate,
         paymentMethod: _paymentMethod,
-        notes: _notesController.text.trim(),
+        notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
         receiptId: receiptId,
         receiptNumber: _generatedReceiptNo,
         createdAt: now,
         updatedAt: now,
+        memberName: widget.member.name,
       );
 
       // Extend membership and safely preserve trainer and PT fee
@@ -157,7 +192,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
           feeAmount: amount,
           status: 'Active',
           trainerId: widget.membership!.trainerId,
-          personalTrainingFee: _ptFee,
+          personalTrainingFee: effectivePtFee,
           packageId: widget.membership!.packageId,
           updatedAt: now,
         );

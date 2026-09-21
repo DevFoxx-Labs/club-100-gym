@@ -159,17 +159,22 @@ class MemberRepository {
     String? memberId,
     required String? newTrainerId,
     required double newPersonalTrainingFee,
+    double? newFeeAmount,
     required TrainerChangeLogModel log,
   }) async {
     final db = await _db;
     await db.transaction((txn) async {
+      final updateData = <String, dynamic>{
+        'trainerId': newTrainerId,
+        'personalTrainingFee': newPersonalTrainingFee,
+        'updatedAt': DateTime.now().toIso8601String(),
+      };
+      if (newFeeAmount != null) {
+        updateData['feeAmount'] = newFeeAmount;
+      }
       await txn.update(
         'memberships',
-        {
-          'trainerId': newTrainerId,
-          'personalTrainingFee': newPersonalTrainingFee,
-          'updatedAt': DateTime.now().toIso8601String(),
-        },
+        updateData,
         where: 'id = ?',
         whereArgs: [membershipId],
       );

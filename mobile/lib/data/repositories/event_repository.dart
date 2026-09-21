@@ -46,6 +46,26 @@ class EventRepository {
     return result.map((map) => EventModel.fromMap(map)).toList();
   }
 
+  Future<List<EventModel>> getEventsToday() async {
+    final now = DateTime.now();
+    return getEventsForDate(now);
+  }
+
+  Future<List<EventModel>> getUpcomingEvents({int daysAhead = 30}) async {
+    final db = await _db;
+    final now = DateTime.now();
+    final startStr = DateTime(now.year, now.month, now.day, 0, 0, 0).toIso8601String();
+    final endStr = now.add(Duration(days: daysAhead)).toIso8601String();
+
+    final result = await db.query(
+      'events',
+      where: 'deletedAt IS NULL AND startTime >= ? AND startTime <= ?',
+      whereArgs: [startStr, endStr],
+      orderBy: 'startTime ASC',
+    );
+    return result.map((map) => EventModel.fromMap(map)).toList();
+  }
+
   Future<EventModel?> getEventById(String id) async {
     final db = await _db;
     final result = await db.query(

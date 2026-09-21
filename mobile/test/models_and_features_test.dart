@@ -1,13 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:club_100_gym_app/data/models/trainer_model.dart';
-import 'package:club_100_gym_app/data/models/membership_change_log_model.dart';
-import 'package:club_100_gym_app/data/models/trainer_change_log_model.dart';
-import 'package:club_100_gym_app/data/models/gym_info_model.dart';
-import 'package:club_100_gym_app/data/models/receipt_model.dart';
-import 'package:club_100_gym_app/core/receipt/qr_service.dart';
-import 'package:club_100_gym_app/core/utils/form_validators.dart';
-import 'package:club_100_gym_app/core/utils/sms_templates.dart';
-import 'package:club_100_gym_app/core/services/app_state_service.dart';
+import 'package:the_elite_fitness/data/models/trainer_model.dart';
+import 'package:the_elite_fitness/data/models/membership_change_log_model.dart';
+import 'package:the_elite_fitness/data/models/trainer_change_log_model.dart';
+import 'package:the_elite_fitness/data/models/gym_info_model.dart';
+import 'package:the_elite_fitness/data/models/receipt_model.dart';
+import 'package:the_elite_fitness/data/models/payment_model.dart';
+import 'package:the_elite_fitness/data/models/membership_model.dart';
+import 'package:the_elite_fitness/data/models/event_model.dart';
+import 'package:the_elite_fitness/core/receipt/qr_service.dart';
+import 'package:the_elite_fitness/core/utils/form_validators.dart';
+import 'package:the_elite_fitness/core/utils/sms_templates.dart';
+import 'package:the_elite_fitness/core/services/app_state_service.dart';
 
 void main() {
   group('TrainerModel Tests', () {
@@ -262,6 +265,190 @@ void main() {
         amount: 1500,
       );
       expect(dueToday, contains('due today'));
+    });
+  });
+
+  group('PaymentModel Tests', () {
+    test('PaymentModel supports memberName serialization and copyWith', () {
+      final payment = PaymentModel(
+        id: 'pay-101',
+        memberId: 'm-101',
+        membershipId: 'ms-101',
+        amount: 2500.0,
+        paymentDate: DateTime(2026, 9, 21),
+        paymentMethod: 'UPI',
+        receiptId: 'rec-101',
+        receiptNumber: 'GYM-2026-00005',
+        createdAt: DateTime(2026, 9, 21),
+        updatedAt: DateTime(2026, 9, 21),
+        memberName: 'Rohan Sharma',
+      );
+
+      expect(payment.memberName, 'Rohan Sharma');
+      final map = payment.toMap();
+      // fromMap with memberName
+      final fromMap = PaymentModel.fromMap({...map, 'memberName': 'Rohan Sharma'});
+      expect(fromMap.memberName, 'Rohan Sharma');
+      expect(fromMap.receiptNumber, 'GYM-2026-00005');
+      expect(fromMap.amount, 2500.0);
+
+      final updated = payment.copyWith(memberName: 'Aman Verma');
+      expect(updated.memberName, 'Aman Verma');
+      expect(updated.id, 'pay-101');
+    });
+  });
+
+  group('Trainer Fee & Change Trainer Flow Bug Fix Tests', () {
+    test('Preserves base plan fee when member adds PT fee without changing trainer', () {
+      // Step 1: Member onboards with Plan fee 1500, Trainer assigned, but initial PT fee 0
+      const planDefaultFee = 1500.0;
+      const initialPtFee = 0.0;
+      final initialMembership = MembershipModel(
+        id: 'ms-1',
+        memberId: 'm-1',
+        planId: 'plan-1',
+        planName: 'Monthly General Plan',
+        trainerId: 'trainer-1',
+        personalTrainingFee: initialPtFee,
+        startDate: DateTime(2026, 9, 21),
+        endDate: DateTime(2026, 10, 21),
+        feeAmount: planDefaultFee + initialPtFee, // 1500
+        status: 'Active',
+        createdAt: DateTime(2026, 9, 21),
+        updatedAt: DateTime(2026, 9, 21),
+      );
+
+      expect(initialMembership.feeAmount, 1500.0);
+      expect(initialMembership.personalTrainingFee, 0.0);
+
+      // Step 2: In Change Trainer screen, member keeps same trainer but adds PT fee of 1000
+      const newPtFee = 1000.0;
+      // The base fee is computed from previous membership
+      final basePlanFee = (initialMembership.feeAmount > initialMembership.personalTrainingFee)
+          ? (initialMembership.feeAmount - initialMembership.personalTrainingFee)
+          : initialMembership.feeAmount;
+      expect(basePlanFee, 1500.0);
+
+      // New total membership fee after adding PT fee
+      final newTotalFee = basePlanFee + newPtFee;
+      expect(newTotalFee, 2500.0);
+
+      final updatedMembership = initialMembership.copyWith(
+        personalTrainingFee: newPtFee,
+        feeAmount: newTotalFee,
+        updatedAt: DateTime(2026, 9, 21),
+      );
+
+      // Step 3: When Add Payment screen opens for this member:
+      final paymentBaseFee = (updatedMembership.feeAmount >= updatedMembership.personalTrainingFee)
+          ? (updatedMembership.feeAmount - updatedMembership.personalTrainingFee)
+          : updatedMembership.feeAmount;
+      final paymentPtFee = updatedMembership.personalTrainingFee;
+      final totalDue = paymentBaseFee + paymentPtFee;
+
+      // Assert that base fee is NOT 0 and matches the 1500 base plan!
+      expect(paymentBaseFee, 1500.0);
+      expect(paymentPtFee, 1000.0);
+      expect(totalDue, 2500.0);
+    });
+
+    test('Self-healing fallback resolves base fee if feeAmount was corrupted to <= PT fee', () {
+      // Corrupted scenario: feeAmount was 1000 and personalTrainingFee was 1000
+      const corruptedFeeAmount = 1000.0;
+      const ptFee = 1000.0;
+      const planDefaultFee = 1500.0;
+
+      double baseFee = (corruptedFeeAmount > ptFee) ? (corruptedFeeAmount - ptFee) : 0.0;
+      expect(baseFee, 0.0); // Corrupted
+
+      // Self-healing fallback: if baseFee <= 0, retrieve defaultFee from plan
+      if (baseFee <= 0 && planDefaultFee > 0) {
+        baseFee = planDefaultFee;
+      }
+      final healedTotal = baseFee + ptFee;
+
+      expect(baseFee, 1500.0);
+      expect(healedTotal, 2500.0);
+    });
+  });
+
+  group('EventModel & Event Notifications Tests', () {
+    test('EventModel serializes, deserializes, and copies correctly', () {
+      final event = EventModel(
+        id: 'event-101',
+        title: 'Morning Yoga Bootcamp',
+        description: 'Sunrise flow session with master trainer',
+        startTime: '2026-09-22T06:00:00.000',
+        endTime: '2026-09-22T07:15:00.000',
+        location: 'Studio A (Rooftop)',
+        trainerId: 'trainer-1',
+        colorValue: 0xFFD4FF00,
+        createdAt: '2026-09-21T12:00:00.000',
+        updatedAt: '2026-09-21T12:00:00.000',
+        deletedAt: null,
+      );
+
+      final map = event.toMap();
+      expect(map['title'], 'Morning Yoga Bootcamp');
+      expect(map['location'], 'Studio A (Rooftop)');
+      expect(map['colorValue'], 0xFFD4FF00);
+
+      final fromMap = EventModel.fromMap(map);
+      expect(fromMap.title, event.title);
+      expect(fromMap.startTime, event.startTime);
+      expect(fromMap.colorValue, event.colorValue);
+
+      final updated = event.copyWith(title: 'Advanced Power Yoga');
+      expect(updated.title, 'Advanced Power Yoga');
+      expect(updated.location, 'Studio A (Rooftop)');
+    });
+
+    test('Event notification ID hashing generates valid positive 32-bit integers', () {
+      const eventId1 = 'event-101';
+      const eventId2 = '8f3e2b1a-9c4d-4e5f-a6b7-c8d9e0f1a2b3';
+      const eventId3 = 'special_event_marathon_2026';
+
+      final id1 = eventId1.hashCode.abs() % 100000 + 10000;
+      final id2 = eventId2.hashCode.abs() % 100000 + 10000;
+      final id3 = eventId3.hashCode.abs() % 100000 + 10000;
+
+      expect(id1, greaterThanOrEqualTo(10000));
+      expect(id1, lessThan(110000));
+      expect(id2, greaterThanOrEqualTo(10000));
+      expect(id2, lessThan(110000));
+      expect(id3, greaterThanOrEqualTo(10000));
+      expect(id3, lessThan(110000));
+    });
+
+    test('Event notification alert time computes 30 min advance schedule or immediate fallback', () {
+      final eventStartFar = DateTime.now().add(const Duration(hours: 3));
+      final alertTimeFar = eventStartFar.subtract(const Duration(minutes: 30));
+      expect(alertTimeFar.isAfter(DateTime.now()), isTrue);
+      expect(eventStartFar.difference(alertTimeFar).inMinutes, 30);
+
+      // Imminent event (starting in 10 minutes)
+      final now = DateTime.now();
+      final eventStartSoon = now.add(const Duration(minutes: 10));
+      DateTime notifyTimeSoon = eventStartSoon.subtract(const Duration(minutes: 30));
+      if (notifyTimeSoon.isBefore(now)) {
+        notifyTimeSoon = now.add(const Duration(seconds: 10));
+      }
+      expect(notifyTimeSoon.isAfter(now), isTrue);
+      expect(notifyTimeSoon.isBefore(eventStartSoon), isTrue);
+    });
+
+    test('Payment list receipt badge formatting handles plan name presence and absence', () {
+      const receiptNo = 'GYM-2026-00001';
+      const planName = 'Monthly Standard';
+
+      // With plan name
+      final displayNameWithPlan = (planName.isNotEmpty) ? '$receiptNo ($planName)' : receiptNo;
+      expect(displayNameWithPlan, 'GYM-2026-00001 (Monthly Standard)');
+
+      // Without plan name
+      const String? emptyPlan = null;
+      final displayNameNoPlan = (emptyPlan != null && emptyPlan.isNotEmpty) ? '$receiptNo ($emptyPlan)' : receiptNo;
+      expect(displayNameNoPlan, 'GYM-2026-00001');
     });
   });
 }

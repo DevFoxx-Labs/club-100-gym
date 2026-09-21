@@ -6,6 +6,7 @@ import '../../data/models/trainer_change_log_model.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
+import '../../data/repositories/plan_repository.dart';
 import '../../core/utils/form_validators.dart';
 import '../../core/services/app_state_service.dart';
 import '../../shared/widgets/custom_text_field.dart';
@@ -32,10 +33,12 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
 
   final MemberRepository _memberRepo = MemberRepository();
   final TrainerRepository _trainerRepo = TrainerRepository();
+  final PlanRepository _planRepo = PlanRepository();
 
   List<TrainerModel> _trainers = [];
   TrainerModel? _selectedTrainer;
   TrainerModel? _currentTrainer;
+  double _basePlanFee = 0.0;
   bool _isLoading = false;
   bool _isInit = true;
 
@@ -45,7 +48,12 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
     _ptFeeController.text = widget.currentMembership.personalTrainingFee > 0
         ? widget.currentMembership.personalTrainingFee.toStringAsFixed(0)
         : '0';
+    _ptFeeController.addListener(_onPtFeeChanged);
     _loadTrainers();
+  }
+
+  void _onPtFeeChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadTrainers() async {
@@ -55,11 +63,26 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
       current = trainers.where((t) => t.id == widget.currentMembership.trainerId).firstOrNull;
     }
 
+    // Resolve base plan fee accurately (total fee - previous pt fee)
+    double base = (widget.currentMembership.feeAmount > widget.currentMembership.personalTrainingFee)
+        ? (widget.currentMembership.feeAmount - widget.currentMembership.personalTrainingFee)
+        : 0.0;
+
+    if (base <= 0) {
+      final plan = await _planRepo.getPlanById(widget.currentMembership.planId);
+      if (plan != null && plan.defaultFee > 0) {
+        base = plan.defaultFee;
+      } else if (widget.currentMembership.feeAmount > 0) {
+        base = widget.currentMembership.feeAmount;
+      }
+    }
+
     if (mounted) {
       setState(() {
         _trainers = trainers;
         _currentTrainer = current;
         _selectedTrainer = current;
+        _basePlanFee = base;
         _isInit = false;
       });
     }
@@ -80,6 +103,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
     final newPtFee = _selectedTrainer == null
         ? 0.0
         : (double.tryParse(_ptFeeController.text.trim()) ?? 0.0);
+    final newTotalFee = _basePlanFee + newPtFee;
     final reason = _reasonController.text.trim();
 
     final log = TrainerChangeLogModel(
@@ -101,6 +125,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
       memberId: widget.member.id,
       newTrainerId: _selectedTrainer?.id,
       newPersonalTrainingFee: newPtFee,
+      newFeeAmount: newTotalFee,
       log: log,
     );
 
@@ -253,6 +278,48 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                         controller: _ptFeeController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         validator: (v) => FormValidators.validateAmount(v, fieldName: 'Personal training fee', allowZero: true),
+                      ),
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFD4FF00).withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Base Plan Fee:', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                Text('₹${_basePlanFee.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Personal Training Fee:', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                Text(
+                                  '₹${(double.tryParse(_ptFeeController.text.trim()) ?? 0.0).toStringAsFixed(0)}',
+                                  style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                              ],
+                            ),
+                            const Divider(color: Color(0xFF2E2E2E), height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Updated Total Fee:', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                Text(
+                                  '₹${(_basePlanFee + (double.tryParse(_ptFeeController.text.trim()) ?? 0.0)).toStringAsFixed(0)}',
+                                  style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.w900, fontSize: 15),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                     const SizedBox(height: 16),

@@ -402,7 +402,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14),
                                 ),
                                 subtitle: Text(
-                                  '${pay.paymentMethod} • ${dateFormat.format(pay.paymentDate)}',
+                                  'Receipt #${pay.receiptNumber} • ${pay.paymentMethod} • ${dateFormat.format(pay.paymentDate)}',
                                   style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                                 ),
                                 trailing: Row(

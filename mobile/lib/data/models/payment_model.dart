@@ -10,6 +10,8 @@ class PaymentModel {
   final String receiptNumber;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? memberName;
+  final String? planName;
 
   PaymentModel({
     required this.id,
@@ -23,6 +25,8 @@ class PaymentModel {
     required this.receiptNumber,
     required this.createdAt,
     required this.updatedAt,
+    this.memberName,
+    this.planName,
   });
 
   Map<String, dynamic> toMap() {
@@ -54,6 +58,40 @@ class PaymentModel {
       receiptNumber: map['receiptNumber'] ?? '',
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
       updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : DateTime.now(),
+      memberName: map['memberName'] ?? map['member_name'],
+      planName: map['planName'] ?? map['plan_name'],
+    );
+  }
+
+  PaymentModel copyWith({
+    String? id,
+    String? memberId,
+    String? membershipId,
+    double? amount,
+    DateTime? paymentDate,
+    String? paymentMethod,
+    String? notes,
+    String? receiptId,
+    String? receiptNumber,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? memberName,
+    String? planName,
+  }) {
+    return PaymentModel(
+      id: id ?? this.id,
+      memberId: memberId ?? this.memberId,
+      membershipId: membershipId ?? this.membershipId,
+      amount: amount ?? this.amount,
+      paymentDate: paymentDate ?? this.paymentDate,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      notes: notes ?? this.notes,
+      receiptId: receiptId ?? this.receiptId,
+      receiptNumber: receiptNumber ?? this.receiptNumber,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      memberName: memberName ?? this.memberName,
+      planName: planName ?? this.planName,
     );
   }
 }

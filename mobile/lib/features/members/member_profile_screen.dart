@@ -584,11 +584,19 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                   child: Column(
                     children: [
                       _DetailRow(label: 'Plan Name', value: _membership!.planName),
-                      const Divider(color: AppTheme.darkBorder, height: 18),
-                      _DetailRow(label: 'Membership Fee', value: '₹${_membership!.feeAmount.toStringAsFixed(0)}'),
                       if (_membership!.personalTrainingFee > 0) ...[
                         const Divider(color: AppTheme.darkBorder, height: 18),
+                        _DetailRow(
+                          label: 'Base Plan Fee',
+                          value: '₹${((_membership!.feeAmount >= _membership!.personalTrainingFee) ? (_membership!.feeAmount - _membership!.personalTrainingFee) : _membership!.feeAmount).toStringAsFixed(0)}',
+                        ),
+                        const Divider(color: AppTheme.darkBorder, height: 18),
                         _DetailRow(label: 'Personal Training Fee', value: '₹${_membership!.personalTrainingFee.toStringAsFixed(0)}'),
+                        const Divider(color: AppTheme.darkBorder, height: 18),
+                        _DetailRow(label: 'Total Membership Fee', value: '₹${_membership!.feeAmount.toStringAsFixed(0)}', isHighlight: true),
+                      ] else ...[
+                        const Divider(color: AppTheme.darkBorder, height: 18),
+                        _DetailRow(label: 'Membership Fee', value: '₹${_membership!.feeAmount.toStringAsFixed(0)}'),
                       ],
                       if (_trainer != null) ...[
                         const Divider(color: AppTheme.darkBorder, height: 18),
@@ -800,16 +808,28 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
 class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
+  final bool isHighlight;
 
-  const _DetailRow({required this.label, required this.value});
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    this.isHighlight = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
-        Text(value, style: const TextStyle(color: AppTheme.textWhite, fontSize: 13, fontWeight: FontWeight.bold)),
+        Text(label, style: TextStyle(color: isHighlight ? AppTheme.textWhite : AppTheme.textMuted, fontSize: 13, fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal)),
+        Text(
+          value,
+          style: TextStyle(
+            color: isHighlight ? AppTheme.neonLime : AppTheme.textWhite,
+            fontSize: isHighlight ? 14 : 13,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
