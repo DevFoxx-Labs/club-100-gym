@@ -1,0 +1,209 @@
+import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/receipt/receipt_pdf_service.dart';
+import '../../data/models/receipt_model.dart';
+import '../../data/models/gym_info_model.dart';
+import '../../data/repositories/settings_repository.dart';
+import '../../shared/widgets/neon_button.dart';
+import 'qr_scanner_screen.dart';
+
+class ReceiptPreviewScreen extends StatefulWidget {
+  final ReceiptModel receipt;
+
+  const ReceiptPreviewScreen({super.key, required this.receipt});
+
+  @override
+  State<ReceiptPreviewScreen> createState() => _ReceiptPreviewScreenState();
+}
+
+class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
+  final _settingsRepo = SettingsRepository();
+  GymInfoModel? _gymInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGymInfo();
+  }
+
+  Future<void> _loadGymInfo() async {
+    final gym = await _settingsRepo.getGymInfo();
+    setState(() => _gymInfo = gym);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('RECEIPT #${widget.receipt.receiptNumber}'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.neonLime),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const QrScannerScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              // Digital Receipt Paper Card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.darkSurface,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppTheme.neonLime.withOpacity(0.4), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.neonLime.withOpacity(0.1),
+                      blurRadius: 20,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              (_gymInfo?.name ?? 'CLUB 100 THE GYM').toUpperCase(),
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
+                            ),
+                            Text(
+                              _gymInfo?.phone ?? '070843 06574',
+                              style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppTheme.neonLime,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'PAID',
+                            style: TextStyle(color: AppTheme.darkBackground, fontWeight: FontWeight.w900, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: AppTheme.darkBorder, height: 24),
+
+                    _RowInfo(label: 'Receipt Number', value: widget.receipt.receiptNumber),
+                    const SizedBox(height: 8),
+                    _RowInfo(label: 'Member Name', value: widget.receipt.memberName),
+                    const SizedBox(height: 8),
+                    _RowInfo(label: 'Mobile Number', value: widget.receipt.memberPhone),
+                    const SizedBox(height: 8),
+                    _RowInfo(label: 'Plan Name', value: widget.receipt.planName),
+                    const SizedBox(height: 8),
+                    _RowInfo(label: 'Payment Method', value: widget.receipt.paymentMethod),
+                    const SizedBox(height: 8),
+                    _RowInfo(label: 'Amount Paid', value: '₹${widget.receipt.amount.toStringAsFixed(0)}', isHighlight: true),
+                    const Divider(color: AppTheme.darkBorder, height: 24),
+
+                    // QR Code Image Center
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: QrImageView(
+                              data: widget.receipt.qrPayload,
+                              version: QrVersions.auto,
+                              size: 130.0,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Tamper-Resistant QR Signature',
+                            style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Action Buttons Grid
+              Row(
+                children: [
+                  Expanded(
+                    child: NeonButton(
+                      text: 'Print Receipt',
+                      icon: Icons.print_rounded,
+                      onPressed: () {
+                        if (_gymInfo != null) {
+                          ReceiptPdfService.printReceipt(receipt: widget.receipt, gymInfo: _gymInfo!);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: NeonButton(
+                      text: 'Share PDF',
+                      icon: Icons.share_rounded,
+                      isSecondary: true,
+                      onPressed: () {
+                        if (_gymInfo != null) {
+                          ReceiptPdfService.shareReceipt(receipt: widget.receipt, gymInfo: _gymInfo!);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RowInfo extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isHighlight;
+
+  const _RowInfo({required this.label, required this.value, this.isHighlight = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+        Text(
+          value,
+          style: TextStyle(
+            color: isHighlight ? AppTheme.neonLime : AppTheme.textWhite,
+            fontWeight: FontWeight.bold,
+            fontSize: isHighlight ? 16 : 13,
+          ),
+        ),
+      ],
+    );
+  }
+}
+

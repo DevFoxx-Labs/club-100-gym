@@ -1,0 +1,144 @@
+class DbTables {
+  static const String gym = '''
+    CREATE TABLE IF NOT EXISTS gym (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      ownerName TEXT,
+      phone TEXT NOT NULL,
+      email TEXT,
+      address TEXT NOT NULL,
+      city TEXT,
+      logoPath TEXT,
+      currency TEXT DEFAULT 'INR (₹)',
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
+  ''';
+
+  static const String admins = '''
+    CREATE TABLE IF NOT EXISTS admins (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone TEXT,
+      isBiometricEnabled INTEGER DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
+  ''';
+
+  static const String membershipPlans = '''
+    CREATE TABLE IF NOT EXISTS membership_plans (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      durationDays INTEGER NOT NULL,
+      defaultFee REAL NOT NULL,
+      description TEXT,
+      isActive INTEGER DEFAULT 1,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
+  ''';
+
+  static const String members = '''
+    CREATE TABLE IF NOT EXISTS members (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      gender TEXT,
+      dateOfBirth TEXT,
+      photoPath TEXT,
+      notes TEXT,
+      isArchived INTEGER DEFAULT 0,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      deletedAt TEXT
+    );
+  ''';
+
+  static const String memberships = '''
+    CREATE TABLE IF NOT EXISTS memberships (
+      id TEXT PRIMARY KEY,
+      memberId TEXT NOT NULL,
+      planId TEXT NOT NULL,
+      planName TEXT NOT NULL,
+      startDate TEXT NOT NULL,
+      endDate TEXT NOT NULL,
+      feeAmount REAL NOT NULL,
+      status TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      FOREIGN KEY (memberId) REFERENCES members (id) ON DELETE CASCADE
+    );
+  ''';
+
+  static const String payments = '''
+    CREATE TABLE IF NOT EXISTS payments (
+      id TEXT PRIMARY KEY,
+      memberId TEXT NOT NULL,
+      membershipId TEXT,
+      amount REAL NOT NULL,
+      paymentDate TEXT NOT NULL,
+      paymentMethod TEXT NOT NULL,
+      notes TEXT,
+      receiptId TEXT NOT NULL,
+      receiptNumber TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL,
+      FOREIGN KEY (memberId) REFERENCES members (id) ON DELETE CASCADE
+    );
+  ''';
+
+  static const String receipts = '''
+    CREATE TABLE IF NOT EXISTS receipts (
+      id TEXT PRIMARY KEY,
+      paymentId TEXT NOT NULL,
+      receiptNumber TEXT NOT NULL UNIQUE,
+      memberName TEXT NOT NULL,
+      memberPhone TEXT NOT NULL,
+      planName TEXT NOT NULL,
+      amount REAL NOT NULL,
+      paymentMethod TEXT NOT NULL,
+      paymentDate TEXT NOT NULL,
+      startDate TEXT NOT NULL,
+      endDate TEXT NOT NULL,
+      qrPayload TEXT NOT NULL,
+      createdAt TEXT NOT NULL
+    );
+  ''';
+
+  static const String notifications = '''
+    CREATE TABLE IF NOT EXISTS notifications (
+      id TEXT PRIMARY KEY,
+      memberId TEXT,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      scheduledAt TEXT NOT NULL,
+      triggeredAt TEXT,
+      isRead INTEGER DEFAULT 0,
+      createdAt TEXT NOT NULL
+    );
+  ''';
+
+  static const String notificationSettings = '''
+    CREATE TABLE IF NOT EXISTS notification_settings (
+      id TEXT PRIMARY KEY,
+      feeReminder7Days INTEGER DEFAULT 1,
+      feeReminder3Days INTEGER DEFAULT 1,
+      feeReminder1Day INTEGER DEFAULT 1,
+      feeReminderDueToday INTEGER DEFAULT 1,
+      feeReminderOverdue INTEGER DEFAULT 1,
+      membershipReminder7Days INTEGER DEFAULT 1,
+      membershipReminder3Days INTEGER DEFAULT 1,
+      membershipReminder1Day INTEGER DEFAULT 1
+    );
+  ''';
+
+  static const String appSettings = '''
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+  ''';
+}
+

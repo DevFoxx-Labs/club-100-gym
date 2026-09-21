@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0b0c10;
+  --foreground: #f8fafc;
+  --color-neon: #b5f63d;
+  --color-dark-bg: #0b0c10;
+  --color-card-bg: #13151b;
+  --color-card-border: #1e222d;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  overflow-x: hidden;
+}
+
+.font-handwriting {
+  font-family: 'Caveat', cursive;
+}
+
+.bg-nova-dark {
+  background-color: #0b0c10;
+}
+
+.bg-nova-card {
+  background-color: #13151b;
+}
+
+.border-nova-card {
+  border-color: #1e222d;
+}
+
+.text-nova-neon {
+  color: #b5f63d;
+}
+
+.bg-nova-neon {
+  background-color: #b5f63d;
+}
+
+.border-nova-neon {
+  border-color: #b5f63d;
+}
+
+/* Reference Button Styles */
+.btn-nova-neon {
+  background-color: #b5f63d;
+  color: #0b0c10;
+  font-weight: 800;
+  border-radius: 9999px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 10px 25px -5px rgba(181, 246, 61, 0.3);
+}
+
+.btn-nova-neon:hover {
+  background-color: #c4f85e;
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 15px 35px -5px rgba(181, 246, 61, 0.5);
+}
+
+/* Reference Dark Glass Cards */
+.card-nova {
+  background-color: #13151b;
+  border: 1px solid #1e222d;
+  border-radius: 1.5rem;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-nova:hover {
+  border-color: rgba(181, 246, 61, 0.4);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8), 0 0 20px 0 rgba(181, 246, 61, 0.15);
+}
+
+.card-nova-featured {
+  background-color: #13151b;
+  border: 2px solid #b5f63d;
+  border-radius: 1.5rem;
+  box-shadow: 0 0 30px rgba(181, 246, 61, 0.2);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0c10;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e222d;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b5f63d;
+}
