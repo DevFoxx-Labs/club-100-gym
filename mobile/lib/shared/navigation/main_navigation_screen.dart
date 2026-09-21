@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/app_drawer.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/members/members_list_screen.dart';
 import '../../features/payments/payments_list_screen.dart';
@@ -20,6 +21,7 @@ class MainNavigationScreen extends StatefulWidget {
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late int _currentIndex;
   String? _membersFilter;
 
@@ -42,7 +44,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final screens = [
-      DashboardScreen(onNavigateToMembers: (filter) => _onTabSelected(1, filter: filter)),
+      DashboardScreen(
+        onNavigateToMembers: (filter) => _onTabSelected(1, filter: filter),
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
       MembersListScreen(initialFilter: _membersFilter),
       const PaymentsListScreen(),
       const NotificationsScreen(),
@@ -50,6 +55,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ];
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: AppDrawer(
+        currentIndex: _currentIndex,
+        onSelectTab: (index) => _onTabSelected(index),
+      ),
       body: IndexedStack(
         index: _currentIndex,
         children: screens,
@@ -83,4 +93,3 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
-

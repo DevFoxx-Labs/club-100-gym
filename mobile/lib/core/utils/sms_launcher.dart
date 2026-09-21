@@ -50,5 +50,27 @@ class SmsLauncher {
   }) {
     return "Hi $memberName, payment of ₹${amount.toStringAsFixed(0)} received successfully at $gymName. Receipt No: $receiptNumber. Thank you!";
   }
+
+  static Future<bool> sendWhatsApp({
+    required String phoneNumber,
+    required String message,
+  }) async {
+    var cleanPhone = phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
+    if (cleanPhone.length == 10) {
+      cleanPhone = '91$cleanPhone';
+    }
+    final uri = Uri.parse('whatsapp://send?phone=$cleanPhone&text=${Uri.encodeComponent(message)}');
+    final webUri = Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}');
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        return await launchUrl(uri);
+      } else {
+        return await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      return false;
+    }
+  }
 }
 

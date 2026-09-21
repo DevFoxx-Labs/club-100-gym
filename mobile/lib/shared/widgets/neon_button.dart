@@ -8,6 +8,8 @@ class NeonButton extends StatelessWidget {
   final bool isSecondary;
   final bool isLoading;
   final double? width;
+  final EdgeInsetsGeometry? padding;
+  final double? fontSize;
 
   const NeonButton({
     super.key,
@@ -17,10 +19,13 @@ class NeonButton extends StatelessWidget {
     this.isSecondary = false,
     this.isLoading = false,
     this.width,
+    this.padding,
+    this.fontSize,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectivePadding = padding ?? const EdgeInsets.symmetric(horizontal: 12);
     final child = isLoading
         ? SizedBox(
             height: 20,
@@ -40,15 +45,19 @@ class NeonButton extends StatelessWidget {
                   size: 18,
                   color: isSecondary ? AppTheme.neonLime : AppTheme.darkBackground,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
               ],
-              Text(
-                text,
-                style: TextStyle(
-                  color: isSecondary ? AppTheme.textWhite : AppTheme.darkBackground,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14,
-                  letterSpacing: 0.5,
+              Flexible(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: isSecondary ? AppTheme.textWhite : AppTheme.darkBackground,
+                    fontWeight: FontWeight.w900,
+                    fontSize: fontSize ?? 13.5,
+                    letterSpacing: 0.3,
+                  ),
                 ),
               ),
             ],
@@ -65,7 +74,7 @@ class NeonButton extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: effectivePadding,
               ),
               child: child,
             )
@@ -79,7 +88,7 @@ class NeonButton extends StatelessWidget {
                 ),
                 elevation: 4,
                 shadowColor: AppTheme.neonLime.withValues(alpha: 0.4),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: effectivePadding,
               ),
               child: child,
             ),

@@ -28,6 +28,33 @@ class PlanRepository {
     );
   }
 
+  Future<PlanModel?> getPlanById(String id) async {
+    final db = await AppDatabase.instance.database;
+    final maps = await db.query(
+      'membership_plans',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return PlanModel.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  Future<List<PlanModel>> getPlansByPackageId(String packageId, {bool activeOnly = true}) async {
+    final db = await AppDatabase.instance.database;
+    final where = activeOnly
+        ? 'packageId = ? AND isActive = 1'
+        : 'packageId = ?';
+    final List<Map<String, dynamic>> maps = await db.query(
+      'membership_plans',
+      where: where,
+      whereArgs: [packageId],
+      orderBy: 'durationDays ASC',
+    );
+    return maps.map((map) => PlanModel.fromMap(map)).toList();
+  }
+
   Future<void> deletePlan(String planId) async {
     final db = await AppDatabase.instance.database;
     await db.delete('membership_plans', where: 'id = ?', whereArgs: [planId]);

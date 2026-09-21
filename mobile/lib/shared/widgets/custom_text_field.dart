@@ -11,6 +11,7 @@ class CustomTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final int maxLines;
   final String? Function(String?)? validator;
+  final ValueChanged<String>? onChanged;
 
   const CustomTextField({
     super.key,
@@ -23,6 +24,7 @@ class CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.maxLines = 1,
     this.validator,
+    this.onChanged,
   });
 
   @override
@@ -46,6 +48,7 @@ class CustomTextField extends StatelessWidget {
           obscureText: obscureText,
           maxLines: maxLines,
           validator: validator,
+          onChanged: onChanged,
           style: const TextStyle(color: AppTheme.textWhite, fontSize: 14, fontWeight: FontWeight.w600),
           decoration: InputDecoration(
             hintText: hint,

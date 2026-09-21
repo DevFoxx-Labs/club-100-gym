@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/gym_logo_picker.dart';
 import '../../data/models/gym_info_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/custom_text_field.dart';
@@ -23,6 +24,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
   late TextEditingController _addressController;
   late TextEditingController _cityController;
 
+  String? _logoPath;
   String _currency = 'INR (₹)';
   bool _isLoading = true;
 
@@ -39,6 +41,17 @@ class _EditGymScreenState extends State<EditGymScreen> {
     _loadGymInfo();
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _ownerController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
+    _cityController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadGymInfo() async {
     final gym = await _settingsRepo.getGymInfo();
     setState(() {
@@ -49,6 +62,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
       _addressController.text = gym.address;
       _cityController.text = gym.city ?? '';
       _currency = gym.currency;
+      _logoPath = gym.logoPath;
       _isLoading = false;
     });
   }
@@ -65,6 +79,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
       email: _emailController.text.trim(),
       address: _addressController.text.trim(),
       city: _cityController.text.trim(),
+      logoPath: _logoPath,
       currency: _currency,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
@@ -94,17 +109,50 @@ class _EditGymScreenState extends State<EditGymScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      CustomTextField(label: 'Gym Name *', controller: _nameController, validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null),
+                      // Gym Logo
+                      EditableGymLogo(
+                        logoPath: _logoPath,
+                        size: 90,
+                        onLogoChanged: (p) => setState(() => _logoPath = p),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('Tap camera icon to set Gym Logo', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                      const SizedBox(height: 24),
+
+                      CustomTextField(
+                        label: 'Gym Name *',
+                        controller: _nameController,
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                      ),
                       const SizedBox(height: 16),
-                      CustomTextField(label: 'Owner Name', controller: _ownerController),
+                      CustomTextField(
+                        label: 'Owner Name',
+                        controller: _ownerController,
+                      ),
                       const SizedBox(height: 16),
-                      CustomTextField(label: 'Phone Number *', controller: _phoneController, keyboardType: TextInputType.phone, validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null),
+                      CustomTextField(
+                        label: 'Phone Number *',
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                      ),
                       const SizedBox(height: 16),
-                      CustomTextField(label: 'Email Address', controller: _emailController, keyboardType: TextInputType.emailAddress),
+                      CustomTextField(
+                        label: 'Email Address',
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                      ),
                       const SizedBox(height: 16),
-                      CustomTextField(label: 'Address', controller: _addressController, maxLines: 2),
+                      CustomTextField(
+                        label: 'Address',
+                        controller: _addressController,
+                        maxLines: 2,
+                      ),
                       const SizedBox(height: 16),
-                      CustomTextField(label: 'City', controller: _cityController),
+                      CustomTextField(
+                        label: 'City',
+                        controller: _cityController,
+                      ),
                       const SizedBox(height: 32),
                       NeonButton(
                         text: 'Save Gym Information',
@@ -119,4 +167,3 @@ class _EditGymScreenState extends State<EditGymScreen> {
     );
   }
 }
-

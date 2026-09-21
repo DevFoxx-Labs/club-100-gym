@@ -1,0 +1,449 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+import '../../data/models/member_model.dart';
+import '../../data/models/membership_change_log_model.dart';
+import '../../data/models/membership_model.dart';
+import '../../data/models/package_model.dart';
+import '../../data/models/plan_model.dart';
+import '../../data/models/trainer_model.dart';
+import '../../data/repositories/member_repository.dart';
+import '../../data/repositories/package_repository.dart';
+import '../../data/repositories/plan_repository.dart';
+import '../../data/repositories/trainer_repository.dart';
+import '../../shared/widgets/custom_text_field.dart';
+import '../../shared/widgets/neon_button.dart';
+
+class ChangePlanScreen extends StatefulWidget {
+  final MemberModel member;
+  final MembershipModel currentMembership;
+
+  const ChangePlanScreen({
+    super.key,
+    required this.member,
+    required this.currentMembership,
+  });
+
+  @override
+  State<ChangePlanScreen> createState() => _ChangePlanScreenState();
+}
+
+class _ChangePlanScreenState extends State<ChangePlanScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _feeController = TextEditingController();
+  final _ptFeeController = TextEditingController(text: '0');
+  final _reasonController = TextEditingController();
+
+  final MemberRepository _memberRepo = MemberRepository();
+  final PlanRepository _planRepo = PlanRepository();
+  final PackageRepository _packageRepo = PackageRepository();
+  final TrainerRepository _trainerRepo = TrainerRepository();
+
+  List<PackageModel> _packages = [];
+  List<PlanModel> _plans = [];
+  List<TrainerModel> _trainers = [];
+  PlanModel? _selectedPlan;
+  TrainerModel? _selectedTrainer;
+
+  DateTime _startDate = DateTime.now();
+  late DateTime _endDate;
+  bool _isLoading = false;
+  bool _isInit = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _endDate = DateTime.now().add(const Duration(days: 30));
+    _ptFeeController.text = widget.currentMembership.personalTrainingFee > 0
+        ? widget.currentMembership.personalTrainingFee.toStringAsFixed(0)
+        : '0';
+    _loadDependencies();
+  }
+
+  Future<void> _loadDependencies() async {
+    final packages = await _packageRepo.getAllPackages();
+    final plans = await _planRepo.getPlans();
+    final trainers = await _trainerRepo.getAllTrainers();
+
+    TrainerModel? currentTrainer;
+    if (widget.currentMembership.trainerId != null) {
+      currentTrainer = trainers.where((t) => t.id == widget.currentMembership.trainerId).firstOrNull;
+    }
+
+    if (mounted) {
+      setState(() {
+        _packages = packages;
+        _plans = plans;
+        _trainers = trainers;
+        _selectedTrainer = currentTrainer;
+        _isInit = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _feeController.dispose();
+    _ptFeeController.dispose();
+    _reasonController.dispose();
+    super.dispose();
+  }
+
+  void _onPlanSelected(PlanModel? plan) {
+    if (plan == null) return;
+    setState(() {
+      _selectedPlan = plan;
+      _endDate = _startDate.add(Duration(days: plan.durationDays));
+      final ptFee = double.tryParse(_ptFeeController.text.trim()) ?? 0;
+      _feeController.text = (plan.defaultFee + ptFee).toStringAsFixed(0);
+    });
+  }
+
+  void _recomputeFee() {
+    final planFee = _selectedPlan?.defaultFee ?? double.tryParse(_feeController.text.trim()) ?? 0;
+    final ptFee = double.tryParse(_ptFeeController.text.trim()) ?? 0;
+    _feeController.text = (planFee + ptFee).toStringAsFixed(0);
+  }
+
+  Future<void> _pickDate({required bool isStart}) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isStart ? _startDate : _endDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+      builder: (context, child) => Theme(
+        data: ThemeData.dark().copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: Color(0xFFD4FF00),
+            onPrimary: Color(0xFF121212),
+            surface: Color(0xFF1E1E1E),
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startDate = picked;
+          if (_selectedPlan != null) {
+            _endDate = _startDate.add(Duration(days: _selectedPlan!.durationDays));
+          }
+        } else {
+          _endDate = picked;
+        }
+      });
+    }
+  }
+
+  Future<void> _submitChangePlan() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedPlan == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a new membership plan'), backgroundColor: Color(0xFFFF5252)),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    final now = DateTime.now().toIso8601String();
+    final newMembershipId = const Uuid().v4();
+    final feeAmount = double.tryParse(_feeController.text.trim()) ?? _selectedPlan!.defaultFee;
+    final ptFee = double.tryParse(_ptFeeController.text.trim()) ?? 0.0;
+    final reason = _reasonController.text.trim();
+
+    // Find package name for snapshot if any
+    String planNameSnapshot = _selectedPlan!.name;
+    if (_selectedPlan!.packageId != null) {
+      final pkg = _packages.where((p) => p.id == _selectedPlan!.packageId).firstOrNull;
+      if (pkg != null) {
+        planNameSnapshot = '${pkg.name} - ${_selectedPlan!.name}';
+      }
+    }
+
+    final newMembership = MembershipModel(
+      id: newMembershipId,
+      memberId: widget.member.id,
+      planId: _selectedPlan!.id,
+      planName: planNameSnapshot,
+      trainerId: _selectedTrainer?.id,
+      personalTrainingFee: ptFee,
+      packageId: _selectedPlan!.packageId,
+      startDate: _startDate,
+      endDate: _endDate,
+      feeAmount: feeAmount,
+      status: 'Active',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+
+    final log = MembershipChangeLogModel(
+      id: const Uuid().v4(),
+      memberId: widget.member.id,
+      previousMembershipId: widget.currentMembership.id,
+      newMembershipId: newMembershipId,
+      previousPlanNameSnapshot: widget.currentMembership.planName,
+      newPlanNameSnapshot: planNameSnapshot,
+      previousFeeAmount: widget.currentMembership.feeAmount,
+      newFeeAmount: feeAmount,
+      reason: reason.isEmpty ? null : reason,
+      changedAt: now,
+    );
+
+    await _memberRepo.changePlan(
+      memberId: widget.member.id,
+      currentMembershipId: widget.currentMembership.id,
+      newMembership: newMembership,
+      log: log,
+    );
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      Navigator.pop(context, true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd MMM yyyy');
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF121212),
+      appBar: AppBar(
+        title: const Text(
+          'CHANGE MEMBERSHIP PLAN',
+          style: TextStyle(letterSpacing: 1.2, fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+      ),
+      body: _isInit
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFD4FF00)))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Member & Current Plan Summary Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: const Color(0xFF121212),
+                                  child: Text(
+                                    widget.member.name.isNotEmpty ? widget.member.name[0].toUpperCase() : 'M',
+                                    style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.member.name,
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                    ),
+                                    Text(
+                                      widget.member.phone,
+                                      style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 24, color: Color(0xFF252525)),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Current Active Plan', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      widget.currentMembership.planName,
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    const Text('Expires On', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      dateFormat.format(widget.currentMembership.endDate),
+                                      style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Instructions banner
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFD4FF00).withValues(alpha: 0.2)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Color(0xFFD4FF00), size: 18),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'The current plan will be marked Superseded and the member will be transitioned to the new plan. An audit trail is permanently saved.',
+                              style: TextStyle(color: Colors.white70, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Select New Plan
+                    const Text(
+                      'SELECT NEW PLAN *',
+                      style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<PlanModel>(
+                      initialValue: _selectedPlan,
+                      dropdownColor: const Color(0xFF252525),
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: 'Choose plan upgrade or switch',
+                        prefixIcon: Icon(Icons.card_membership, color: Color(0xFFD4FF00)),
+                      ),
+                      items: _plans.map((p) {
+                        return DropdownMenuItem(
+                          value: p,
+                          child: Text('${p.name} (${p.durationDays} Days - ₹${p.defaultFee.toStringAsFixed(0)})'),
+                        );
+                      }).toList(),
+                      onChanged: _onPlanSelected,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Date range pickers
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Card(
+                            child: ListTile(
+                              title: const Text('Start Date', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                              subtitle: Text(
+                                dateFormat.format(_startDate),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                              onTap: () => _pickDate(isStart: true),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Card(
+                            child: ListTile(
+                              title: const Text('New End Date', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                              subtitle: Text(
+                                dateFormat.format(_endDate),
+                                style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                              onTap: () => _pickDate(isStart: false),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Assigned Trainer & PT Fee
+                    const Text(
+                      'PERSONAL TRAINER (OPTIONAL)',
+                      style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<TrainerModel?>(
+                      initialValue: _selectedTrainer,
+                      dropdownColor: const Color(0xFF252525),
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: 'Assign Personal Trainer',
+                        prefixIcon: Icon(Icons.sports_gymnastics, color: Color(0xFFD4FF00)),
+                      ),
+                      items: [
+                        const DropdownMenuItem(value: null, child: Text('None / Self Trained')),
+                        ..._trainers.map((t) => DropdownMenuItem(value: t, child: Text(t.name))),
+                      ],
+                      onChanged: (t) {
+                        setState(() {
+                          _selectedTrainer = t;
+                          if (t == null) {
+                            _ptFeeController.text = '0';
+                            _recomputeFee();
+                          }
+                        });
+                      },
+                    ),
+                    if (_selectedTrainer != null) ...[
+                      const SizedBox(height: 16),
+                      CustomTextField(
+                        label: 'PERSONAL TRAINING FEE (₹)',
+                        hint: '0',
+                        controller: _ptFeeController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (_) => _recomputeFee(),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+
+                    // Total Fee Amount
+                    CustomTextField(
+                      label: 'TOTAL FEE AMOUNT (₹) *',
+                      hint: '1500',
+                      controller: _feeController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      validator: (v) {
+                        if (v == null || double.tryParse(v.trim()) == null) return 'Enter valid fee amount';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Reason
+                    CustomTextField(
+                      label: 'REASON FOR PLAN CHANGE (OPTIONAL)',
+                      hint: 'e.g. Member requested upgrade to Annual VIP with PT',
+                      controller: _reasonController,
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Submit Button
+                    NeonButton(
+                      text: 'Confirm & Apply Plan Change',
+                      icon: Icons.swap_horiz,
+                      isLoading: _isLoading,
+                      onPressed: _submitChangePlan,
+                    ),
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+}
+

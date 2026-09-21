@@ -6,17 +6,18 @@ class ConfirmationDialog extends StatelessWidget {
   final String title;
   final String message;
   final String confirmText;
-  final VoidCallback onConfirm;
+  final VoidCallback? onConfirm;
   final bool isDestructive;
 
   const ConfirmationDialog({
     super.key,
     required this.title,
     required this.message,
-    this.confirmText = 'Confirm',
-    required this.onConfirm,
+    String? confirmText,
+    String? confirmLabel,
+    this.onConfirm,
     this.isDestructive = false,
-  });
+  }) : confirmText = confirmLabel ?? confirmText ?? 'Confirm';
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +56,7 @@ class ConfirmationDialog extends StatelessWidget {
                 ),
                 onPressed: () {
                   Navigator.pop(context, true);
-                  onConfirm();
+                  onConfirm?.call();
                 },
                 child: Text(
                   confirmText,

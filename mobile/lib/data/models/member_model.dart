@@ -4,6 +4,7 @@ class MemberModel {
   final String id;
   final String name;
   final String phone;
+  final String? email;
   final String? gender;
   final DateTime? dateOfBirth;
   final String? photoPath;
@@ -17,6 +18,7 @@ class MemberModel {
     required this.id,
     required this.name,
     required this.phone,
+    this.email,
     this.gender,
     this.dateOfBirth,
     this.photoPath,
@@ -32,6 +34,7 @@ class MemberModel {
       'id': id,
       'name': name,
       'phone': phone,
+      'email': email,
       'gender': gender,
       'dateOfBirth': dateOfBirth?.toIso8601String(),
       'photoPath': photoPath,
@@ -48,6 +51,7 @@ class MemberModel {
       id: map['id'] ?? '',
       name: map['name'] ?? '',
       phone: map['phone'] ?? '',
+      email: map['email'],
       gender: map['gender'],
       dateOfBirth: map['dateOfBirth'] != null ? DateTime.parse(map['dateOfBirth']) : null,
       photoPath: map['photoPath'],
@@ -56,6 +60,36 @@ class MemberModel {
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
       updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : DateTime.now(),
       deletedAt: map['deletedAt'] != null ? DateTime.parse(map['deletedAt']) : null,
+    );
+  }
+
+  MemberModel copyWith({
+    String? id,
+    String? name,
+    String? phone,
+    String? email,
+    String? gender,
+    DateTime? dateOfBirth,
+    String? photoPath,
+    String? notes,
+    bool? isArchived,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    DateTime? deletedAt,
+  }) {
+    return MemberModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      gender: gender ?? this.gender,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      photoPath: photoPath ?? this.photoPath,
+      notes: notes ?? this.notes,
+      isArchived: isArchived ?? this.isArchived,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 }

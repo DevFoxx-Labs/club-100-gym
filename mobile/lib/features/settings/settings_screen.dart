@@ -7,7 +7,11 @@ import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../onboarding/welcome_screen.dart';
 import 'edit_gym_screen.dart';
-import 'manage_plans_screen.dart';
+import 'packages_and_plans_screen.dart';
+import 'archived_members_screen.dart';
+import 'notification_settings_screen.dart';
+import '../trainers/trainers_list_screen.dart';
+import '../events/events_calendar_screen.dart';
 import 'backup_screen.dart';
 import 'change_mpin_screen.dart';
 import '../notifications/notifications_screen.dart';
@@ -34,10 +38,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isLoading = true);
     final admin = await _settingsRepo.getAdminInfo();
 
-    setState(() {
-      _admin = admin;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _admin = admin;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _toggleBiometric(bool val) async {
@@ -59,7 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => ConfirmationDialog(
         title: 'RESET ALL APPLICATION DATA?',
-        message: 'This action cannot be undone. All members, payments, receipts, and settings will be permanently wiped from this device.',
+        message: 'This action cannot be undone. All members, payments, receipts, trainers, events, and settings will be permanently wiped from this device.',
         confirmText: 'Wipe Everything',
         isDestructive: true,
         onConfirm: () async {
@@ -88,12 +94,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             : ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  // Gym Section
-                  const _SectionHeader(title: 'GYM INFORMATION'),
+                  // Gym Operations Section
+                  const _SectionHeader(title: 'GYM OPERATIONS & CATALOG'),
                   _SettingsTile(
                     icon: Icons.store_rounded,
                     title: 'Edit Gym Information & Logo',
-                    subtitle: 'Name, phone, address, currency settings',
+                    subtitle: 'Name, phone, address, custom gym logo',
                     onTap: () async {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => const EditGymScreen()));
                       _loadSettings();
@@ -101,13 +107,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   _SettingsTile(
                     icon: Icons.card_membership_rounded,
-                    title: 'Manage Membership Plans',
-                    subtitle: 'Create, edit, or remove reusable plans',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ManagePlansScreen())),
+                    title: 'Packages & Membership Plans',
+                    subtitle: 'Organize packages and customizable plans',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PackagesAndPlansScreen())),
                   ),
-                  const SizedBox(height: 20),
+                  _SettingsTile(
+                    icon: Icons.sports_gymnastics_rounded,
+                    title: 'Trainers & Payouts',
+                    subtitle: 'Manage trainers, clients, and payout records',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const TrainersListScreen())),
+                  ),
+                  _SettingsTile(
+                    icon: Icons.event_note_rounded,
+                    title: 'Events & Calendar',
+                    subtitle: 'Gym events, challenges, and workshops',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EventsCalendarScreen())),
+                  ),
+                  const SizedBox(height: 18),
 
-                  // Account & Security Section
+                  // Member Management Section
+                  const _SectionHeader(title: 'MEMBER MANAGEMENT'),
+                  _SettingsTile(
+                    icon: Icons.archive_rounded,
+                    title: 'Archived Members',
+                    subtitle: 'View and restore archived member profiles',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ArchivedMembersScreen())),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Notifications & Alerts Section
+                  const _SectionHeader(title: 'NOTIFICATIONS & REMINDERS'),
+                  _SettingsTile(
+                    icon: Icons.alarm_on_rounded,
+                    title: 'Reminder Intervals & Notification Settings',
+                    subtitle: 'Configure 7-day, 3-day, and 1-day alert timings',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationSettingsScreen())),
+                  ),
+                  _SettingsTile(
+                    icon: Icons.notifications_active_rounded,
+                    title: 'View Active Alerts',
+                    subtitle: 'Scheduled fee due and membership expiry alerts',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen())),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Security Section
                   const _SectionHeader(title: 'SECURITY & AUTHENTICATION'),
                   _SettingsTile(
                     icon: Icons.lock_rounded,
@@ -122,23 +166,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: const Text('Fingerprint / Biometric Login', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14)),
                     subtitle: const Text('Unlock app using device biometrics', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
-                  // Backup & Reminders
-                  const _SectionHeader(title: 'DATA BACKUP & REMINDERS'),
-                  _SettingsTile(
-                    icon: Icons.notifications_active_rounded,
-                    title: 'Local Fee Reminders',
-                    subtitle: 'View scheduled fee due & expiry alerts',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen())),
-                  ),
+                  // Backup Section
+                  const _SectionHeader(title: 'DATA BACKUP & RECOVERY'),
                   _SettingsTile(
                     icon: Icons.backup_rounded,
                     title: 'Export / Restore Backup',
                     subtitle: 'Encrypted .gymbackup file export & import',
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const BackupScreen())),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
                   // Danger Zone
                   const _SectionHeader(title: 'DANGER ZONE'),
@@ -155,7 +193,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Center(
                     child: Column(
                       children: [
-                        Text('CLUB 100 THE GYM • VERSION 1.0.0', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold)),
+                        Text('CLUB 100 THE GYM • VERSION 2.0.0', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold)),
                         SizedBox(height: 4),
                         Text('Offline-First Architecture • Flutter 3.24.4', style: TextStyle(color: AppTheme.textMuted, fontSize: 10)),
                       ],
@@ -214,4 +252,3 @@ class _SettingsTile extends StatelessWidget {
     );
   }
 }
-

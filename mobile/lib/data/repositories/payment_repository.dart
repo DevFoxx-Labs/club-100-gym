@@ -24,6 +24,16 @@ class PaymentRepository {
     return maps.map((map) => PaymentModel.fromMap(map)).toList();
   }
 
+  Future<List<PaymentModel>> getRecentPayments({int limit = 5}) async {
+    final db = await AppDatabase.instance.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'payments',
+      orderBy: 'paymentDate DESC',
+      limit: limit,
+    );
+    return maps.map((map) => PaymentModel.fromMap(map)).toList();
+  }
+
   Future<String> generateNextReceiptNumber() async {
     final db = await AppDatabase.instance.database;
     final year = DateTime.now().year;

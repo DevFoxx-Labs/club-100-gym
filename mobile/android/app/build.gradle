@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.club100gym.club_100_gym_app"
-    compileSdk = 34
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
