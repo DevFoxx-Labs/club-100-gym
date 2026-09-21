@@ -12,6 +12,10 @@ class QrService {
       'amount': receipt.amount,
       'date': receipt.paymentDate.toIso8601String().split('T').first,
       'plan': receipt.planName,
+      if (receipt.personalTrainingFee > 0) ...{
+        'ptFee': receipt.personalTrainingFee,
+        if (receipt.trainerName != null) 'trainer': receipt.trainerName!,
+      },
     };
 
     final jsonStr = jsonEncode(rawData);

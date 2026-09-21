@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../../data/models/package_model.dart';
 import '../../data/repositories/package_repository.dart';
+import '../../core/utils/form_validators.dart';
+import '../../core/services/app_state_service.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 
@@ -66,6 +68,8 @@ class _PackageFormScreenState extends State<PackageFormScreen> {
       await _repository.insertPackage(newPkg);
     }
 
+    AppStateService.instance.notifyPackagesChanged();
+
     if (mounted) {
       setState(() => _isLoading = false);
       Navigator.pop(context, true);
@@ -93,10 +97,7 @@ class _PackageFormScreenState extends State<PackageFormScreen> {
                 label: 'PACKAGE CATEGORY NAME *',
                 hint: 'e.g. Standard Gym Access, Strength & CrossFit, Zumba + Cardio',
                 controller: _nameController,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Package name is required';
-                  return null;
-                },
+                validator: (v) => FormValidators.validateName(v, fieldName: 'Package category name'),
               ),
               const SizedBox(height: 16),
               CustomTextField(

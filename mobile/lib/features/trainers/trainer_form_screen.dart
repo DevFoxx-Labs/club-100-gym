@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/utils/member_photo_picker.dart';
+import '../../core/utils/form_validators.dart';
+import '../../core/services/app_state_service.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/repositories/trainer_repository.dart';
 import '../../shared/widgets/custom_text_field.dart';
@@ -85,6 +87,8 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
       await _repository.insertTrainer(newTrainer);
     }
 
+    AppStateService.instance.notifyTrainersChanged();
+
     if (mounted) {
       setState(() => _isLoading = false);
       Navigator.pop(context, true);
@@ -123,10 +127,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
                 label: 'TRAINER FULL NAME *',
                 hint: 'e.g. Vikram Singh',
                 controller: _nameController,
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Trainer name is required';
-                  return null;
-                },
+                validator: (val) => FormValidators.validateName(val, fieldName: 'Trainer name'),
               ),
               const SizedBox(height: 16),
               CustomTextField(
@@ -134,12 +135,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
                 hint: 'e.g. 9876543210',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Phone number is required';
-                  final clean = val.replaceAll(RegExp(r'[^\d]'), '');
-                  if (clean.length < 10) return 'Enter a valid 10-digit phone number';
-                  return null;
-                },
+                validator: (val) => FormValidators.validatePhone(val, fieldName: 'Phone number'),
               ),
               const SizedBox(height: 16),
               CustomTextField(
@@ -153,6 +149,9 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
                 hint: 'e.g. 25000',
                 controller: _salaryController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (val) => (val == null || val.trim().isEmpty)
+                    ? null
+                    : FormValidators.validateAmount(val, fieldName: 'Monthly salary', allowZero: true),
               ),
               if (widget.isEdit) ...[
                 const SizedBox(height: 16),

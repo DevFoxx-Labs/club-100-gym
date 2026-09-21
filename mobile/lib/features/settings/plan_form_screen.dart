@@ -4,6 +4,8 @@ import '../../data/models/package_model.dart';
 import '../../data/models/plan_model.dart';
 import '../../data/repositories/package_repository.dart';
 import '../../data/repositories/plan_repository.dart';
+import '../../core/utils/form_validators.dart';
+import '../../core/services/app_state_service.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 
@@ -97,6 +99,8 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
       await _planRepo.addPlan(newPlan);
     }
 
+    AppStateService.instance.notifyPackagesChanged();
+
     if (mounted) {
       setState(() => _isLoading = false);
       Navigator.pop(context, true);
@@ -124,10 +128,7 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
                 label: 'PLAN NAME *',
                 hint: 'e.g. Monthly Plan, 3 Months Pro, Annual VIP',
                 controller: _nameController,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Plan name is required';
-                  return null;
-                },
+                validator: (v) => FormValidators.validateName(v, fieldName: 'Plan name'),
               ),
               const SizedBox(height: 16),
               const Text(
@@ -159,7 +160,9 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
                       controller: _durationController,
                       keyboardType: TextInputType.number,
                       validator: (v) {
-                        if (v == null || int.tryParse(v.trim()) == null) return 'Enter days';
+                        if (v == null || int.tryParse(v.trim()) == null || int.parse(v.trim()) <= 0) {
+                          return 'Enter valid days (> 0)';
+                        }
                         return null;
                       },
                     ),
@@ -171,10 +174,7 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
                       hint: '1500',
                       controller: _feeController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (v) {
-                        if (v == null || double.tryParse(v.trim()) == null) return 'Enter fee';
-                        return null;
-                      },
+                      validator: (v) => FormValidators.validateAmount(v, fieldName: 'Default fee'),
                     ),
                   ),
                 ],

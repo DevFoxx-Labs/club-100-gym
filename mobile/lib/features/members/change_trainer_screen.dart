@@ -6,6 +6,8 @@ import '../../data/models/trainer_change_log_model.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
+import '../../core/utils/form_validators.dart';
+import '../../core/services/app_state_service.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 
@@ -101,6 +103,8 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
       newPersonalTrainingFee: newPtFee,
       log: log,
     );
+
+    AppStateService.instance.notifyMembersChanged();
 
     if (mounted) {
       setState(() => _isLoading = false);
@@ -248,6 +252,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                         hint: '0',
                         controller: _ptFeeController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        validator: (v) => FormValidators.validateAmount(v, fieldName: 'Personal training fee', allowZero: true),
                       ),
                     ],
                     const SizedBox(height: 16),

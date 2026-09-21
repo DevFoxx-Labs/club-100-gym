@@ -4,6 +4,8 @@ import 'package:uuid/uuid.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/member_photo_picker.dart';
 import '../../core/utils/contact_sync_service.dart';
+import '../../core/utils/form_validators.dart';
+import '../../core/services/app_state_service.dart';
 import '../../data/models/member_model.dart';
 import '../../data/models/membership_model.dart';
 import '../../data/models/plan_model.dart';
@@ -108,6 +110,13 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
     }
   }
 
+  void _recalculateTotalFee() {
+    if (_selectedPlan == null) return;
+    final base = _selectedPlan!.defaultFee;
+    final pt = double.tryParse(_ptFeeController.text.trim()) ?? 0.0;
+    _feeController.text = (base + pt).toStringAsFixed(0);
+  }
+
   Future<void> _saveMember() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedPlan == null && widget.member == null) {
@@ -163,6 +172,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
       } catch (_) {}
     }
 
+    // Trigger instant app-wide reactive state updates
+    AppStateService.instance.notifyMembersChanged();
+
     setState(() => _isLoading = false);
     if (mounted) Navigator.pop(context, true);
   }
@@ -207,7 +219,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                   label: 'Full Name *',
                   hint: 'e.g. Rahul Sharma',
                   controller: _nameController,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Full name is required' : null,
+                  validator: (v) => FormValidators.validateName(v, fieldName: 'Full name'),
                 ),
                 const SizedBox(height: 16),
 
@@ -216,7 +228,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                   hint: 'e.g. 9876543210',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Phone number is required' : null,
+                  validator: (v) => FormValidators.validatePhone(v, fieldName: 'Phone number'),
                 ),
                 const SizedBox(height: 16),
 
@@ -225,6 +237,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                   hint: 'e.g. rahul@example.com',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  validator: (v) => FormValidators.validateEmail(v),
                 ),
                 const SizedBox(height: 16),
 
@@ -283,7 +296,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                           if (val != null) {
                             setState(() {
                               _selectedPlan = val;
-                              _feeController.text = val.defaultFee.toStringAsFixed(0);
+                              _recalculateTotalFee();
                             });
                           }
                         },
@@ -332,9 +345,10 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: CustomTextField(
-                          label: 'FEE AMOUNT (₹)',
+                          label: 'TOTAL FEE (₹) *',
                           controller: _feeController,
-                          keyboardType: TextInputType.number,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          validator: (v) => FormValidators.validateAmount(v, fieldName: 'Total fee'),
                         ),
                       ),
                     ],
@@ -373,6 +387,10 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                         onChanged: (val) {
                           setState(() {
                             _selectedTrainer = val;
+                            if (val == null) {
+                              _ptFeeController.text = '0';
+                            }
+                            _recalculateTotalFee();
                           });
                         },
                       ),
@@ -384,8 +402,12 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                     CustomTextField(
                       label: 'Personal Training Fee (₹)',
                       controller: _ptFeeController,
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       hint: '0',
+                      validator: (v) => FormValidators.validateAmount(v, fieldName: 'Personal training fee', allowZero: true),
+                      onChanged: (val) {
+                        _recalculateTotalFee();
+                      },
                     ),
                     const SizedBox(height: 20),
                   ],

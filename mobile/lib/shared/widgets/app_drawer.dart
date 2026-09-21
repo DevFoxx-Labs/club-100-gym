@@ -11,6 +11,7 @@ import '../../features/settings/edit_gym_screen.dart';
 import '../../features/settings/notification_settings_screen.dart';
 import '../../features/settings/packages_and_plans_screen.dart';
 import '../../features/trainers/trainers_list_screen.dart';
+import '../../core/services/app_state_service.dart';
 import 'gym_logo_view.dart';
 
 class AppDrawer extends StatefulWidget {
@@ -35,6 +36,17 @@ class _AppDrawerState extends State<AppDrawer> {
   @override
   void initState() {
     super.initState();
+    _loadHeaderInfo();
+    AppStateService.instance.addListener(_onAppStateChanged);
+  }
+
+  @override
+  void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
     _loadHeaderInfo();
   }
 
@@ -94,6 +106,15 @@ class _AppDrawerState extends State<AppDrawer> {
                   '$_greeting, ${_adminInfo?.name ?? 'Admin'}',
                   style: const TextStyle(color: Color(0xFFD4FF00), fontSize: 13, fontWeight: FontWeight.w600),
                 ),
+                if (_gymInfo?.website != null && _gymInfo!.website!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    _gymInfo!.website!.trim(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Color(0xFF8E8E93), fontSize: 11),
+                  ),
+                ],
               ],
             ),
           ),

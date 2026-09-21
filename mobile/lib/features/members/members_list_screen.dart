@@ -4,6 +4,7 @@ import '../../data/models/member_model.dart';
 import '../../data/models/membership_model.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../../core/services/app_state_service.dart';
 import 'add_edit_member_screen.dart';
 import 'member_profile_screen.dart';
 
@@ -35,6 +36,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
     }
     _loadMembers();
     _searchController.addListener(_applyFilters);
+    AppStateService.instance.addListener(_onAppStateChanged);
   }
 
   @override
@@ -50,12 +52,21 @@ class _MembersListScreenState extends State<MembersListScreen> {
 
   @override
   void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadMembers() async {
-    setState(() => _isLoading = true);
+  void _onAppStateChanged() {
+    if (mounted) {
+      _loadMembers(showSpinner: false);
+    }
+  }
+
+  Future<void> _loadMembers({bool showSpinner = true}) async {
+    if (showSpinner || _allMembers.isEmpty) {
+      setState(() => _isLoading = true);
+    }
 
     final members = await _memberRepo.getMembers();
     final Map<String, MembershipModel?> memberships = {};

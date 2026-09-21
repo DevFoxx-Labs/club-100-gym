@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/form_validators.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 import 'mpin_setup_screen.dart';
@@ -9,6 +10,7 @@ class AdminSetupScreen extends StatefulWidget {
   final String ownerName;
   final String phone;
   final String email;
+  final String? website;
   final String address;
   final String city;
   final String currency;
@@ -19,6 +21,7 @@ class AdminSetupScreen extends StatefulWidget {
     required this.ownerName,
     required this.phone,
     required this.email,
+    this.website,
     required this.address,
     required this.city,
     required this.currency,
@@ -38,6 +41,13 @@ class _AdminSetupScreenState extends State<AdminSetupScreen> {
     super.initState();
     _adminNameController = TextEditingController(text: widget.ownerName);
     _adminPhoneController = TextEditingController(text: widget.phone);
+  }
+
+  @override
+  void dispose() {
+    _adminNameController.dispose();
+    _adminPhoneController.dispose();
+    super.dispose();
   }
 
   @override
@@ -69,15 +79,16 @@ class _AdminSetupScreenState extends State<AdminSetupScreen> {
                   label: 'Admin Name *',
                   hint: 'Full name',
                   controller: _adminNameController,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Admin name is required' : null,
+                  validator: (v) => FormValidators.validateName(v, fieldName: 'Admin name'),
                 ),
                 const SizedBox(height: 16),
 
                 CustomTextField(
-                  label: 'Mobile Number',
+                  label: 'Mobile Number *',
                   hint: 'Mobile number',
                   controller: _adminPhoneController,
                   keyboardType: TextInputType.phone,
+                  validator: (v) => FormValidators.validatePhone(v, fieldName: 'Admin mobile number'),
                 ),
                 const SizedBox(height: 32),
 
@@ -94,6 +105,7 @@ class _AdminSetupScreenState extends State<AdminSetupScreen> {
                             ownerName: widget.ownerName,
                             gymPhone: widget.phone,
                             email: widget.email,
+                            website: widget.website,
                             address: widget.address,
                             city: widget.city,
                             currency: widget.currency,
@@ -113,4 +125,3 @@ class _AdminSetupScreenState extends State<AdminSetupScreen> {
     );
   }
 }
-

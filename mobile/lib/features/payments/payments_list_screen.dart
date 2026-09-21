@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/payment_model.dart';
 import '../../data/repositories/payment_repository.dart';
+import '../../core/services/app_state_service.dart';
 import '../receipts/receipt_preview_screen.dart';
 
 class PaymentsListScreen extends StatefulWidget {
@@ -25,16 +26,35 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
     super.initState();
     _loadPayments();
     _searchController.addListener(_filterPayments);
+    AppStateService.instance.addListener(_onAppStateChanged);
   }
 
-  Future<void> _loadPayments() async {
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    if (mounted) {
+      _loadPayments(showSpinner: false);
+    }
+  }
+
+  Future<void> _loadPayments({bool showSpinner = true}) async {
+    if (showSpinner || _allPayments.isEmpty) {
+      setState(() => _isLoading = true);
+    }
     final payments = await _paymentRepo.getPayments();
-    setState(() {
-      _allPayments = payments;
-      _filteredPayments = payments;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _allPayments = payments;
+        _filteredPayments = payments;
+        _isLoading = false;
+      });
+      _filterPayments();
+    }
   }
 
   void _filterPayments() {

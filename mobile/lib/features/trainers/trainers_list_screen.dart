@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/repositories/trainer_repository.dart';
+import '../../core/services/app_state_service.dart';
 import '../../shared/widgets/neon_button.dart';
 import 'trainer_detail_screen.dart';
 import 'trainer_form_screen.dart';
@@ -22,10 +23,25 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
   void initState() {
     super.initState();
     _loadTrainers();
+    AppStateService.instance.addListener(_onAppStateChanged);
   }
 
-  Future<void> _loadTrainers() async {
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    if (mounted) {
+      _loadTrainers(showSpinner: false);
+    }
+  }
+
+  Future<void> _loadTrainers({bool showSpinner = true}) async {
+    if (showSpinner || _trainers.isEmpty) {
+      setState(() => _isLoading = true);
+    }
     final trainers = await _repository.getAllTrainers(includeInactive: true);
     if (mounted) {
       setState(() {

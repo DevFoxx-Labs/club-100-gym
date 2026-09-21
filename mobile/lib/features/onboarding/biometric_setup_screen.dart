@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/security/security_service.dart';
 import '../../core/security/biometric_service.dart';
+import '../../core/services/app_state_service.dart';
 import '../../data/models/gym_info_model.dart';
 import '../../data/models/admin_model.dart';
 import '../../data/repositories/settings_repository.dart';
@@ -13,6 +14,7 @@ class BiometricSetupScreen extends StatefulWidget {
   final String ownerName;
   final String gymPhone;
   final String email;
+  final String? website;
   final String address;
   final String city;
   final String currency;
@@ -25,6 +27,7 @@ class BiometricSetupScreen extends StatefulWidget {
     required this.ownerName,
     required this.gymPhone,
     required this.email,
+    this.website,
     required this.address,
     required this.city,
     required this.currency,
@@ -79,6 +82,7 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
         ownerName: widget.ownerName,
         phone: widget.gymPhone,
         email: widget.email,
+        website: widget.website,
         address: widget.address,
         city: widget.city,
         currency: widget.currency,
@@ -97,6 +101,8 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
 
       await repo.saveGymInfo(gym);
       await repo.saveAdminInfo(admin);
+
+      AppStateService.instance.notifyGymInfoChanged();
 
       final security = SecurityService();
       await security.setSetupComplete(true);

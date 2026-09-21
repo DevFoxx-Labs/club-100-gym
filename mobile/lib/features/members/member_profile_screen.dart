@@ -18,6 +18,7 @@ import '../../data/repositories/trainer_repository.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../../shared/widgets/neon_button.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
+import '../../core/services/app_state_service.dart';
 import '../payments/add_payment_screen.dart';
 import '../receipts/receipt_preview_screen.dart';
 import 'add_edit_member_screen.dart';
@@ -53,10 +54,25 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   void initState() {
     super.initState();
     _loadMemberData();
+    AppStateService.instance.addListener(_onAppStateChanged);
   }
 
-  Future<void> _loadMemberData() async {
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    if (mounted) {
+      _loadMemberData(showSpinner: false);
+    }
+  }
+
+  Future<void> _loadMemberData({bool showSpinner = true}) async {
+    if (showSpinner || _member == null) {
+      setState(() => _isLoading = true);
+    }
 
     final gym = await _settingsRepo.getGymInfo();
     final member = await _memberRepo.getMemberById(widget.memberId);

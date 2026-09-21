@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/form_validators.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 import 'admin_setup_screen.dart';
@@ -17,9 +18,22 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
   final _ownerController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _websiteController = TextEditingController();
   final _addressController = TextEditingController();
   final _cityController = TextEditingController();
   String _currency = 'INR (₹)';
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _ownerController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _websiteController.dispose();
+    _addressController.dispose();
+    _cityController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +64,7 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
                   label: 'Gym Name *',
                   hint: 'e.g. Elite Fitness Gym',
                   controller: _nameController,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Gym name is required' : null,
+                  validator: (v) => FormValidators.validateName(v, fieldName: 'Gym name'),
                 ),
                 const SizedBox(height: 16),
 
@@ -66,15 +80,34 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
                   hint: 'e.g. 9876543210',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Phone number is required' : null,
+                  validator: (v) => FormValidators.validatePhone(v, fieldName: 'Phone number'),
                 ),
                 const SizedBox(height: 16),
 
                 CustomTextField(
-                  label: 'Address',
+                  label: 'Email Address',
+                  hint: 'e.g. contact@elitefitnessgym.com',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (v) => FormValidators.validateEmail(v),
+                ),
+                const SizedBox(height: 16),
+
+                CustomTextField(
+                  label: 'Gym Website',
+                  hint: 'e.g. elitefitnessgym.com or https://...',
+                  controller: _websiteController,
+                  keyboardType: TextInputType.url,
+                  validator: (v) => FormValidators.validateWebsite(v),
+                ),
+                const SizedBox(height: 16),
+
+                CustomTextField(
+                  label: 'Address *',
                   hint: 'e.g. Main Street, Suite 100',
                   controller: _addressController,
                   maxLines: 2,
+                  validator: (v) => FormValidators.validateRequired(v, 'Address'),
                 ),
                 const SizedBox(height: 16),
 
@@ -139,6 +172,9 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
                             ownerName: _ownerController.text.trim(),
                             phone: _phoneController.text.trim(),
                             email: _emailController.text.trim(),
+                            website: _websiteController.text.trim().isNotEmpty
+                                ? _websiteController.text.trim()
+                                : null,
                             address: _addressController.text.trim(),
                             city: _cityController.text.trim(),
                             currency: _currency,
@@ -156,4 +192,3 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
     );
   }
 }
-

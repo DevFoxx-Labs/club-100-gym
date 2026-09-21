@@ -5,6 +5,8 @@ import '../../data/models/event_model.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/repositories/event_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
+import '../../core/utils/form_validators.dart';
+import '../../core/services/app_state_service.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
@@ -179,6 +181,8 @@ class _EventFormScreenState extends State<EventFormScreen> {
       await _eventRepository.insertEvent(newEvent);
     }
 
+    AppStateService.instance.notifyEventsChanged();
+
     if (mounted) {
       setState(() => _isLoading = false);
       Navigator.pop(context, true);
@@ -197,6 +201,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
     );
     if (confirm == true) {
       await _eventRepository.deleteEvent(widget.event!.id);
+      AppStateService.instance.notifyEventsChanged();
       if (mounted) Navigator.pop(context, true);
     }
   }
@@ -229,10 +234,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
                 label: 'EVENT / CLASS TITLE *',
                 hint: 'e.g. Morning HIIT, CrossFit Bootcamp, Yoga Flow',
                 controller: _titleController,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Title is required';
-                  return null;
-                },
+                validator: (v) => FormValidators.validateName(v, fieldName: 'Event title'),
               ),
               const SizedBox(height: 16),
               CustomTextField(

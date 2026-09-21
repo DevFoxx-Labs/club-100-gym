@@ -11,6 +11,8 @@ import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/package_repository.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
+import '../../core/utils/form_validators.dart';
+import '../../core/services/app_state_service.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 
@@ -196,6 +198,8 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
       newMembership: newMembership,
       log: log,
     );
+
+    AppStateService.instance.notifyMembersChanged();
 
     if (mounted) {
       setState(() => _isLoading = false);
@@ -404,6 +408,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                         hint: '0',
                         controller: _ptFeeController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        validator: (v) => FormValidators.validateAmount(v, fieldName: 'Personal training fee', allowZero: true),
                         onChanged: (_) => _recomputeFee(),
                       ),
                     ],
@@ -415,10 +420,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                       hint: '1500',
                       controller: _feeController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (v) {
-                        if (v == null || double.tryParse(v.trim()) == null) return 'Enter valid fee amount';
-                        return null;
-                      },
+                      validator: (v) => FormValidators.validateAmount(v, fieldName: 'Total fee amount'),
                     ),
                     const SizedBox(height: 16),
 

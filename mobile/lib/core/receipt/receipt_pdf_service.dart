@@ -13,6 +13,8 @@ class ReceiptPdfService {
   }) async {
     final pdf = pw.Document();
     final dateFormat = DateFormat('dd MMM yyyy');
+    final hasPt = receipt.personalTrainingFee > 0;
+    final baseFee = hasPt ? (receipt.amount - receipt.personalTrainingFee) : receipt.amount;
 
     pdf.addPage(
       pw.Page(
@@ -51,6 +53,11 @@ class ReceiptPdfService {
                           'Phone: ${gymInfo.phone}',
                           style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
                         ),
+                        if (gymInfo.website != null && gymInfo.website!.trim().isNotEmpty)
+                          pw.Text(
+                            'Website: ${gymInfo.website!.trim()}',
+                            style: const pw.TextStyle(fontSize: 9, color: PdfColors.blueGrey800),
+                          ),
                       ],
                     ),
                     pw.Container(
@@ -66,9 +73,9 @@ class ReceiptPdfService {
                     ),
                   ],
                 ),
-                pw.SizedBox(height: 16),
+                pw.SizedBox(height: 14),
                 pw.Divider(color: PdfColors.grey300),
-                pw.SizedBox(height: 12),
+                pw.SizedBox(height: 10),
 
                 // Receipt Info Grid
                 pw.Row(
@@ -78,7 +85,7 @@ class ReceiptPdfService {
                     pw.Text('Date: ${dateFormat.format(receipt.paymentDate)}', style: const pw.TextStyle(fontSize: 10)),
                   ],
                 ),
-                pw.SizedBox(height: 12),
+                pw.SizedBox(height: 10),
 
                 // Member Details
                 pw.Container(
@@ -103,29 +110,74 @@ class ReceiptPdfService {
                     ],
                   ),
                 ),
-                pw.SizedBox(height: 14),
+                pw.SizedBox(height: 12),
 
-                // Membership Table
+                // Membership & PT Fee Table
                 pw.Table(
                   border: pw.TableBorder.all(color: PdfColors.grey300),
                   children: [
                     pw.TableRow(
                       decoration: const pw.BoxDecoration(color: PdfColors.grey200),
                       children: [
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Plan', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Period', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Payment Mode', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Amount', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Item / Plan', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Validity', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Payment Mode', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Amount', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
                       ],
                     ),
                     pw.TableRow(
                       children: [
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(receipt.planName, style: const pw.TextStyle(fontSize: 10))),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(6),
-                          child: pw.Text('${dateFormat.format(receipt.startDate)} - ${dateFormat.format(receipt.endDate)}', style: const pw.TextStyle(fontSize: 9)),
+                          child: pw.Text(
+                            hasPt ? '${receipt.planName} (Base Plan)' : receipt.planName,
+                            style: const pw.TextStyle(fontSize: 9),
+                          ),
                         ),
-                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(receipt.paymentMethod, style: const pw.TextStyle(fontSize: 10))),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Text('${dateFormat.format(receipt.startDate)} - ${dateFormat.format(receipt.endDate)}', style: const pw.TextStyle(fontSize: 8)),
+                        ),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(receipt.paymentMethod, style: const pw.TextStyle(fontSize: 9))),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Text('INR ${baseFee.toStringAsFixed(0)}', style: const pw.TextStyle(fontSize: 9)),
+                        ),
+                      ],
+                    ),
+                    if (hasPt)
+                      pw.TableRow(
+                        children: [
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(6),
+                            child: pw.Text(
+                              'Personal Trainer: ${receipt.trainerName ?? "Assigned Trainer"}',
+                              style: const pw.TextStyle(fontSize: 9),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(6),
+                            child: pw.Text('Cycle PT', style: const pw.TextStyle(fontSize: 8)),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(6),
+                            child: pw.Text(receipt.paymentMethod, style: const pw.TextStyle(fontSize: 9)),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.all(6),
+                            child: pw.Text('INR ${receipt.personalTrainingFee.toStringAsFixed(0)}', style: const pw.TextStyle(fontSize: 9)),
+                          ),
+                        ],
+                      ),
+                    pw.TableRow(
+                      decoration: const pw.BoxDecoration(color: PdfColors.grey100),
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Text('TOTAL PAID', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                        ),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('')),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('')),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(6),
                           child: pw.Text('INR ${receipt.amount.toStringAsFixed(0)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
@@ -134,7 +186,7 @@ class ReceiptPdfService {
                     ),
                   ],
                 ),
-                pw.SizedBox(height: 16),
+                pw.SizedBox(height: 14),
 
                 // QR Code & Status Footer
                 pw.Row(
@@ -147,8 +199,8 @@ class ReceiptPdfService {
                         pw.BarcodeWidget(
                           barcode: pw.Barcode.qrCode(),
                           data: receipt.qrPayload,
-                          width: 60,
-                          height: 60,
+                          width: 55,
+                          height: 55,
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text('Scan to verify offline', style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600)),
@@ -158,15 +210,15 @@ class ReceiptPdfService {
                       crossAxisAlignment: pw.CrossAxisAlignment.end,
                       children: [
                         pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: pw.BoxDecoration(
                             color: PdfColors.green100,
                             borderRadius: pw.BorderRadius.circular(6),
                             border: pw.Border.all(color: PdfColors.green700),
                           ),
-                          child: pw.Text('STATUS: PAID', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11, color: PdfColors.green900)),
+                          child: pw.Text('STATUS: PAID', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10, color: PdfColors.green900)),
                         ),
-                        pw.SizedBox(height: 12),
+                        pw.SizedBox(height: 8),
                         pw.Text('Thank you for choosing ${gymInfo.name}!', style: pw.TextStyle(fontSize: 9, fontStyle: pw.FontStyle.italic)),
                       ],
                     ),
@@ -204,4 +256,3 @@ class ReceiptPdfService {
     );
   }
 }
-

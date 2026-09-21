@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/gym_logo_picker.dart';
+import '../../core/utils/form_validators.dart';
+import '../../core/services/app_state_service.dart';
 import '../../data/models/gym_info_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/custom_text_field.dart';
@@ -21,6 +23,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
   late TextEditingController _ownerController;
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
+  late TextEditingController _websiteController;
   late TextEditingController _addressController;
   late TextEditingController _cityController;
 
@@ -35,6 +38,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
     _ownerController = TextEditingController();
     _phoneController = TextEditingController();
     _emailController = TextEditingController();
+    _websiteController = TextEditingController();
     _addressController = TextEditingController();
     _cityController = TextEditingController();
 
@@ -47,6 +51,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
     _ownerController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _websiteController.dispose();
     _addressController.dispose();
     _cityController.dispose();
     super.dispose();
@@ -54,17 +59,20 @@ class _EditGymScreenState extends State<EditGymScreen> {
 
   Future<void> _loadGymInfo() async {
     final gym = await _settingsRepo.getGymInfo();
-    setState(() {
-      _nameController.text = gym.name;
-      _ownerController.text = gym.ownerName ?? '';
-      _phoneController.text = gym.phone;
-      _emailController.text = gym.email ?? '';
-      _addressController.text = gym.address;
-      _cityController.text = gym.city ?? '';
-      _currency = gym.currency;
-      _logoPath = gym.logoPath;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _nameController.text = gym.name;
+        _ownerController.text = gym.ownerName ?? '';
+        _phoneController.text = gym.phone;
+        _emailController.text = gym.email ?? '';
+        _websiteController.text = gym.website ?? '';
+        _addressController.text = gym.address;
+        _cityController.text = gym.city ?? '';
+        _currency = gym.currency;
+        _logoPath = gym.logoPath;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _saveGymInfo() async {
@@ -74,11 +82,12 @@ class _EditGymScreenState extends State<EditGymScreen> {
     final info = GymInfoModel(
       id: 'default',
       name: _nameController.text.trim(),
-      ownerName: _ownerController.text.trim(),
+      ownerName: _ownerController.text.trim().isNotEmpty ? _ownerController.text.trim() : null,
       phone: _phoneController.text.trim(),
-      email: _emailController.text.trim(),
+      email: _emailController.text.trim().isNotEmpty ? _emailController.text.trim() : null,
+      website: _websiteController.text.trim().isNotEmpty ? _websiteController.text.trim() : null,
       address: _addressController.text.trim(),
-      city: _cityController.text.trim(),
+      city: _cityController.text.trim().isNotEmpty ? _cityController.text.trim() : null,
       logoPath: _logoPath,
       currency: _currency,
       createdAt: DateTime.now(),
@@ -86,10 +95,15 @@ class _EditGymScreenState extends State<EditGymScreen> {
     );
 
     await _settingsRepo.saveGymInfo(info);
-    setState(() => _isLoading = false);
+
+    // Notify all app components to refresh gym branding and info immediately
+    AppStateService.instance.notifyGymInfoChanged();
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gym details updated successfully')));
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gym details updated successfully')),
+      );
       Navigator.pop(context, true);
     }
   }
@@ -122,7 +136,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
                       CustomTextField(
                         label: 'Gym Name *',
                         controller: _nameController,
-                        validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                        validator: (v) => FormValidators.validateName(v, fieldName: 'Gym Name'),
                       ),
                       const SizedBox(height: 16),
                       CustomTextField(
@@ -134,19 +148,29 @@ class _EditGymScreenState extends State<EditGymScreen> {
                         label: 'Phone Number *',
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
-                        validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                        validator: (v) => FormValidators.validatePhone(v, fieldName: 'Phone Number'),
                       ),
                       const SizedBox(height: 16),
                       CustomTextField(
                         label: 'Email Address',
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        validator: (v) => FormValidators.validateEmail(v),
                       ),
                       const SizedBox(height: 16),
                       CustomTextField(
-                        label: 'Address',
+                        label: 'Gym Website',
+                        hint: 'e.g. elitefitnessgym.com or https://...',
+                        controller: _websiteController,
+                        keyboardType: TextInputType.url,
+                        validator: (v) => FormValidators.validateWebsite(v),
+                      ),
+                      const SizedBox(height: 16),
+                      CustomTextField(
+                        label: 'Address *',
                         controller: _addressController,
                         maxLines: 2,
+                        validator: (v) => FormValidators.validateRequired(v, 'Address'),
                       ),
                       const SizedBox(height: 16),
                       CustomTextField(
@@ -157,6 +181,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
                       NeonButton(
                         text: 'Save Gym Information',
                         width: double.infinity,
+                        isLoading: _isLoading,
                         onPressed: _saveGymInfo,
                       ),
                     ],

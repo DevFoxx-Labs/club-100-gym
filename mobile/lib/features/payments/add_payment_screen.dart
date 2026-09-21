@@ -3,12 +3,16 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/receipt/qr_service.dart';
+import '../../core/utils/form_validators.dart';
+import '../../core/services/app_state_service.dart';
 import '../../data/models/member_model.dart';
 import '../../data/models/membership_model.dart';
 import '../../data/models/payment_model.dart';
 import '../../data/models/receipt_model.dart';
+import '../../data/models/trainer_model.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/member_repository.dart';
+import '../../data/repositories/trainer_repository.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 import '../receipts/receipt_preview_screen.dart';
@@ -31,9 +35,15 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _paymentRepo = PaymentRepository();
   final _memberRepo = MemberRepository();
+  final _trainerRepo = TrainerRepository();
 
   late TextEditingController _amountController;
   late TextEditingController _notesController;
+
+  TrainerModel? _trainer;
+  String? _trainerName;
+  double _ptFee = 0.0;
+  double _baseFee = 0.0;
 
   String _paymentMethod = 'Cash';
   final DateTime _paymentDate = DateTime.now();
@@ -49,19 +59,47 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
     _amountController = TextEditingController(text: defaultAmount.toStringAsFixed(0));
     _notesController = TextEditingController();
 
+    _ptFee = widget.membership?.personalTrainingFee ?? 0.0;
+    _baseFee = (defaultAmount >= _ptFee) ? (defaultAmount - _ptFee) : defaultAmount;
+
     if (widget.membership != null) {
       _startDate = widget.membership!.endDate.isBefore(DateTime.now())
           ? DateTime.now()
           : widget.membership!.endDate;
       _endDate = _startDate.add(const Duration(days: 30));
+
+      if (widget.membership!.trainerId != null && widget.membership!.trainerId!.isNotEmpty) {
+        _loadTrainer(widget.membership!.trainerId!);
+      }
     }
 
     _loadReceiptNumber();
   }
 
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadTrainer(String trainerId) async {
+    try {
+      final trainer = await _trainerRepo.getTrainerById(trainerId);
+      if (mounted && trainer != null) {
+        setState(() {
+          _trainer = trainer;
+          _trainerName = trainer.name;
+        });
+      }
+    } catch (_) {}
+  }
+
   Future<void> _loadReceiptNumber() async {
     final recNo = await _paymentRepo.generateNextReceiptNumber();
-    setState(() => _generatedReceiptNo = recNo);
+    if (mounted) {
+      setState(() => _generatedReceiptNo = recNo);
+    }
   }
 
   Future<void> _processPayment() async {
@@ -82,6 +120,8 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         memberName: widget.member.name,
         memberPhone: widget.member.phone,
         planName: widget.membership?.planName ?? 'Monthly Membership',
+        trainerName: _trainerName ?? _trainer?.name,
+        personalTrainingFee: _ptFee,
         amount: amount,
         paymentMethod: _paymentMethod,
         paymentDate: _paymentDate,
@@ -93,21 +133,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
 
       final qrPayload = QrService.generateQrPayload(receipt);
 
-      final finalReceipt = ReceiptModel(
-        id: receiptId,
-        paymentId: paymentId,
-        receiptNumber: _generatedReceiptNo,
-        memberName: widget.member.name,
-        memberPhone: widget.member.phone,
-        planName: widget.membership?.planName ?? 'Monthly Membership',
-        amount: amount,
-        paymentMethod: _paymentMethod,
-        paymentDate: _paymentDate,
-        startDate: _startDate,
-        endDate: _endDate,
-        qrPayload: qrPayload,
-        createdAt: now,
-      );
+      final finalReceipt = receipt.copyWith(qrPayload: qrPayload);
 
       final payment = PaymentModel(
         id: paymentId,
@@ -123,18 +149,16 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         updatedAt: now,
       );
 
-      // Extend or create new membership
+      // Extend membership and safely preserve trainer and PT fee
       if (widget.membership != null) {
-        final updatedMembership = MembershipModel(
-          id: widget.membership!.id,
-          memberId: widget.member.id,
-          planId: widget.membership!.planId,
-          planName: widget.membership!.planName,
+        final updatedMembership = widget.membership!.copyWith(
           startDate: _startDate,
           endDate: _endDate,
           feeAmount: amount,
           status: 'Active',
-          createdAt: widget.membership!.createdAt,
+          trainerId: widget.membership!.trainerId,
+          personalTrainingFee: _ptFee,
+          packageId: widget.membership!.packageId,
           updatedAt: now,
         );
         await _memberRepo.updateMembership(updatedMembership);
@@ -142,7 +166,11 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
 
       await _paymentRepo.addPayment(payment, finalReceipt);
 
-      setState(() => _isLoading = false);
+      // Trigger app-wide reactive state updates
+      AppStateService.instance.notifyPaymentsChanged();
+      AppStateService.instance.notifyMembersChanged();
+
+      if (mounted) setState(() => _isLoading = false);
 
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -150,13 +178,14 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         MaterialPageRoute(builder: (context) => ReceiptPreviewScreen(receipt: finalReceipt)),
       );
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy');
+    final hasPersonalTrainer = _ptFee > 0 || _trainer != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -182,20 +211,91 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                     children: [
                       CircleAvatar(
                         backgroundColor: AppTheme.neonLime,
-                        child: Text(widget.member.name[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.darkBackground)),
+                        child: Text(
+                          widget.member.name.isNotEmpty ? widget.member.name[0].toUpperCase() : 'M',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.darkBackground),
+                        ),
                       ),
                       const SizedBox(width: 14),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(widget.member.name, style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text(widget.member.phone, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(widget.member.name, style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text(widget.member.phone, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+
+                // Personal Training Fee Breakdown Banner
+                if (hasPersonalTrainer) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.darkSurface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.fitness_center_rounded, color: AppTheme.neonLime, size: 18),
+                            SizedBox(width: 8),
+                            Text(
+                              'PERSONAL TRAINING INCLUDED',
+                              style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Assigned Trainer:', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                            Text(
+                              _trainerName ?? _trainer?.name ?? 'Personal Trainer',
+                              style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Base Plan Fee:', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                            Text('₹${_baseFee.toStringAsFixed(0)}', style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w600, fontSize: 13)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Personal Training Fee:', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                            Text('₹${_ptFee.toStringAsFixed(0)}', style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 13)),
+                          ],
+                        ),
+                        const Divider(color: AppTheme.darkBorder, height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total Plan + PT Due:', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13)),
+                            Text(
+                              '₹${(_baseFee + _ptFee).toStringAsFixed(0)}',
+                              style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 15),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Receipt Number Badge
                 Row(
@@ -214,8 +314,8 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                   label: 'Payment Amount (₹) *',
                   hint: '1500',
                   controller: _amountController,
-                  keyboardType: TextInputType.number,
-                  validator: (v) => v == null || v.trim().isEmpty ? 'Amount is required' : null,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  validator: (v) => FormValidators.validateAmount(v, fieldName: 'Payment Amount'),
                 ),
                 const SizedBox(height: 16),
 
@@ -247,7 +347,12 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                           const SizedBox(height: 6),
                           InkWell(
                             onTap: () async {
-                              final picked = await showDatePicker(context: context, initialDate: _startDate, firstDate: DateTime(2020), lastDate: DateTime(2030));
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: _startDate,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2030),
+                              );
                               if (picked != null) setState(() => _startDate = picked);
                             },
                             child: Container(
@@ -268,7 +373,12 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                           const SizedBox(height: 6),
                           InkWell(
                             onTap: () async {
-                              final picked = await showDatePicker(context: context, initialDate: _endDate, firstDate: DateTime(2020), lastDate: DateTime(2030));
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: _endDate,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2030),
+                              );
                               if (picked != null) setState(() => _endDate = picked);
                             },
                             child: Container(
@@ -305,4 +415,3 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
     );
   }
 }
-

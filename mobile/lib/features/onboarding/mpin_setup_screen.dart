@@ -9,6 +9,7 @@ class MpinSetupScreen extends StatefulWidget {
   final String ownerName;
   final String gymPhone;
   final String email;
+  final String? website;
   final String address;
   final String city;
   final String currency;
@@ -21,6 +22,7 @@ class MpinSetupScreen extends StatefulWidget {
     required this.ownerName,
     required this.gymPhone,
     required this.email,
+    this.website,
     required this.address,
     required this.city,
     required this.currency,
@@ -89,6 +91,7 @@ class _MpinSetupScreenState extends State<MpinSetupScreen> {
             ownerName: widget.ownerName,
             gymPhone: widget.gymPhone,
             email: widget.email,
+            website: widget.website,
             address: widget.address,
             city: widget.city,
             currency: widget.currency,

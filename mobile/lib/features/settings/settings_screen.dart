@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/database/app_database.dart';
 import '../../core/security/security_service.dart';
+import '../../core/services/app_state_service.dart';
 import '../../data/models/admin_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
@@ -32,6 +33,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadSettings();
+    AppStateService.instance.addListener(_onAppStateChanged);
+  }
+
+  @override
+  void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    if (mounted) {
+      _loadSettings();
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -99,7 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _SettingsTile(
                     icon: Icons.store_rounded,
                     title: 'Edit Gym Information & Logo',
-                    subtitle: 'Name, phone, address, custom gym logo',
+                    subtitle: 'Name, website, phone, address, gym logo',
                     onTap: () async {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => const EditGymScreen()));
                       _loadSettings();

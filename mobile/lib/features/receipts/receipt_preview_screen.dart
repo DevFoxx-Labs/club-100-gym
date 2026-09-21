@@ -94,6 +94,11 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                                     _gymInfo!.phone,
                                     style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
                                   ),
+                                if (_gymInfo?.website != null && _gymInfo!.website!.trim().isNotEmpty)
+                                  Text(
+                                    _gymInfo!.website!.trim(),
+                                    style: const TextStyle(fontSize: 11, color: AppTheme.neonLime),
+                                  ),
                               ],
                             ),
                           ],
@@ -120,10 +125,27 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                     _RowInfo(label: 'Mobile Number', value: widget.receipt.memberPhone),
                     const SizedBox(height: 8),
                     _RowInfo(label: 'Plan Name', value: widget.receipt.planName),
+                    if (widget.receipt.personalTrainingFee > 0) ...[
+                      const SizedBox(height: 8),
+                      _RowInfo(
+                        label: 'Personal Trainer',
+                        value: widget.receipt.trainerName ?? 'Assigned Trainer',
+                      ),
+                      const SizedBox(height: 8),
+                      _RowInfo(
+                        label: 'Base Plan Fee',
+                        value: '₹${(widget.receipt.amount - widget.receipt.personalTrainingFee).toStringAsFixed(0)}',
+                      ),
+                      const SizedBox(height: 8),
+                      _RowInfo(
+                        label: 'Personal Training Fee',
+                        value: '₹${widget.receipt.personalTrainingFee.toStringAsFixed(0)}',
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     _RowInfo(label: 'Payment Method', value: widget.receipt.paymentMethod),
                     const SizedBox(height: 8),
-                    _RowInfo(label: 'Amount Paid', value: '₹${widget.receipt.amount.toStringAsFixed(0)}', isHighlight: true),
+                    _RowInfo(label: 'Total Amount Paid', value: '₹${widget.receipt.amount.toStringAsFixed(0)}', isHighlight: true),
                     const Divider(color: AppTheme.darkBorder, height: 24),
 
                     // QR Code Image Center

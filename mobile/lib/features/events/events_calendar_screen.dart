@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../data/models/event_model.dart';
 import '../../data/repositories/event_repository.dart';
+import '../../core/services/app_state_service.dart';
 import 'event_form_screen.dart';
 
 class EventsCalendarScreen extends StatefulWidget {
@@ -23,10 +24,25 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
   void initState() {
     super.initState();
     _loadEvents();
+    AppStateService.instance.addListener(_onAppStateChanged);
   }
 
-  Future<void> _loadEvents() async {
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    if (mounted) {
+      _loadEvents(showSpinner: false);
+    }
+  }
+
+  Future<void> _loadEvents({bool showSpinner = true}) async {
+    if (showSpinner) {
+      setState(() => _isLoading = true);
+    }
     final events = await _repository.getEventsForMonth(_currentMonth.year, _currentMonth.month);
     final dayEvents = await _repository.getEventsForDate(_selectedDate);
     if (mounted) {

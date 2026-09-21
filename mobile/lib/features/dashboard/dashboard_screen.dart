@@ -13,6 +13,7 @@ import '../trainers/trainers_list_screen.dart';
 import '../events/events_calendar_screen.dart';
 import '../receipts/receipt_preview_screen.dart';
 import '../../shared/widgets/gym_logo_view.dart';
+import '../../core/services/app_state_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(String filter) onNavigateToMembers;
@@ -51,6 +52,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadDashboardData();
+    AppStateService.instance.addListener(_onAppStateChanged);
+  }
+
+  @override
+  void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    if (mounted) {
+      _loadDashboardData(showSpinner: false);
+    }
   }
 
   String get _greeting {
@@ -60,8 +74,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return 'Good Evening';
   }
 
-  Future<void> _loadDashboardData() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadDashboardData({bool showSpinner = true}) async {
+    if (showSpinner || _gymInfo == null) {
+      setState(() => _isLoading = true);
+    }
 
     final gym = await _settingsRepo.getGymInfo();
     final admin = await _settingsRepo.getAdminInfo();

@@ -4,6 +4,7 @@ import '../../data/models/plan_model.dart';
 import '../../data/repositories/package_repository.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
+import '../../core/services/app_state_service.dart';
 import 'package:intl/intl.dart';
 import 'package_form_screen.dart';
 import 'plan_form_screen.dart';
@@ -27,10 +28,25 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
   void initState() {
     super.initState();
     _loadData();
+    AppStateService.instance.addListener(_onAppStateChanged);
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    if (mounted) {
+      _loadData(showSpinner: false);
+    }
+  }
+
+  Future<void> _loadData({bool showSpinner = true}) async {
+    if (showSpinner || _packages.isEmpty) {
+      setState(() => _isLoading = true);
+    }
     final packages = await _packageRepo.getAllPackages();
     final plans = await _planRepo.getPlans(activeOnly: false);
     if (mounted) {

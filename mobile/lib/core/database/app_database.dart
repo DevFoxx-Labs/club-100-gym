@@ -21,7 +21,7 @@ class AppDatabase {
 
     final db = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -29,6 +29,19 @@ class AppDatabase {
     // Ensure trainers table has photoPath
     try {
       await db.execute('ALTER TABLE trainers ADD COLUMN photoPath TEXT;');
+    } catch (_) {}
+
+    // Ensure gym table has website
+    try {
+      await db.execute('ALTER TABLE gym ADD COLUMN website TEXT;');
+    } catch (_) {}
+
+    // Ensure receipts table has trainerName and personalTrainingFee
+    try {
+      await db.execute('ALTER TABLE receipts ADD COLUMN trainerName TEXT;');
+    } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE receipts ADD COLUMN personalTrainingFee REAL DEFAULT 0.0;');
     } catch (_) {}
 
     return db;
@@ -168,6 +181,18 @@ class AppDatabase {
     if (oldVersion < 3) {
       try {
         await db.execute('ALTER TABLE trainers ADD COLUMN photoPath TEXT;');
+      } catch (_) {}
+    }
+
+    if (oldVersion < 4) {
+      try {
+        await db.execute('ALTER TABLE gym ADD COLUMN website TEXT;');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE receipts ADD COLUMN trainerName TEXT;');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE receipts ADD COLUMN personalTrainingFee REAL DEFAULT 0.0;');
       } catch (_) {}
     }
   }
