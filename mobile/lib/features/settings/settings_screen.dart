@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/database/app_database.dart';
 import '../../core/security/security_service.dart';
@@ -204,12 +205,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 30),
 
                   // App Version Footer
-                  const Center(
+                  Center(
                     child: Column(
                       children: [
-                        Text('ELITE FITNESS GYM • VERSION 2.0.0', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 4),
-                        //Text('Offline-First Architecture • Flutter 3.24.4', style: TextStyle(color: AppTheme.textMuted, fontSize: 10)),
+                        const Text('ELITE FITNESS GYM • VERSION 2.0.0', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 4),
+                        GestureDetector(
+                          onTap: () => launchUrl(Uri.parse('https://devfoxxlabs.com'), mode: LaunchMode.externalApplication),
+                          child: const Text('Designed and developed by DevFoxx Labs', style: TextStyle(color: AppTheme.neonLime, fontSize: 10, fontWeight: FontWeight.w600)),
+                        ),
                       ],
                     ),
                   ),
