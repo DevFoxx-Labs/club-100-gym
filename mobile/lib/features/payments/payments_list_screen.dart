@@ -103,7 +103,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
                                 },
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 leading: CircleAvatar(
-                                  backgroundColor: AppTheme.neonLime.withOpacity(0.15),
+                                  backgroundColor: AppTheme.neonLime.withValues(alpha: 0.15),
                                   child: const Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime),
                                 ),
                                 title: Text(

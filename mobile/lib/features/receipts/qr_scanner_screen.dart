@@ -114,7 +114,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppTheme.darkSurface.withOpacity(0.9),
+                color: AppTheme.darkSurface.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppTheme.darkBorder),
               ),

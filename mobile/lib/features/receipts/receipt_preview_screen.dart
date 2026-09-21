@@ -60,10 +60,10 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                 decoration: BoxDecoration(
                   color: AppTheme.darkSurface,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppTheme.neonLime.withOpacity(0.4), width: 1.5),
+                  border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.4), width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.neonLime.withOpacity(0.1),
+                      color: AppTheme.neonLime.withValues(alpha: 0.1),
                       blurRadius: 20,
                     ),
                   ],

@@ -78,7 +78,7 @@ class NeonButton extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 elevation: 4,
-                shadowColor: AppTheme.neonLime.withOpacity(0.4),
+                shadowColor: AppTheme.neonLime.withValues(alpha: 0.4),
                 padding: const EdgeInsets.symmetric(horizontal: 20),
               ),
               child: child,

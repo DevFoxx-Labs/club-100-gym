@@ -35,13 +35,13 @@ class SummaryCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.15),
+                      color: accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: accentColor.withOpacity(0.3)),
+                      border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                     ),
                     child: Icon(icon, color: accentColor, size: 20),
                   ),
-                  Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted.withOpacity(0.5), size: 18),
+                  Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted.withValues(alpha: 0.5), size: 18),
                 ],
               ),
               const SizedBox(height: 12),

@@ -15,19 +15,19 @@ class StatusBadge extends StatelessWidget {
     final lower = status.toLowerCase();
 
     if (lower.contains('overdue')) {
-      bg = AppTheme.statusOverdue.withOpacity(0.15);
+      bg = AppTheme.statusOverdue.withValues(alpha: 0.15);
       fg = AppTheme.statusOverdue;
       icon = Icons.warning_rounded;
     } else if (lower.contains('due') || lower.contains('expiring')) {
-      bg = AppTheme.statusDueSoon.withOpacity(0.15);
+      bg = AppTheme.statusDueSoon.withValues(alpha: 0.15);
       fg = AppTheme.statusDueSoon;
       icon = Icons.access_time_rounded;
     } else if (lower.contains('active') || lower.contains('paid')) {
-      bg = AppTheme.statusActive.withOpacity(0.15);
+      bg = AppTheme.statusActive.withValues(alpha: 0.15);
       fg = AppTheme.statusActive;
       icon = Icons.check_circle_rounded;
     } else {
-      bg = AppTheme.textMuted.withOpacity(0.15);
+      bg = AppTheme.textMuted.withValues(alpha: 0.15);
       fg = AppTheme.textMuted;
       icon = Icons.info_outline_rounded;
     }
@@ -37,7 +37,7 @@ class StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: fg.withOpacity(0.4), width: 1),
+        border: Border.all(color: fg.withValues(alpha: 0.4), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

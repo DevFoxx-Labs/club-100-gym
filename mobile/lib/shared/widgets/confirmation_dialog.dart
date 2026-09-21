@@ -41,7 +41,7 @@ class ConfirmationDialog extends StatelessWidget {
               child: NeonButton(
                 text: 'Cancel',
                 isSecondary: true,
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(context, false),
               ),
             ),
             const SizedBox(width: 10),
@@ -54,7 +54,7 @@ class ConfirmationDialog extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pop(context, true);
                   onConfirm();
                 },
                 child: Text(

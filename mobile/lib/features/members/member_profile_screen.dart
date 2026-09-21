@@ -120,7 +120,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
             color: AppTheme.darkSurface,
             onSelected: (val) async {
               if (val == 'archive') {
-                showDialog(
+                final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (context) => ConfirmationDialog(
                     title: _member!.isArchived ? 'Unarchive Member?' : 'Archive Member?',
@@ -128,28 +128,32 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                         ? 'This member will be restored to active member lists.'
                         : 'Archived members are hidden from active lists but historical payment records remain preserved.',
                     confirmText: _member!.isArchived ? 'Unarchive' : 'Archive',
-                    onConfirm: () async {
-                      final nav = Navigator.of(context);
-                      await _memberRepo.archiveMember(_member!.id, !_member!.isArchived);
-                      nav.pop();
-                    },
+                    onConfirm: () {},
                   ),
                 );
+                if (confirmed == true && mounted) {
+                  await _memberRepo.archiveMember(_member!.id, !_member!.isArchived);
+                  if (mounted) {
+                    _loadMemberData();
+                  }
+                }
               } else if (val == 'delete') {
-                showDialog(
+                final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (context) => ConfirmationDialog(
                     title: 'Delete Member Record?',
                     message: 'This will permanently delete this member profile and all associated membership records.',
                     confirmText: 'Delete',
                     isDestructive: true,
-                    onConfirm: () async {
-                      final nav = Navigator.of(context);
-                      await _memberRepo.deleteMember(_member!.id);
-                      nav.pop();
-                    },
+                    onConfirm: () {},
                   ),
                 );
+                if (confirmed == true && mounted) {
+                  await _memberRepo.deleteMember(_member!.id);
+                  if (context.mounted) {
+                    Navigator.pop(context, true);
+                  }
+                }
               }
             },
             itemBuilder: (context) => [

@@ -38,6 +38,17 @@ class _MembersListScreenState extends State<MembersListScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant MembersListScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialFilter != null && widget.initialFilter != oldWidget.initialFilter) {
+      setState(() {
+        _selectedTab = widget.initialFilter!;
+      });
+      _applyFilters();
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -231,7 +242,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                 },
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 leading: CircleAvatar(
-                                  backgroundColor: AppTheme.neonLime.withOpacity(0.2),
+                                  backgroundColor: AppTheme.neonLime.withValues(alpha: 0.2),
                                   child: Text(
                                     member.name.isNotEmpty ? member.name[0].toUpperCase() : 'M',
                                     style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900),

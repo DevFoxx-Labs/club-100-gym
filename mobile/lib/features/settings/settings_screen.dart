@@ -10,6 +10,7 @@ import 'edit_gym_screen.dart';
 import 'manage_plans_screen.dart';
 import 'backup_screen.dart';
 import 'change_mpin_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -117,7 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   SwitchListTile(
                     value: _admin?.isBiometricEnabled ?? false,
                     onChanged: _toggleBiometric,
-                    activeColor: AppTheme.neonLime,
+                    activeThumbColor: AppTheme.neonLime,
                     title: const Text('Fingerprint / Biometric Login', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14)),
                     subtitle: const Text('Unlock app using device biometrics', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                   ),
@@ -125,6 +126,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   // Backup & Reminders
                   const _SectionHeader(title: 'DATA BACKUP & REMINDERS'),
+                  _SettingsTile(
+                    icon: Icons.notifications_active_rounded,
+                    title: 'Local Fee Reminders',
+                    subtitle: 'View scheduled fee due & expiry alerts',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen())),
+                  ),
                   _SettingsTile(
                     icon: Icons.backup_rounded,
                     title: 'Export / Restore Backup',

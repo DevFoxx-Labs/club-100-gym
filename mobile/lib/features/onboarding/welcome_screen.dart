@@ -28,7 +28,7 @@ class WelcomeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.neonLime.withOpacity(0.3),
+                          color: AppTheme.neonLime.withValues(alpha: 0.3),
                           blurRadius: 24,
                           spreadRadius: 4,
                         ),

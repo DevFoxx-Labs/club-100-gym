@@ -103,7 +103,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             );
                           },
                           leading: CircleAvatar(
-                            backgroundColor: (isOverdue ? AppTheme.statusOverdue : AppTheme.statusDueSoon).withOpacity(0.15),
+                            backgroundColor: (isOverdue ? AppTheme.statusOverdue : AppTheme.statusDueSoon).withValues(alpha: 0.15),
                             child: Icon(
                               isOverdue ? Icons.warning_rounded : Icons.notifications_active_rounded,
                               color: isOverdue ? AppTheme.statusOverdue : AppTheme.statusDueSoon,

@@ -25,7 +25,7 @@ class AppTheme {
         onPrimary: darkBackground,
         outline: darkBorder,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: darkSurface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -89,7 +89,7 @@ class AppTheme {
           elevation: 4,
         ),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: darkSurface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),

@@ -126,10 +126,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         decoration: BoxDecoration(
                           color: AppTheme.darkSurface,
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: AppTheme.neonLime.withOpacity(0.3)),
+                          border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.3)),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.neonLime.withOpacity(0.08),
+                              color: AppTheme.neonLime.withValues(alpha: 0.08),
                               blurRadius: 20,
                               spreadRadius: 2,
                             ),

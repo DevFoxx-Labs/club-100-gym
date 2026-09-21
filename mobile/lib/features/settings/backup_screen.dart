@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:path/path.dart' as p;
 import '../../core/theme/app_theme.dart';
 import '../../core/backup/backup_service.dart';
 import '../../shared/widgets/neon_button.dart';
@@ -25,7 +26,7 @@ class _BackupScreenState extends State<BackupScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Encrypted backup created: ${file.path.split('/').last}')),
+          SnackBar(content: Text('Encrypted backup created: ${p.basename(file.path)}')),
         );
         await Share.shareXFiles([XFile(file.path)], text: 'Club 100 Gym Data Backup');
       }
