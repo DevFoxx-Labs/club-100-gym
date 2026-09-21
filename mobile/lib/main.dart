@@ -25,8 +25,12 @@ void main() async {
     ),
   );
 
-  // Initialize notifications
-  await NotificationService().init();
+  // Initialize notifications (non-fatal: app must still start if this fails)
+  try {
+    await NotificationService().init();
+  } catch (e, stackTrace) {
+    debugPrint('NotificationService init failed: $e\n$stackTrace');
+  }
 
   // Check if first setup is complete
   final security = SecurityService();
