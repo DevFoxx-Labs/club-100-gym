@@ -58,7 +58,7 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
     try {
       if (enableBiometric) {
         final authenticated = await _biometricService.authenticate(
-          localizedReason: 'Scan fingerprint/face to enable biometric login for Club 100 Gym',
+          localizedReason: 'Scan fingerprint/face to enable biometric login for Elite Fitness Gym',
         );
         if (!authenticated) {
           setState(() => _isLoading = false);
@@ -148,7 +148,7 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _isAvailable
-                        ? 'Unlock Club 100 Gym quickly using Android fingerprint or device biometrics.'
+                        ? 'Unlock Elite Fitness Gym quickly using Android fingerprint or device biometrics.'
                         : 'Biometrics are not supported on this device. You will use your MPIN to log in.',
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 13, color: AppTheme.textMuted, height: 1.4),

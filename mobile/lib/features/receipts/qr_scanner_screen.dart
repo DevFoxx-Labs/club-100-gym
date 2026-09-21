@@ -63,7 +63,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                 ],
               )
             : const Text(
-                'This QR signature could not be verified. The receipt data may have been altered or generated outside Club 100 Gym.',
+                'This QR signature could not be verified. The receipt data may have been altered or generated outside Elite Fitness Gym.',
                 style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
               ),
         actions: [

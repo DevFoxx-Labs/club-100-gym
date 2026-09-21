@@ -193,9 +193,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Center(
                     child: Column(
                       children: [
-                        Text('CLUB 100 THE GYM • VERSION 2.0.0', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold)),
+                        Text('ELITE FITNESS GYM • VERSION 2.0.0', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold)),
                         SizedBox(height: 4),
-                        Text('Offline-First Architecture • Flutter 3.24.4', style: TextStyle(color: AppTheme.textMuted, fontSize: 10)),
+                        //Text('Offline-First Architecture • Flutter 3.24.4', style: TextStyle(color: AppTheme.textMuted, fontSize: 10)),
                       ],
                     ),
                   ),

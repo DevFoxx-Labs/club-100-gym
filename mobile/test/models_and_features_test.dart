@@ -77,18 +77,18 @@ void main() {
   group('SmsTemplates Tests', () {
     test('Formats fee overdue and due today correctly', () {
       final overdue = SmsTemplates.feeOverdue(
-        gymName: 'Club 100 The Gym',
+        gymName: 'Elite Fitness Gym',
         memberName: 'Rahul',
         amountDue: 1500,
         daysOverdue: 5,
       );
       expect(overdue, contains('Rahul'));
       expect(overdue, contains('₹1500'));
-      expect(overdue, contains('Club 100 The Gym'));
+      expect(overdue, contains('Elite Fitness Gym'));
       expect(overdue, contains('5 days'));
 
       final dueToday = SmsTemplates.feeDueToday(
-        gymName: 'Club 100 The Gym',
+        gymName: 'Elite Fitness Gym',
         memberName: 'Rahul',
         amount: 1500,
       );

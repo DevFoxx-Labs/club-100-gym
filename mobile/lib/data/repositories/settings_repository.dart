@@ -12,11 +12,11 @@ class SettingsRepository {
     }
     return GymInfoModel(
       id: 'default',
-      name: 'Club 100 The Gym',
+      name: 'Elite Fitness Gym',
       ownerName: 'Admin',
-      phone: '070843 06574',
-      address: '1st Floor TP Nagar, Transport Nagar, Prayagraj, UP 211011',
-      city: 'Prayagraj',
+      phone: '',
+      address: '',
+      city: '',
       currency: 'INR (₹)',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
@@ -37,7 +37,7 @@ class SettingsRepository {
     return AdminModel(
       id: 'default',
       name: 'Gym Administrator',
-      phone: '070843 06574',
+      phone: '',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

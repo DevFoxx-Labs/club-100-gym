@@ -5,7 +5,7 @@ import '../../data/models/receipt_model.dart';
 class QrService {
   static String generateQrPayload(ReceiptModel receipt) {
     final rawData = {
-      'gym': 'Club 100 The Gym',
+      'gym': 'Elite Fitness Gym',
       'recNo': receipt.receiptNumber,
       'member': receipt.memberName,
       'phone': receipt.memberPhone,

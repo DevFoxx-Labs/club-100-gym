@@ -44,12 +44,12 @@ class GymInfoModel {
   factory GymInfoModel.fromMap(Map<String, dynamic> map) {
     return GymInfoModel(
       id: map['id'] ?? '',
-      name: map['name'] ?? 'Club 100 The Gym',
+      name: map['name'] ?? 'Elite Fitness Gym',
       ownerName: map['ownerName'],
-      phone: map['phone'] ?? '070843 06574',
+      phone: map['phone'] ?? '',
       email: map['email'],
-      address: map['address'] ?? 'Transport Nagar, Prayagraj',
-      city: map['city'] ?? 'Prayagraj',
+      address: map['address'] ?? '',
+      city: map['city'] ?? '',
       logoPath: map['logoPath'],
       currency: map['currency'] ?? 'INR (₹)',
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),

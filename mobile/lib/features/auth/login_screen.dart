@@ -4,6 +4,7 @@ import '../../core/security/security_service.dart';
 import '../../core/security/biometric_service.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../shared/widgets/gym_logo_view.dart';
 import '../../shared/navigation/main_navigation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -19,7 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   String _mpin = '';
   String? _errorMsg;
   bool _isBiometricEnabled = false;
-  String _gymName = 'Club 100 The Gym';
+  String _gymName = 'Elite Fitness Gym';
+  String? _gymLogoPath;
 
   @override
   void initState() {
@@ -34,6 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() {
       _gymName = gym.name;
+      _gymLogoPath = gym.logoPath;
       _isBiometricEnabled = admin.isBiometricEnabled;
     });
 
@@ -98,24 +101,10 @@ class _LoginScreenState extends State<LoginScreen> {
               Column(
                 children: [
                   const SizedBox(height: 20),
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      color: AppTheme.neonLime,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.neonLime.withValues(alpha: 0.3),
-                          blurRadius: 18,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.fitness_center_rounded,
-                      size: 38,
-                      color: AppTheme.darkBackground,
-                    ),
+                  GymLogoView(
+                    size: 70,
+                    borderRadius: 22,
+                    logoPath: _gymLogoPath,
                   ),
                   const SizedBox(height: 16),
                   Text(

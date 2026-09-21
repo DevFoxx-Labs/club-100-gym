@@ -6,6 +6,7 @@ import '../../data/models/receipt_model.dart';
 import '../../data/models/gym_info_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../shared/widgets/gym_logo_view.dart';
 import 'qr_scanner_screen.dart';
 
 class ReceiptPreviewScreen extends StatefulWidget {
@@ -74,16 +75,27 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
                           children: [
-                            Text(
-                              (_gymInfo?.name ?? 'CLUB 100 THE GYM').toUpperCase(),
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
+                            GymLogoView(
+                              size: 44,
+                              borderRadius: 12,
+                              logoPath: _gymInfo?.logoPath,
                             ),
-                            Text(
-                              _gymInfo?.phone ?? '070843 06574',
-                              style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  (_gymInfo?.name ?? 'ELITE FITNESS GYM').toUpperCase(),
+                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
+                                ),
+                                if (_gymInfo?.phone != null && _gymInfo!.phone.isNotEmpty)
+                                  Text(
+                                    _gymInfo!.phone,
+                                    style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                  ),
+                              ],
                             ),
                           ],
                         ),

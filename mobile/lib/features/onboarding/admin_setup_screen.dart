@@ -36,7 +36,7 @@ class _AdminSetupScreenState extends State<AdminSetupScreen> {
   @override
   void initState() {
     super.initState();
-    _adminNameController = TextEditingController(text: widget.ownerName.isNotEmpty ? widget.ownerName : 'Gym Owner');
+    _adminNameController = TextEditingController(text: widget.ownerName);
     _adminPhoneController = TextEditingController(text: widget.phone);
   }
 

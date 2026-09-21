@@ -43,11 +43,13 @@ class Club100GymApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Club 100 The Gym',
+      title: 'Elite Fitness Gym',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       home: isSetupComplete ? const LoginScreen() : const WelcomeScreen(),
     );
   }
 }
+
+typedef EliteFitnessGymApp = Club100GymApp;
 

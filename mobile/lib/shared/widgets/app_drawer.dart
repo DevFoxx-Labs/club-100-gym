@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../data/models/admin_model.dart';
 import '../../data/models/gym_info_model.dart';
@@ -12,6 +11,7 @@ import '../../features/settings/edit_gym_screen.dart';
 import '../../features/settings/notification_settings_screen.dart';
 import '../../features/settings/packages_and_plans_screen.dart';
 import '../../features/trainers/trainers_list_screen.dart';
+import 'gym_logo_view.dart';
 
 class AppDrawer extends StatefulWidget {
   final int currentIndex;
@@ -58,10 +58,6 @@ class _AppDrawerState extends State<AppDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final hasLogo = _gymInfo?.logoPath != null &&
-        _gymInfo!.logoPath!.isNotEmpty &&
-        File(_gymInfo!.logoPath!).existsSync();
-
     return Drawer(
       backgroundColor: const Color(0xFF181818),
       child: SafeArea(
@@ -79,27 +75,14 @@ class _AppDrawerState extends State<AppDrawer> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF121212),
-                      border: Border.all(color: const Color(0xFFD4FF00), width: 2),
-                      image: hasLogo
-                          ? DecorationImage(
-                              image: FileImage(File(_gymInfo!.logoPath!)),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: !hasLogo
-                        ? const Icon(Icons.fitness_center, color: Color(0xFFD4FF00), size: 30)
-                        : null,
+                  GymLogoView(
+                    size: 60,
+                    isCircle: true,
+                    logoPath: _gymInfo?.logoPath,
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    _gymInfo?.name ?? 'Club 100 Gym',
+                    _gymInfo?.name ?? 'Elite Fitness Gym',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(

@@ -13,12 +13,12 @@ class GymSetupScreen extends StatefulWidget {
 
 class _GymSetupScreenState extends State<GymSetupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: 'Club 100 The Gym');
-  final _ownerController = TextEditingController(text: 'Karunendu');
-  final _phoneController = TextEditingController(text: '070843 06574');
-  final _emailController = TextEditingController(text: 'info@club100gym.com');
-  final _addressController = TextEditingController(text: '1st Floor TP Nagar, Transport Nagar, Prayagraj, UP 211011');
-  final _cityController = TextEditingController(text: 'Prayagraj');
+  final _nameController = TextEditingController();
+  final _ownerController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _cityController = TextEditingController();
   String _currency = 'INR (₹)';
 
   @override
@@ -48,7 +48,7 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
 
                 CustomTextField(
                   label: 'Gym Name *',
-                  hint: 'e.g. Club 100 The Gym',
+                  hint: 'e.g. Elite Fitness Gym',
                   controller: _nameController,
                   validator: (v) => v == null || v.trim().isEmpty ? 'Gym name is required' : null,
                 ),
@@ -56,14 +56,14 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
 
                 CustomTextField(
                   label: 'Owner / Admin Name',
-                  hint: 'Owner name',
+                  hint: 'e.g. John Doe',
                   controller: _ownerController,
                 ),
                 const SizedBox(height: 16),
 
                 CustomTextField(
                   label: 'Helpline Phone Number *',
-                  hint: '070843 06574',
+                  hint: 'e.g. 9876543210',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   validator: (v) => v == null || v.trim().isEmpty ? 'Phone number is required' : null,
@@ -72,7 +72,7 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
 
                 CustomTextField(
                   label: 'Address',
-                  hint: 'Gym street address',
+                  hint: 'e.g. Main Street, Suite 100',
                   controller: _addressController,
                   maxLines: 2,
                 ),
@@ -83,7 +83,7 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
                     Expanded(
                       child: CustomTextField(
                         label: 'City',
-                        hint: 'Prayagraj',
+                        hint: 'e.g. Mumbai',
                         controller: _cityController,
                       ),
                     ),

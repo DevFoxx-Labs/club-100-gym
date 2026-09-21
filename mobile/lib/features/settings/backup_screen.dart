@@ -28,7 +28,7 @@ class _BackupScreenState extends State<BackupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Encrypted backup created: ${p.basename(file.path)}')),
         );
-        await Share.shareXFiles([XFile(file.path)], text: 'Club 100 Gym Data Backup');
+        await Share.shareXFiles([XFile(file.path)], text: 'Elite Fitness Gym Data Backup');
       }
     } catch (e) {
       setState(() => _isLoading = false);

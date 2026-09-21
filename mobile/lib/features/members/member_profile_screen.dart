@@ -47,7 +47,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   List<TrainerChangeLogModel> _trainerChangeLogs = [];
 
   bool _isLoading = true;
-  String _gymName = 'Club 100 The Gym';
+  String _gymName = 'Elite Fitness Gym';
 
   @override
   void initState() {

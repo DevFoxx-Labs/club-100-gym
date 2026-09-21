@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../shared/widgets/neon_button.dart';
 import 'gym_setup_screen.dart';
+import '../../shared/widgets/gym_logo_view.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -18,31 +19,15 @@ class WelcomeScreen extends StatelessWidget {
               const SizedBox(height: 20),
 
               // Brand Hero Header
-              Column(
+              const Column(
                 children: [
-                  Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      color: AppTheme.neonLime,
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.neonLime.withValues(alpha: 0.3),
-                          blurRadius: 24,
-                          spreadRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.fitness_center_rounded,
-                      size: 48,
-                      color: AppTheme.darkBackground,
-                    ),
+                  GymLogoView(
+                    size: 90,
+                    borderRadius: 28,
                   ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'CLUB 100 THE GYM',
+                  SizedBox(height: 24),
+                  Text(
+                    'ELITE FITNESS GYM',
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
@@ -50,8 +35,8 @@ class WelcomeScreen extends StatelessWidget {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  SizedBox(height: 8),
+                  Text(
                     'Gym Member & Fee Management App',
                     style: TextStyle(
                       fontSize: 14,
@@ -59,8 +44,8 @@ class WelcomeScreen extends StatelessWidget {
                       color: AppTheme.neonLime,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
+                  SizedBox(height: 16),
+                  Text(
                     'Manage members, track membership dues, record payments, and generate digital PDF receipts offline on your device.',
                     textAlign: TextAlign.center,
                     style: TextStyle(

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
@@ -13,6 +12,7 @@ import '../members/add_edit_member_screen.dart';
 import '../trainers/trainers_list_screen.dart';
 import '../events/events_calendar_screen.dart';
 import '../receipts/receipt_preview_screen.dart';
+import '../../shared/widgets/gym_logo_view.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(String filter) onNavigateToMembers;
@@ -135,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              (_gymInfo?.name ?? 'CLUB 100 THE GYM').toUpperCase(),
+              (_gymInfo?.name ?? 'ELITE FITNESS GYM').toUpperCase(),
               style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
             ),
             const Text(
@@ -192,7 +192,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    _gymInfo?.name ?? 'Club 100 The Gym',
+                                    _gymInfo?.name ?? 'Elite Fitness Gym',
                                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
                                   ),
                                   const SizedBox(height: 2),
@@ -203,27 +203,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ],
                               ),
                             ),
-                            if (_gymInfo?.logoPath != null && File(_gymInfo!.logoPath!).existsSync())
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: Image.file(
-                                  File(_gymInfo!.logoPath!),
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            else
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: AppTheme.neonLime.withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.4)),
-                                ),
-                                child: const Icon(Icons.fitness_center_rounded, color: AppTheme.neonLime, size: 22),
-                              ),
+                            GymLogoView(
+                              size: 50,
+                              borderRadius: 16,
+                              logoPath: _gymInfo?.logoPath,
+                            ),
                           ],
                         ),
                       ),
