@@ -42,18 +42,18 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'gym_reminders_channel',
       'Fee & Membership Reminders',
       channelDescription: 'Local notifications for member fee dues and membership expiries',
       importance: Importance.high,
       priority: Priority.high,
-      color: const Color(0xFFB5F63D),
+      color: Color(0xFFB5F63D),
     );
 
-    final NotificationDetails notificationDetails = NotificationDetails(
+    const NotificationDetails notificationDetails = NotificationDetails(
       android: androidDetails,
-      iOS: const DarwinNotificationDetails(),
+      iOS: DarwinNotificationDetails(),
     );
 
     await _notificationsPlugin.show(

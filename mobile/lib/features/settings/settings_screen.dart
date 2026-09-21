@@ -62,12 +62,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         confirmText: 'Wipe Everything',
         isDestructive: true,
         onConfirm: () async {
+          final nav = Navigator.of(context);
           await AppDatabase.instance.clearAllData();
           await SecurityService().clearSecurityData();
 
-          if (!mounted) return;
-          Navigator.pushAndRemoveUntil(
-            context,
+          nav.pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const WelcomeScreen()),
             (route) => false,
           );

@@ -80,8 +80,8 @@ class WelcomeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppTheme.darkBorder),
                 ),
-                child: Column(
-                  children: const [
+                child: const Column(
+                  children: [
                     _FeatureRow(icon: Icons.offline_pin_rounded, title: '100% Offline-First', subtitle: 'No internet required. Data stays on your device.'),
                     SizedBox(height: 14),
                     _FeatureRow(icon: Icons.receipt_long_rounded, title: 'Instant Receipts & QR', subtitle: 'PDF receipts with tamper-resistant QR codes.'),
