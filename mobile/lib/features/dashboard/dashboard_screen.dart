@@ -204,8 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                             GymLogoView(
-                              size: 50,
-                              borderRadius: 16,
+                              size: 54,
                               logoPath: _gymInfo?.logoPath,
                             ),
                           ],

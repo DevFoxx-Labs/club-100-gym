@@ -222,7 +222,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
                           itemCount: _filteredMembers.length,
                           itemBuilder: (context, index) {
                             final member = _filteredMembers[index];
@@ -268,6 +268,26 @@ class _MembersListScreenState extends State<MembersListScreen> {
                         ),
             ),
           ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddEditMemberScreen()),
+          );
+          _loadMembers();
+        },
+        backgroundColor: AppTheme.neonLime,
+        icon: const Icon(Icons.person_add_rounded, color: AppTheme.darkBackground),
+        label: const Text(
+          'Add Member',
+          style: TextStyle(
+            color: AppTheme.darkBackground,
+            fontWeight: FontWeight.w900,
+            fontSize: 14,
+            letterSpacing: 0.3,
+          ),
         ),
       ),
     );

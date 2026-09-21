@@ -22,8 +22,7 @@ class WelcomeScreen extends StatelessWidget {
               const Column(
                 children: [
                   GymLogoView(
-                    size: 90,
-                    borderRadius: 28,
+                    size: 100,
                   ),
                   SizedBox(height: 24),
                   Text(

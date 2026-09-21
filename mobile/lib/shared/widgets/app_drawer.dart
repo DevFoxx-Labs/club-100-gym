@@ -76,8 +76,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   GymLogoView(
-                    size: 60,
-                    isCircle: true,
+                    size: 64,
                     logoPath: _gymInfo?.logoPath,
                   ),
                   const SizedBox(height: 12),

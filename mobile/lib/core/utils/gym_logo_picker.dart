@@ -117,23 +117,18 @@ class EditableGymLogo extends StatelessWidget {
         child: Stack(
           alignment: Alignment.bottomRight,
           children: [
-            Container(
+            SizedBox(
               width: size,
               height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF252525),
-                border: Border.all(color: const Color(0xFFD4FF00), width: 2),
-                image: hasLogo
-                    ? DecorationImage(
-                        image: FileImage(File(logoPath!)),
-                        fit: BoxFit.cover,
-                      )
-                    : const DecorationImage(
-                        image: AssetImage('assets/images/logo.png'),
-                        fit: BoxFit.cover,
-                      ),
-              ),
+              child: hasLogo
+                  ? Image.file(
+                      File(logoPath!),
+                      fit: BoxFit.contain,
+                    )
+                  : Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.contain,
+                    ),
             ),
             Container(
               padding: const EdgeInsets.all(6),

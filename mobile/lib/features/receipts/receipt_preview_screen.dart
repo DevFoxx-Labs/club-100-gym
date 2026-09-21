@@ -78,8 +78,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                         Row(
                           children: [
                             GymLogoView(
-                              size: 44,
-                              borderRadius: 12,
+                              size: 48,
                               logoPath: _gymInfo?.logoPath,
                             ),
                             const SizedBox(width: 12),

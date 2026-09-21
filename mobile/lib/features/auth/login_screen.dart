@@ -102,8 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const SizedBox(height: 20),
                   GymLogoView(
-                    size: 70,
-                    borderRadius: 22,
+                    size: 80,
                     logoPath: _gymLogoPath,
                   ),
                   const SizedBox(height: 16),
