@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/notifications/notification_service.dart';
 import '../../core/services/app_state_service.dart';
@@ -694,13 +695,38 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppTheme.neonLime.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.campaign_rounded, color: AppTheme.neonLime, size: 20),
+              ),
+              const SizedBox(width: 12),
               const Expanded(
-                child: Text(
-                  'Create Announcement',
-                  style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 15),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Create Announcement',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 15),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Share important updates with your gym members.',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                    ),
+                  ],
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '$length/$_maxLength',
                 style: TextStyle(
@@ -711,7 +737,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 14),
           TextField(
             controller: _messageController,
             maxLines: 4,
@@ -793,7 +819,9 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             ),
           ],
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _buildToggleTile(
                 icon: Icons.image_outlined,
@@ -802,14 +830,12 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 showSwitch: false,
                 onTap: _pickImage,
               ),
-              const SizedBox(width: 8),
               _buildToggleTile(
                 icon: Icons.push_pin_outlined,
                 label: 'Important',
                 isActive: _isImportant,
                 onTap: () => setState(() => _isImportant = !_isImportant),
               ),
-              const SizedBox(width: 8),
               _buildToggleTile(
                 icon: Icons.calendar_today_outlined,
                 label: 'Schedule',
@@ -828,6 +854,26 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               onPressed: canSubmit ? _submitAnnouncement : null,
             ),
           ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF25D366),
+                side: const BorderSide(color: Color(0xFF25D366)),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              icon: const Icon(Icons.chat_bubble_rounded, size: 18),
+              label: const Text(
+                'Share to WhatsApp Status',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+              ),
+              onPressed: canSubmit
+                  ? () => _shareToWhatsApp(message: _messageController.text.trim(), imagePath: _pickedImagePath)
+                  : null,
+            ),
+          ),
         ],
       ),
     );
@@ -840,34 +886,31 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     required VoidCallback onTap,
     bool showSwitch = true,
   }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppTheme.darkBackground,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: isActive ? AppTheme.neonLime.withValues(alpha: 0.5) : AppTheme.darkBorder),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 15, color: isActive ? AppTheme.neonLime : AppTheme.textMuted),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: isActive ? AppTheme.textWhite : AppTheme.textMuted,
-                  ),
-                ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppTheme.darkBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isActive ? AppTheme.neonLime.withValues(alpha: 0.5) : AppTheme.darkBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: isActive ? AppTheme.neonLime : AppTheme.textMuted),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: isActive ? AppTheme.textWhite : AppTheme.textMuted,
               ),
+            ),
               if (showSwitch) ...[
                 const SizedBox(width: 6),
                 AnimatedContainer(
@@ -893,8 +936,28 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             ],
           ),
         ),
-      ),
-    );
+      );
+  }
+
+  Future<void> _shareToWhatsApp({required String message, String? imagePath}) async {
+    if (message.isEmpty) return;
+    try {
+      if (imagePath != null && imagePath.isNotEmpty && await File(imagePath).exists()) {
+        await Share.shareXFiles([XFile(imagePath)], text: message);
+      } else {
+        await Share.share(message);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unable to open share sheet: $e'),
+            backgroundColor: AppTheme.statusOverdue,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildRecentHeader() {
@@ -1050,9 +1113,21 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     _loadAnnouncements(showSpinner: false);
                   } else if (val == 'delete') {
                     _deleteAnnouncement(item);
+                  } else if (val == 'whatsapp') {
+                    _shareToWhatsApp(message: item.message, imagePath: item.imagePath);
                   }
                 },
                 itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'whatsapp',
+                    child: Row(
+                      children: [
+                        Icon(Icons.chat_bubble_rounded, color: Color(0xFF25D366), size: 18),
+                        SizedBox(width: 10),
+                        Text('Share to WhatsApp', style: TextStyle(color: AppTheme.textWhite)),
+                      ],
+                    ),
+                  ),
                   PopupMenuItem(
                     value: 'pin',
                     child: Row(
