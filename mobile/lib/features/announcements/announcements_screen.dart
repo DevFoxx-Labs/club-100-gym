@@ -14,7 +14,6 @@ import '../../data/repositories/notification_repository.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
-import '../../shared/widgets/neon_button.dart';
 import '../notifications/notifications_screen.dart';
 
 class AnnouncementsScreen extends StatefulWidget {
@@ -158,13 +157,12 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   Future<void> _loadAnnouncements({bool showSpinner = true}) async {
     if (showSpinner && mounted) setState(() => _isLoading = true);
     try {
-      // Auto-promote any scheduled announcements whose time has arrived.
       final promoted = await _announcementRepo.promoteDueScheduled();
       for (final item in promoted) {
         try {
           await NotificationService().showNotification(
             id: item.id.hashCode.abs() % 100000,
-            title: 'Announcement Sent',
+            title: item.displayTitle,
             body: item.message,
           );
         } catch (_) {}
@@ -363,6 +361,26 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     }
   }
 
+  String _inferCategory(String text) {
+    final lower = text.toLowerCase();
+    if (lower.contains('zumba') || lower.contains('class') || lower.contains('session') || lower.contains('workout') || lower.contains('batch')) {
+      return 'class';
+    }
+    if (lower.contains('equipment') || lower.contains('machine') || lower.contains('dumbbell') || lower.contains('weight') || lower.contains('bench')) {
+      return 'equipment';
+    }
+    if (lower.contains('hour') || lower.contains('timing') || lower.contains('sunday') || lower.contains('holiday') || lower.contains('close') || lower.contains('open')) {
+      return 'hours';
+    }
+    if (lower.contains('thank') || lower.contains('appreciation') || lower.contains('offer') || lower.contains('discount') || lower.contains('celebrate') || lower.contains('event')) {
+      return 'event';
+    }
+    if (lower.contains('maintenance') || lower.contains('repair') || lower.contains('sauna') || lower.contains('notice') || lower.contains('water') || lower.contains('power')) {
+      return 'maintenance';
+    }
+    return 'general';
+  }
+
   Future<void> _submitAnnouncement() async {
     final message = _messageController.text.trim();
     if (message.isEmpty || _isSubmitting) return;
@@ -384,10 +402,18 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     final id = const Uuid().v4();
     final isScheduled = _isScheduleEnabled && _scheduledDateTime != null;
 
+    // Detect title from first line
+    final lines = message.split('\n');
+    final titleCandidate = lines.first.trim();
+    final title = titleCandidate.length <= 60 ? titleCandidate : '${titleCandidate.substring(0, 57)}...';
+    final category = _inferCategory(message);
+
     final announcement = AnnouncementModel(
       id: id,
+      title: title,
       message: message,
       imagePath: _pickedImagePath,
+      category: category,
       audienceType: _audienceType,
       audienceLabel: _audienceLabel,
       audiencePlanId: _audiencePlanId,
@@ -402,16 +428,23 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     try {
       await _announcementRepo.insert(announcement);
 
-      if (isScheduled) {
-        try {
+      // Trigger local notification to alert the device
+      try {
+        if (isScheduled) {
           await NotificationService().scheduleNotification(
             id: id.hashCode.abs() % 100000,
-            title: 'Scheduled Announcement Sent',
+            title: title,
             body: message,
             scheduledDate: _scheduledDateTime!,
           );
-        } catch (_) {}
-      }
+        } else {
+          await NotificationService().showNotification(
+            id: id.hashCode.abs() % 100000,
+            title: '📣 $title',
+            body: message,
+          );
+        }
+      } catch (_) {}
 
       if (mounted) {
         setState(() {
@@ -424,13 +457,23 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              isScheduled
-                  ? 'Announcement scheduled for ${DateFormat('dd MMM, hh:mm a').format(announcement.scheduledAt!)}'
-                  : 'Announcement broadcast to $_audienceLabel',
+            content: Row(
+              children: [
+                Icon(isScheduled ? Icons.event_available_rounded : Icons.check_circle_rounded, color: AppTheme.neonLime, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isScheduled
+                        ? 'Announcement scheduled for ${DateFormat('dd MMM, hh:mm a').format(announcement.scheduledAt!)}'
+                        : 'Broadcast sent to $_audienceLabel',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
             ),
-            backgroundColor: const Color(0xFF1E1E1E),
+            backgroundColor: const Color(0xFF141720),
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: AppTheme.neonLime.withValues(alpha: 0.4))),
           ),
         );
       }
@@ -466,17 +509,66 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     }
   }
 
-  ({IconData icon, Color color, String badge}) _styleFor(AnnouncementModel a) {
-    if (a.isScheduled) {
-      return (icon: Icons.schedule_rounded, color: AppTheme.statusDueSoon, badge: 'SCHEDULED');
+  Future<void> _shareToWhatsApp({required String message, String? imagePath}) async {
+    if (message.isEmpty) return;
+    try {
+      if (imagePath != null && imagePath.isNotEmpty && await File(imagePath).exists()) {
+        await Share.shareXFiles([XFile(imagePath)], text: message);
+      } else {
+        await Share.share(message);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unable to open share sheet: $e'),
+            backgroundColor: AppTheme.statusOverdue,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
-    if (a.isImportant) {
-      return (icon: Icons.warning_amber_rounded, color: AppTheme.statusOverdue, badge: 'IMPORTANT');
+  }
+
+  ({IconData icon, Color iconColor, Color bgColor}) _categoryVisuals(String category) {
+    switch (category) {
+      case 'class':
+        return (
+          icon: Icons.calendar_month_rounded,
+          iconColor: const Color(0xFF69F0AE),
+          bgColor: const Color(0xFF142918),
+        );
+      case 'equipment':
+        return (
+          icon: Icons.fitness_center_rounded,
+          iconColor: const Color(0xFF38BDF8),
+          bgColor: const Color(0xFF132238),
+        );
+      case 'hours':
+        return (
+          icon: Icons.access_time_filled_rounded,
+          iconColor: const Color(0xFFF59E0B),
+          bgColor: const Color(0xFF2E1C0C),
+        );
+      case 'event':
+        return (
+          icon: Icons.emoji_events_rounded,
+          iconColor: const Color(0xFFA855F7),
+          bgColor: const Color(0xFF261338),
+        );
+      case 'maintenance':
+        return (
+          icon: Icons.warning_rounded,
+          iconColor: const Color(0xFFF43F5E),
+          bgColor: const Color(0xFF331418),
+        );
+      default:
+        return (
+          icon: Icons.campaign_rounded,
+          iconColor: AppTheme.neonLime,
+          bgColor: const Color(0xFF142918),
+        );
     }
-    if (a.imagePath != null && a.imagePath!.isNotEmpty) {
-      return (icon: Icons.image_rounded, color: Colors.blueAccent, badge: 'MEDIA');
-    }
-    return (icon: Icons.campaign_rounded, color: AppTheme.neonLime, badge: 'GENERAL');
   }
 
   String _formatCardDate(DateTime date) {
@@ -540,12 +632,12 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             await _loadAnnouncements(showSpinner: false);
           },
           child: ListView(
-            padding: EdgeInsets.fromLTRB(20, 12, 20, 24 + safeBottom),
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 24 + safeBottom),
             children: [
               _buildSectionHeader(),
               const SizedBox(height: 16),
               _buildComposeCard(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
               _buildRecentHeader(),
               const SizedBox(height: 12),
               if (_isLoading)
@@ -605,74 +697,67 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   }
 
   Widget _buildSectionHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.neonLime.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(Icons.campaign_rounded, color: AppTheme.neonLime, size: 24),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Announcements',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 22, letterSpacing: -0.3),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Send important updates to all gym members.',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerRight,
-          child: InkWell(
-            onTap: _selectAudience,
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xFF142918),
             borderRadius: BorderRadius.circular(14),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              decoration: BoxDecoration(
-                color: AppTheme.neonLime.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.4)),
+          ),
+          child: const Icon(Icons.campaign_rounded, color: Color(0xFF69F0AE), size: 24),
+        ),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Announcements',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -0.3),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.groups_rounded, color: AppTheme.neonLime, size: 16),
-                  const SizedBox(width: 6),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.5),
-                    child: Text(
-                      _audienceLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w800, fontSize: 12),
-                    ),
+              SizedBox(height: 2),
+              Text(
+                'Send important updates to all gym members.',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        InkWell(
+          onTap: _selectAudience,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF132B1A),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF1E4624)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.groups_rounded, color: Color(0xFF69F0AE), size: 16),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.28),
+                  child: Text(
+                    _audienceLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Color(0xFF69F0AE), fontWeight: FontWeight.w800, fontSize: 12),
                   ),
-                  const SizedBox(width: 2),
-                  Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.neonLime, size: 16),
-                ],
-              ),
+                ),
+                const SizedBox(width: 2),
+                const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF69F0AE), size: 16),
+              ],
             ),
           ),
         ),
@@ -687,73 +772,50 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.darkSurface,
+        color: const Color(0xFF161922),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.darkBorder),
+        border: Border.all(color: const Color(0xFF222838)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.neonLime.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(Icons.campaign_rounded, color: AppTheme.neonLime, size: 20),
+              const Text(
+                'Create Announcement',
+                style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w800, fontSize: 15),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Create Announcement',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 15),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Share important updates with your gym members.',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
               Text(
                 '$length/$_maxLength',
                 style: TextStyle(
                   color: length > _maxLength ? AppTheme.statusOverdue : AppTheme.textMuted,
-                  fontSize: 11.5,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _messageController,
-            maxLines: 4,
-            maxLength: _maxLength,
-            onChanged: (_) => setState(() {}),
-            style: const TextStyle(color: AppTheme.textWhite, fontSize: 13.5),
-            buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
-            decoration: InputDecoration(
-              hintText: 'Type your announcement here...',
-              filled: true,
-              fillColor: AppTheme.darkBackground,
-              contentPadding: const EdgeInsets.all(14),
-              hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.darkBorder)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.darkBorder)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.neonLime, width: 1.5)),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F121A),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF222838)),
+            ),
+            child: TextField(
+              controller: _messageController,
+              maxLines: 4,
+              maxLength: _maxLength,
+              onChanged: (_) => setState(() {}),
+              style: const TextStyle(color: AppTheme.textWhite, fontSize: 13.5),
+              buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+              decoration: const InputDecoration(
+                hintText: 'Type your announcement here...',
+                contentPadding: EdgeInsets.all(14),
+                hintStyle: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                border: InputBorder.none,
+              ),
             ),
           ),
           if (_pickedImagePath != null) ...[
@@ -764,7 +826,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   borderRadius: BorderRadius.circular(14),
                   child: Image.file(
                     File(_pickedImagePath!),
-                    height: 140,
+                    height: 130,
                     width: double.infinity,
                     fit: BoxFit.cover,
                   ),
@@ -777,7 +839,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), shape: BoxShape.circle),
+                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.65), shape: BoxShape.circle),
                       child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
                     ),
                   ),
@@ -786,18 +848,18 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             ),
           ],
           if (_isScheduleEnabled && _scheduledDateTime != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             InkWell(
               onTap: () async {
                 final picked = await _pickScheduleDateTime();
                 if (picked != null && mounted) setState(() => _scheduledDateTime = picked);
               },
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppTheme.statusDueSoon.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppTheme.statusDueSoon.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: AppTheme.statusDueSoon.withValues(alpha: 0.4)),
                 ),
                 child: Row(
@@ -809,7 +871,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                         'Scheduled for ${DateFormat('dd MMM yyyy, hh:mm a').format(_scheduledDateTime!)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppTheme.textWhite, fontSize: 12, fontWeight: FontWeight.w600),
+                        style: const TextStyle(color: AppTheme.textWhite, fontSize: 11.5, fontWeight: FontWeight.w600),
                       ),
                     ),
                     const Icon(Icons.edit_rounded, color: AppTheme.statusDueSoon, size: 14),
@@ -818,60 +880,67 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+          const SizedBox(height: 14),
+          Row(
             children: [
-              _buildToggleTile(
-                icon: Icons.image_outlined,
-                label: _pickedImagePath == null ? 'Add Image' : 'Change Image',
-                isActive: _pickedImagePath != null,
-                showSwitch: false,
-                onTap: _pickImage,
+              Expanded(
+                child: _buildActionChip(
+                  icon: Icons.image_outlined,
+                  label: _pickedImagePath == null ? 'Add Image' : 'Change',
+                  isActive: _pickedImagePath != null,
+                  hasSwitch: false,
+                  onTap: _pickImage,
+                ),
               ),
-              _buildToggleTile(
-                icon: Icons.push_pin_outlined,
-                label: 'Important',
-                isActive: _isImportant,
-                onTap: () => setState(() => _isImportant = !_isImportant),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildActionChip(
+                  icon: Icons.push_pin_outlined,
+                  label: 'Important',
+                  isActive: _isImportant,
+                  hasSwitch: true,
+                  onTap: () => setState(() => _isImportant = !_isImportant),
+                ),
               ),
-              _buildToggleTile(
-                icon: Icons.calendar_today_outlined,
-                label: 'Schedule',
-                isActive: _isScheduleEnabled,
-                onTap: _toggleSchedule,
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildActionChip(
+                  icon: Icons.calendar_today_outlined,
+                  label: 'Schedule',
+                  isActive: _isScheduleEnabled,
+                  hasSwitch: true,
+                  onTap: _toggleSchedule,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
-            child: NeonButton(
-              text: _isScheduleEnabled ? 'Schedule Announcement' : 'Broadcast to $_audienceLabel',
-              icon: Icons.send_rounded,
-              isLoading: _isSubmitting,
-              onPressed: canSubmit ? _submitAnnouncement : null,
-            ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF25D366),
-                side: const BorderSide(color: Color(0xFF25D366)),
-                padding: const EdgeInsets.symmetric(vertical: 13),
+            height: 48,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF69F0AE),
+                foregroundColor: Colors.black,
+                disabledBackgroundColor: const Color(0xFF2A3A2F),
+                disabledForegroundColor: Colors.white38,
+                elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              icon: const Icon(Icons.chat_bubble_rounded, size: 18),
-              label: const Text(
-                'Share to WhatsApp Status',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+              icon: _isSubmitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    )
+                  : const Icon(Icons.send_rounded, size: 18),
+              label: Text(
+                _isScheduleEnabled
+                    ? 'Schedule Announcement'
+                    : 'Broadcast to $_audienceLabel',
+                style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.2),
               ),
-              onPressed: canSubmit
-                  ? () => _shareToWhatsApp(message: _messageController.text.trim(), imagePath: _pickedImagePath)
-                  : null,
+              onPressed: canSubmit ? _submitAnnouncement : null,
             ),
           ),
         ],
@@ -879,106 +948,89 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
     );
   }
 
-  Widget _buildToggleTile({
+  Widget _buildActionChip({
     required IconData icon,
     required String label,
     required bool isActive,
+    required bool hasSwitch,
     required VoidCallback onTap,
-    bool showSwitch = true,
   }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: AppTheme.darkBackground,
+          color: const Color(0xFF0F121A),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isActive ? AppTheme.neonLime.withValues(alpha: 0.5) : AppTheme.darkBorder),
+          border: Border.all(
+            color: isActive ? const Color(0xFF69F0AE).withValues(alpha: 0.6) : const Color(0xFF222838),
+          ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: isActive ? AppTheme.neonLime : AppTheme.textMuted),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w700,
-                color: isActive ? AppTheme.textWhite : AppTheme.textMuted,
+            Icon(icon, size: 15, color: isActive ? const Color(0xFF69F0AE) : AppTheme.textMuted),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: isActive ? AppTheme.textWhite : AppTheme.textMuted,
+                ),
               ),
             ),
-              if (showSwitch) ...[
-                const SizedBox(width: 6),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: 28,
-                  height: 16,
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    color: isActive ? AppTheme.neonLime : AppTheme.darkBorder,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: AnimatedAlign(
-                    duration: const Duration(milliseconds: 150),
-                    alignment: isActive ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle),
+            if (hasSwitch) ...[
+              const SizedBox(width: 5),
+              Container(
+                width: 22,
+                height: 13,
+                padding: const EdgeInsets.all(1.5),
+                decoration: BoxDecoration(
+                  color: isActive ? const Color(0xFF69F0AE) : const Color(0xFF2E3445),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Align(
+                  alignment: isActive ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: isActive ? Colors.black : Colors.white60,
+                      shape: BoxShape.circle,
                     ),
                   ),
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
-      );
-  }
-
-  Future<void> _shareToWhatsApp({required String message, String? imagePath}) async {
-    if (message.isEmpty) return;
-    try {
-      if (imagePath != null && imagePath.isNotEmpty && await File(imagePath).exists()) {
-        await Share.shareXFiles([XFile(imagePath)], text: message);
-      } else {
-        await Share.share(message);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Unable to open share sheet: $e'),
-            backgroundColor: AppTheme.statusOverdue,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
+      ),
+    );
   }
 
   Widget _buildRecentHeader() {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Expanded(
-          child: Text(
-            'Recent Announcements',
-            style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 17),
-          ),
+        const Text(
+          'Recent Announcements',
+          style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 17),
         ),
         PopupMenuButton<String>(
-          color: AppTheme.darkSurface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: AppTheme.darkBorder)),
+          color: const Color(0xFF161922),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0xFF222838))),
           onSelected: (val) => setState(() => _selectedFilter = val),
           itemBuilder: (context) => ['All', 'Pinned', 'Important', 'Scheduled', 'Sent']
               .map((f) => PopupMenuItem(
                     value: f,
                     child: Row(
                       children: [
-                        if (_selectedFilter == f) Icon(Icons.check_rounded, color: AppTheme.neonLime, size: 16),
+                        if (_selectedFilter == f) const Icon(Icons.check_rounded, color: Color(0xFF69F0AE), size: 16),
                         if (_selectedFilter == f) const SizedBox(width: 8),
                         Text(f, style: const TextStyle(color: AppTheme.textWhite)),
                       ],
@@ -986,18 +1038,18 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   ))
               .toList(),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppTheme.darkSurface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppTheme.darkBorder),
+              color: const Color(0xFF161922),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFF222838)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(_selectedFilter, style: const TextStyle(color: AppTheme.textWhite, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                Text(_selectedFilter, style: const TextStyle(color: AppTheme.textWhite, fontSize: 12, fontWeight: FontWeight.w700)),
                 const SizedBox(width: 4),
-                const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textMuted, size: 18),
+                const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.textMuted, size: 16),
               ],
             ),
           ),
@@ -1012,20 +1064,24 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: AppTheme.darkSurface, shape: BoxShape.circle, border: Border.all(color: AppTheme.darkBorder)),
-            child: const Icon(Icons.campaign_outlined, size: 48, color: AppTheme.textMuted),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF161922),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF222838)),
+            ),
+            child: const Icon(Icons.campaign_outlined, size: 40, color: AppTheme.textMuted),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           Text(
             _selectedFilter == 'All' ? 'No Announcements Yet' : 'No $_selectedFilter Announcements',
-            style: const TextStyle(color: AppTheme.textWhite, fontSize: 16, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: AppTheme.textWhite, fontSize: 15, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           const Text(
             'Broadcasts you send to members will appear here.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 12.5),
+            style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
           ),
         ],
       ),
@@ -1033,7 +1089,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   }
 
   Widget _buildAnnouncementCard(AnnouncementModel item) {
-    final style = _styleFor(item);
+    final visuals = _categoryVisuals(item.category);
     final isExpanded = _expandedIds.contains(item.id);
     final date = item.status == 'sent' ? (item.sentAt ?? item.createdAt) : (item.scheduledAt ?? item.createdAt);
 
@@ -1041,9 +1097,11 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: item.isPinned ? AppTheme.neonLime.withValues(alpha: 0.05) : AppTheme.darkSurface,
+        color: const Color(0xFF161922),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: item.isPinned ? AppTheme.neonLime.withValues(alpha: 0.35) : AppTheme.darkBorder),
+        border: Border.all(
+          color: item.isPinned ? const Color(0xFF69F0AE).withValues(alpha: 0.35) : const Color(0xFF222838),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1052,9 +1110,13 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: style.color.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(12)),
-                child: Icon(style.icon, color: style.color, size: 20),
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: visuals.bgColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(visuals.icon, color: visuals.iconColor, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1063,30 +1125,29 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   children: [
                     Row(
                       children: [
-                        Expanded(
+                        Flexible(
                           child: Text(
-                            item.message.split('\n').first,
+                            item.displayTitle,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w800, fontSize: 14),
+                            style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w800, fontSize: 14.5),
                           ),
                         ),
                         if (item.isPinned) ...[
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(color: AppTheme.neonLime.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(6)),
-                            child: Text('Pinned', style: TextStyle(color: AppTheme.neonLime, fontSize: 9.5, fontWeight: FontWeight.w900)),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF69F0AE),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'Pinned',
+                              style: TextStyle(color: Colors.black, fontSize: 9.5, fontWeight: FontWeight.w900),
+                            ),
                           ),
                         ],
                       ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item.audienceLabel,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
                     ),
                   ],
                 ),
@@ -1095,15 +1156,15 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(_formatCardDate(date), style: const TextStyle(color: AppTheme.textMuted, fontSize: 10.5)),
-                  Text(_formatCardTime(date), style: const TextStyle(color: AppTheme.textMuted, fontSize: 10.5)),
+                  Text(_formatCardDate(date), style: const TextStyle(color: AppTheme.textMuted, fontSize: 10.5, fontWeight: FontWeight.w500)),
+                  Text(_formatCardTime(date), style: const TextStyle(color: AppTheme.textMuted, fontSize: 10.5, fontWeight: FontWeight.w500)),
                 ],
               ),
               PopupMenuButton<String>(
                 padding: EdgeInsets.zero,
                 icon: const Icon(Icons.more_vert_rounded, color: AppTheme.textMuted, size: 18),
-                color: AppTheme.darkSurface,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: AppTheme.darkBorder)),
+                color: const Color(0xFF161922),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0xFF222838))),
                 onSelected: (val) async {
                   if (val == 'pin') {
                     await _announcementRepo.setPinned(item.id, !item.isPinned);
@@ -1162,7 +1223,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           GestureDetector(
             onTap: () => setState(() {
               if (isExpanded) {
@@ -1173,7 +1234,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
             }),
             child: Text(
               item.message,
-              maxLines: isExpanded ? null : 2,
+              maxLines: isExpanded ? null : 3,
               overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
               style: const TextStyle(color: Colors.white70, fontSize: 12.5, height: 1.4),
             ),

@@ -67,6 +67,12 @@ class AppDatabase {
     try {
       await db.execute(DbTables.announcements);
     } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE announcements ADD COLUMN title TEXT;');
+    } catch (_) {}
+    try {
+      await db.execute("ALTER TABLE announcements ADD COLUMN category TEXT DEFAULT 'general';");
+    } catch (_) {}
 
     // Ensure expenses table exists for the Expense Tracker feature
     try {

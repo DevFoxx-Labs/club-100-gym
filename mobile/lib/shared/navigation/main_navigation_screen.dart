@@ -112,38 +112,31 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
           onTap: (index) => _onTabSelected(index),
           items: [
-            BottomNavigationBarItem(
-              icon: _currentIndex == 0
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E3A20),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(Icons.grid_view_rounded, color: AppTheme.neonLime, size: 20),
-                    )
-                  : const Icon(Icons.grid_view_rounded, size: 22),
-              label: 'Dashboard',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.people_alt_rounded, size: 22),
-              label: 'Members',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.credit_card_rounded, size: 22),
-              label: 'Payments',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.campaign_rounded, size: 22),
-              label: 'Announcements',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(Icons.settings_rounded, size: 22),
-              label: 'Settings',
-            ),
+            _buildNavItem(0, Icons.grid_view_rounded, 'Dashboard'),
+            _buildNavItem(1, Icons.people_alt_rounded, 'Members'),
+            _buildNavItem(2, Icons.credit_card_rounded, 'Payments'),
+            _buildNavItem(3, Icons.campaign_rounded, 'Announcements'),
+            _buildNavItem(4, Icons.settings_rounded, 'Settings'),
           ],
         ),
       ),
+    );
+  }
+
+  BottomNavigationBarItem _buildNavItem(int index, IconData icon, String label) {
+    final isSelected = _currentIndex == index;
+    return BottomNavigationBarItem(
+      icon: isSelected
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E3A20),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: AppTheme.neonLime, size: 20),
+            )
+          : Icon(icon, size: 22),
+      label: label,
     );
   }
 }

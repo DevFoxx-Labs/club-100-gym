@@ -9,6 +9,7 @@ import 'package:the_elite_fitness/data/models/membership_model.dart';
 import 'package:the_elite_fitness/data/models/event_model.dart';
 import 'package:the_elite_fitness/data/models/member_model.dart';
 import 'package:the_elite_fitness/data/models/notification_model.dart';
+import 'package:the_elite_fitness/data/models/announcement_model.dart';
 import 'package:the_elite_fitness/shared/widgets/member_avatar.dart';
 import 'package:the_elite_fitness/core/receipt/qr_service.dart';
 import 'package:the_elite_fitness/core/utils/form_validators.dart';
@@ -613,4 +614,62 @@ void main() {
       expect(dateKey, '2026-09-22');
     });
   });
+
+  group('AnnouncementModel & Broadcast Tests', () {
+    test('AnnouncementModel serializes, deserializes, and copies with title and category', () {
+      final now = DateTime(2026, 9, 22, 10, 30);
+      final announcement = AnnouncementModel(
+        id: 'ann-101',
+        title: 'Zumba Class Tomorrow',
+        message: "Don't miss our special Zumba Dance Fitness class tomorrow at 6:00 AM in the Aerobics Studio. Let's move, sweat and stay healthy together! 💃",
+        category: 'class',
+        audienceType: 'all',
+        audienceLabel: 'All Members',
+        isPinned: true,
+        isImportant: true,
+        status: 'sent',
+        sentAt: now,
+        createdAt: now,
+      );
+
+      final map = announcement.toMap();
+      expect(map['title'], 'Zumba Class Tomorrow');
+      expect(map['category'], 'class');
+      expect(map['isPinned'], 1);
+      expect(map['isImportant'], 1);
+      expect(map['audienceLabel'], 'All Members');
+
+      final restored = AnnouncementModel.fromMap(map);
+      expect(restored.id, announcement.id);
+      expect(restored.title, 'Zumba Class Tomorrow');
+      expect(restored.displayTitle, 'Zumba Class Tomorrow');
+      expect(restored.category, 'class');
+      expect(restored.isPinned, isTrue);
+      expect(restored.isImportant, isTrue);
+
+      final updated = announcement.copyWith(isPinned: false, title: 'Updated Zumba Class');
+      expect(updated.isPinned, isFalse);
+      expect(updated.title, 'Updated Zumba Class');
+      expect(updated.displayTitle, 'Updated Zumba Class');
+    });
+
+    test('displayTitle falls back to first line when title is null or empty', () {
+      final item = AnnouncementModel(
+        id: 'ann-102',
+        title: null,
+        message: 'New Equipment Arrived\nCheck out the fresh dumbbells!',
+        createdAt: DateTime.now(),
+      );
+      expect(item.displayTitle, 'New Equipment Arrived');
+
+      final itemEmpty = AnnouncementModel(
+        id: 'ann-103',
+        title: '',
+        message: 'Maintenance Notice',
+        createdAt: DateTime.now(),
+      );
+      expect(itemEmpty.displayTitle, 'Maintenance Notice');
+    });
+  });
 }
+

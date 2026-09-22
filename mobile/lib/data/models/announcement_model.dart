@@ -1,7 +1,9 @@
 class AnnouncementModel {
   final String id;
+  final String? title;
   final String message;
   final String? imagePath;
+  final String category; // 'class', 'equipment', 'hours', 'event', 'maintenance', 'general'
   final String audienceType; // 'all', 'active', 'overdue', 'expiring', 'plan'
   final String audienceLabel;
   final String? audiencePlanId;
@@ -14,8 +16,10 @@ class AnnouncementModel {
 
   AnnouncementModel({
     required this.id,
+    this.title,
     required this.message,
     this.imagePath,
+    this.category = 'general',
     this.audienceType = 'all',
     this.audienceLabel = 'All Members',
     this.audiencePlanId,
@@ -29,11 +33,21 @@ class AnnouncementModel {
 
   bool get isScheduled => status == 'scheduled';
 
+  String get displayTitle {
+    if (title != null && title!.trim().isNotEmpty) {
+      return title!.trim();
+    }
+    final firstLine = message.split('\n').first.trim();
+    return firstLine.isNotEmpty ? firstLine : 'Announcement';
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'title': title,
       'message': message,
       'imagePath': imagePath,
+      'category': category,
       'audienceType': audienceType,
       'audienceLabel': audienceLabel,
       'audiencePlanId': audiencePlanId,
@@ -49,8 +63,10 @@ class AnnouncementModel {
   factory AnnouncementModel.fromMap(Map<String, dynamic> map) {
     return AnnouncementModel(
       id: map['id'] ?? '',
+      title: map['title'],
       message: map['message'] ?? '',
       imagePath: map['imagePath'],
+      category: map['category'] ?? 'general',
       audienceType: map['audienceType'] ?? 'all',
       audienceLabel: map['audienceLabel'] ?? 'All Members',
       audiencePlanId: map['audiencePlanId'],
@@ -64,9 +80,11 @@ class AnnouncementModel {
   }
 
   AnnouncementModel copyWith({
+    String? title,
     String? message,
     String? imagePath,
     bool clearImage = false,
+    String? category,
     String? audienceType,
     String? audienceLabel,
     String? audiencePlanId,
@@ -79,8 +97,10 @@ class AnnouncementModel {
   }) {
     return AnnouncementModel(
       id: id,
+      title: title ?? this.title,
       message: message ?? this.message,
       imagePath: clearImage ? null : (imagePath ?? this.imagePath),
+      category: category ?? this.category,
       audienceType: audienceType ?? this.audienceType,
       audienceLabel: audienceLabel ?? this.audienceLabel,
       audiencePlanId: audiencePlanId ?? this.audiencePlanId,

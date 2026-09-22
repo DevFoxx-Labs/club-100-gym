@@ -131,8 +131,10 @@ class DbTables {
   static const String announcements = '''
     CREATE TABLE IF NOT EXISTS announcements (
       id TEXT PRIMARY KEY,
+      title TEXT,
       message TEXT NOT NULL,
       imagePath TEXT,
+      category TEXT DEFAULT 'general',
       audienceType TEXT NOT NULL DEFAULT 'all',
       audienceLabel TEXT NOT NULL DEFAULT 'All Members',
       audiencePlanId TEXT,
