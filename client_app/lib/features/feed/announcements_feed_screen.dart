@@ -340,3 +340,4 @@ class _AnnouncementsFeedScreenState extends State<AnnouncementsFeedScreen> {
     );
   }
 }
+
