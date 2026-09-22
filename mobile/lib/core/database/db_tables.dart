@@ -128,6 +128,23 @@ class DbTables {
     );
   ''';
 
+  static const String announcements = '''
+    CREATE TABLE IF NOT EXISTS announcements (
+      id TEXT PRIMARY KEY,
+      message TEXT NOT NULL,
+      imagePath TEXT,
+      audienceType TEXT NOT NULL DEFAULT 'all',
+      audienceLabel TEXT NOT NULL DEFAULT 'All Members',
+      audiencePlanId TEXT,
+      isImportant INTEGER DEFAULT 0,
+      isPinned INTEGER DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'sent',
+      scheduledAt TEXT,
+      sentAt TEXT,
+      createdAt TEXT NOT NULL
+    );
+  ''';
+
   static const String notificationSettings = '''
     CREATE TABLE IF NOT EXISTS notification_settings (
       id TEXT PRIMARY KEY,

@@ -12,7 +12,6 @@ import '../members/add_edit_member_screen.dart';
 import '../trainers/trainers_list_screen.dart';
 import '../events/events_calendar_screen.dart';
 import '../receipts/receipt_preview_screen.dart';
-import '../../shared/widgets/gym_logo_view.dart';
 import '../../core/services/app_state_service.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -296,9 +295,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         RichText(
                                           text: TextSpan(
                                             children: [
-                                              TextSpan(
+                                              const TextSpan(
                                                 text: 'Good ',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w800,
                                                   color: AppTheme.neonLime,

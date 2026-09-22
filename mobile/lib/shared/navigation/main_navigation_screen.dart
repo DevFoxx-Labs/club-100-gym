@@ -4,12 +4,11 @@ import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/members/members_list_screen.dart';
 import '../../features/payments/payments_list_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
+import '../../features/announcements/announcements_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/notifications/notification_service.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/services/app_state_service.dart';
-import '../../data/repositories/notification_repository.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -29,7 +28,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late int _currentIndex;
   String? _membersFilter;
-  int _unreadCount = 0;
 
   @override
   void initState() {
@@ -37,22 +35,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     WidgetsBinding.instance.addObserver(this);
     _currentIndex = widget.initialIndex;
     _membersFilter = widget.initialFilter;
-    AppStateService.instance.addListener(_loadUnreadCount);
-    _loadUnreadCount();
   }
 
   @override
   void dispose() {
-    AppStateService.instance.removeListener(_loadUnreadCount);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  Future<void> _loadUnreadCount() async {
-    final count = await NotificationRepository().getUnreadCount();
-    if (mounted) {
-      setState(() => _unreadCount = count);
-    }
   }
 
   @override
@@ -60,7 +48,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     if (state == AppLifecycleState.resumed) {
       ReminderScheduler().runDailyScan();
       NotificationService().syncAllUpcomingEventNotifications();
-      _loadUnreadCount();
     }
   }
 
@@ -83,10 +70,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
       MembersListScreen(
         initialFilter: _membersFilter,
         onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
-        onNavigateToNotifications: () => _onTabSelected(3),
+        onNavigateToNotifications: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        ),
       ),
       const PaymentsListScreen(),
-      const NotificationsScreen(),
+      AnnouncementsScreen(
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
       const SettingsScreen(),
     ];
 
@@ -141,14 +133,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
               icon: Icon(Icons.credit_card_rounded, size: 22),
               label: 'Payments',
             ),
-            BottomNavigationBarItem(
-              icon: Badge(
-                isLabelVisible: _unreadCount > 0,
-                label: Text('$_unreadCount', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold)),
-                backgroundColor: AppTheme.statusOverdue,
-                child: const Icon(Icons.notifications_rounded, size: 22),
-              ),
-              label: 'Notifications',
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.campaign_rounded, size: 22),
+              label: 'Announcements',
             ),
             const BottomNavigationBarItem(
               icon: Icon(Icons.settings_rounded, size: 22),

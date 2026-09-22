@@ -21,7 +21,7 @@ class AppDatabase {
 
     final db = await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -63,6 +63,11 @@ class AppDatabase {
       ''');
     } catch (_) {}
 
+    // Ensure announcements table exists for the Announcements broadcast feature
+    try {
+      await db.execute(DbTables.announcements);
+    } catch (_) {}
+
     return db;
   }
 
@@ -83,6 +88,7 @@ class AppDatabase {
     await db.execute(DbTables.notifications);
     await db.execute(DbTables.notificationSettings);
     await db.execute(DbTables.appSettings);
+    await db.execute(DbTables.announcements);
 
     // Seed default packages and plans
     const uuid = Uuid();
@@ -214,6 +220,12 @@ class AppDatabase {
         await db.execute('ALTER TABLE receipts ADD COLUMN personalTrainingFee REAL DEFAULT 0.0;');
       } catch (_) {}
     }
+
+    if (oldVersion < 5) {
+      try {
+        await db.execute(DbTables.announcements);
+      } catch (_) {}
+    }
   }
 
   Future<void> close() async {
@@ -238,6 +250,7 @@ class AppDatabase {
     await db.delete('payments');
     await db.delete('receipts');
     await db.delete('notifications');
+    await db.delete('announcements');
     await db.delete('app_settings');
   }
 }

@@ -19,7 +19,6 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMsg;
   bool _isBiometricEnabled = false;
   String _gymName = 'Elite Fitness Gym';
-  String? _gymLogoPath;
   String? _gymPhone;
   String? _gymEmail;
   String? _ownerName;
@@ -38,7 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       setState(() {
         _gymName = gym.name.isNotEmpty ? gym.name : 'The Elite Fitness Gym';
-        _gymLogoPath = gym.logoPath;
         _gymPhone = gym.phone;
         _gymEmail = gym.email;
         _ownerName = gym.ownerName;

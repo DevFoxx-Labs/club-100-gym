@@ -4,6 +4,7 @@ import '../../data/models/gym_info_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/events/events_calendar_screen.dart';
+import '../../features/notifications/notifications_screen.dart';
 import '../../features/receipts/qr_scanner_screen.dart';
 import '../../features/settings/archived_members_screen.dart';
 import '../../features/settings/backup_screen.dart';
@@ -156,9 +157,9 @@ class _AppDrawerState extends State<AppDrawer> {
               },
             ),
             _buildDrawerTile(
-              icon: Icons.notifications_outlined,
-              selectedIcon: Icons.notifications,
-              title: 'Notifications & Alerts',
+              icon: Icons.campaign_outlined,
+              selectedIcon: Icons.campaign,
+              title: 'Announcements',
               isSelected: widget.currentIndex == 3,
               onTap: () {
                 Navigator.pop(context);
@@ -179,6 +180,14 @@ class _AppDrawerState extends State<AppDrawer> {
             const Divider(color: Color(0xFF252525), height: 24),
 
             // Modules & Feature Shortcuts
+            _buildDrawerTile(
+              icon: Icons.notifications_outlined,
+              title: 'Notifications & Alerts',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+              },
+            ),
             _buildDrawerTile(
               icon: Icons.event_available_outlined,
               title: 'Events & Schedule',
