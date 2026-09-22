@@ -38,7 +38,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
   late TextEditingController _notesController;
-  late TextEditingController _feeController;
+  late TextEditingController _planFeeController;
   late TextEditingController _ptFeeController;
 
   String? _photoPath;
@@ -60,7 +60,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
     _phoneController = TextEditingController(text: widget.member?.phone ?? '');
     _emailController = TextEditingController(text: widget.member?.email ?? '');
     _notesController = TextEditingController(text: widget.member?.notes ?? '');
-    _feeController = TextEditingController(text: '1500');
+    _planFeeController = TextEditingController(text: '1500');
     _ptFeeController = TextEditingController(text: '0');
     _photoPath = widget.member?.photoPath;
     _gender = widget.member?.gender ?? 'Male';
@@ -75,10 +75,14 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     _notesController.dispose();
-    _feeController.dispose();
+    _planFeeController.dispose();
     _ptFeeController.dispose();
     super.dispose();
   }
+
+  double get _currentPlanFee => double.tryParse(_planFeeController.text.trim()) ?? (_selectedPlan?.defaultFee ?? 0.0);
+  double get _currentPtFee => _selectedTrainer != null ? (double.tryParse(_ptFeeController.text.trim()) ?? 0.0) : 0.0;
+  double get _totalFee => _currentPlanFee + _currentPtFee;
 
   Future<void> _loadData() async {
     final packages = await _packageRepo.getAllPackages();
@@ -98,7 +102,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
       _trainers = trainers;
       if (plans.isNotEmpty) {
         _selectedPlan = plans.first;
-        _feeController.text = _selectedPlan!.defaultFee.toStringAsFixed(0);
+        _planFeeController.text = _selectedPlan!.defaultFee.toStringAsFixed(0);
       }
     });
 
@@ -114,7 +118,10 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
 
         setState(() {
           _startDate = membership.startDate;
-          _feeController.text = membership.feeAmount.toStringAsFixed(0);
+          final basePlanFee = (membership.feeAmount >= membership.personalTrainingFee)
+              ? (membership.feeAmount - membership.personalTrainingFee)
+              : membership.feeAmount;
+          _planFeeController.text = basePlanFee.toStringAsFixed(0);
           _selectedTrainer = matchedTrainer;
           _ptFeeController.text = membership.personalTrainingFee > 0
               ? membership.personalTrainingFee.toStringAsFixed(0)
@@ -122,16 +129,6 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
         });
       }
     }
-  }
-
-  void _recalculateTotalFee() {
-    if (_selectedPlan == null) {
-      _feeController.text = '0';
-      return;
-    }
-    final base = _selectedPlan!.defaultFee;
-    final pt = double.tryParse(_ptFeeController.text.trim()) ?? 0.0;
-    _feeController.text = (base + pt).toStringAsFixed(0);
   }
 
   Future<void> _onPackageSelected(PackageModel? pkg) async {
@@ -142,7 +139,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
       _selectedPackage = pkg;
       _plans = plans;
       _selectedPlan = plans.isNotEmpty ? plans.first : null;
-      _recalculateTotalFee();
+      if (_selectedPlan != null) {
+        _planFeeController.text = _selectedPlan!.defaultFee.toStringAsFixed(0);
+      }
     });
   }
 
@@ -174,6 +173,10 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
 
     if (widget.member == null) {
       final endDate = _startDate.add(Duration(days: _selectedPlan!.durationDays));
+      final planFee = double.tryParse(_planFeeController.text.trim()) ?? _selectedPlan!.defaultFee;
+      final ptFee = _selectedTrainer != null ? (double.tryParse(_ptFeeController.text.trim()) ?? 0.0) : 0.0;
+      final totalFee = planFee + ptFee;
+
       final membership = MembershipModel(
         id: uuid.v4(),
         memberId: memberId,
@@ -182,9 +185,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
         packageId: _selectedPlan!.packageId,
         startDate: _startDate,
         endDate: endDate,
-        feeAmount: double.tryParse(_feeController.text.trim()) ?? _selectedPlan!.defaultFee,
+        feeAmount: totalFee,
         trainerId: _selectedTrainer?.id,
-        personalTrainingFee: double.tryParse(_ptFeeController.text.trim()) ?? 0.0,
+        personalTrainingFee: ptFee,
         status: 'Active',
         createdAt: now,
         updatedAt: now,
@@ -358,7 +361,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                           if (val != null) {
                             setState(() {
                               _selectedPlan = val;
-                              _recalculateTotalFee();
+                              _planFeeController.text = val.defaultFee.toStringAsFixed(0);
                             });
                           }
                         },
@@ -368,6 +371,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                   const SizedBox(height: 16),
 
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Column(
@@ -406,11 +410,33 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: CustomTextField(
-                          label: 'TOTAL FEE (₹) *',
-                          controller: _feeController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          validator: (v) => FormValidators.validateAmount(v, fieldName: 'Total fee'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CustomTextField(
+                              label: 'PLAN PRICE (₹) *',
+                              controller: _planFeeController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              hint: _selectedPlan?.defaultFee.toStringAsFixed(0) ?? '1500',
+                              validator: (v) => FormValidators.validateAmount(v, fieldName: 'Plan price'),
+                              onChanged: (_) => setState(() {}),
+                            ),
+                            if (_selectedPlan != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                _currentPlanFee != _selectedPlan!.defaultFee
+                                    ? 'Custom rate (Standard: ₹${_selectedPlan!.defaultFee.toStringAsFixed(0)})'
+                                    : 'Standard rate: ₹${_selectedPlan!.defaultFee.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: _currentPlanFee != _selectedPlan!.defaultFee
+                                      ? AppTheme.neonLime
+                                      : AppTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ],
@@ -452,7 +478,6 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                             if (val == null) {
                               _ptFeeController.text = '0';
                             }
-                            _recalculateTotalFee();
                           });
                         },
                       ),
@@ -467,12 +492,94 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       hint: '0',
                       validator: (v) => FormValidators.validateAmount(v, fieldName: 'Personal training fee', allowZero: true),
-                      onChanged: (val) {
-                        _recalculateTotalFee();
+                      onChanged: (_) {
+                        setState(() {});
                       },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                   ],
+
+                  // Total Membership Fee Summary Card
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.darkSurface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.25)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'TOTAL MEMBERSHIP FEE',
+                              style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                            ),
+                            if (_selectedPlan != null && (_currentPlanFee != _selectedPlan!.defaultFee))
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.neonLime.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.4)),
+                                ),
+                                child: Text(
+                                  'Custom Rate',
+                                  style: TextStyle(color: AppTheme.neonLime, fontSize: 10, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Plan: ${_selectedPlan?.name ?? 'Membership'}',
+                              style: const TextStyle(color: AppTheme.textWhite, fontSize: 13),
+                            ),
+                            Text(
+                              '₹${_currentPlanFee.toStringAsFixed(0)}',
+                              style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                        if (_selectedTrainer != null && _currentPtFee > 0) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Personal Training (${_selectedTrainer!.name})',
+                                style: const TextStyle(color: AppTheme.textWhite, fontSize: 13),
+                              ),
+                              Text(
+                                '₹${_currentPtFee.toStringAsFixed(0)}',
+                                style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const Divider(color: AppTheme.darkBorder, height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Total to Collect:',
+                              style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 14),
+                            ),
+                            Text(
+                              '₹${_totalFee.toStringAsFixed(0)}',
+                              style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 18),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                 ],
 
                 CustomTextField(

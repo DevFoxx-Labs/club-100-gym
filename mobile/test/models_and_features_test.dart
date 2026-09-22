@@ -671,5 +671,133 @@ void main() {
       expect(itemEmpty.displayTitle, 'Maintenance Notice');
     });
   });
+
+  group('Custom Plan Pricing & Fee Breakdown Tests', () {
+    test('Calculates total membership fee correctly from custom plan fee and PT fee', () {
+      const defaultPlanFee = 2000.0;
+      const customPlanFee = 1800.0;
+      const ptFee = 1000.0;
+      const totalFee = customPlanFee + ptFee; // 2800.0
+
+      final membership = MembershipModel(
+        id: 'mem-custom-1',
+        memberId: 'm-1',
+        planId: 'plan-monthly',
+        planName: 'Monthly Gold',
+        startDate: DateTime(2026, 9, 22),
+        endDate: DateTime(2026, 10, 22),
+        feeAmount: totalFee,
+        personalTrainingFee: ptFee,
+        status: 'Active',
+        createdAt: DateTime(2026, 9, 22),
+        updatedAt: DateTime(2026, 9, 22),
+      );
+
+      // Verify fee breakdown
+      final reconstructedBasePlanFee = membership.feeAmount - membership.personalTrainingFee;
+      expect(reconstructedBasePlanFee, customPlanFee);
+      expect(membership.feeAmount, 2800.0);
+      expect(membership.personalTrainingFee, 1000.0);
+
+      // Verify custom rate detection
+      final isCustomRate = reconstructedBasePlanFee != defaultPlanFee;
+      expect(isCustomRate, isTrue);
+    });
+
+    test('Preserves standard rate when no custom discount or premium is applied', () {
+      const defaultPlanFee = 2000.0;
+      const standardPlanFee = 2000.0;
+      const ptFee = 0.0;
+      const totalFee = standardPlanFee + ptFee;
+
+      final membership = MembershipModel(
+        id: 'mem-std-1',
+        memberId: 'm-2',
+        planId: 'plan-monthly',
+        planName: 'Monthly Gold',
+        startDate: DateTime(2026, 9, 22),
+        endDate: DateTime(2026, 10, 22),
+        feeAmount: totalFee,
+        personalTrainingFee: ptFee,
+        status: 'Active',
+        createdAt: DateTime(2026, 9, 22),
+        updatedAt: DateTime(2026, 9, 22),
+      );
+
+      final reconstructedBasePlanFee = membership.feeAmount - membership.personalTrainingFee;
+      expect(reconstructedBasePlanFee, defaultPlanFee);
+      final isCustomRate = reconstructedBasePlanFee != defaultPlanFee;
+      expect(isCustomRate, isFalse);
+    });
+
+    test('Payment preserves custom plan pricing upon renewal', () {
+      const customPlanFee = 1800.0;
+      const ptFee = 1000.0;
+      const totalFee = customPlanFee + ptFee;
+
+      final initialMembership = MembershipModel(
+        id: 'mem-custom-1',
+        memberId: 'm-1',
+        planId: 'plan-monthly',
+        planName: 'Monthly Gold',
+        startDate: DateTime(2026, 9, 22),
+        endDate: DateTime(2026, 10, 22),
+        feeAmount: totalFee,
+        personalTrainingFee: ptFee,
+        status: 'Active',
+        createdAt: DateTime(2026, 9, 22),
+        updatedAt: DateTime(2026, 9, 22),
+      );
+
+      // Simulate renewal with custom fee amount
+      final paymentAmount = initialMembership.feeAmount;
+      final effectivePtFee = (initialMembership.personalTrainingFee <= paymentAmount)
+          ? initialMembership.personalTrainingFee
+          : paymentAmount;
+
+      final renewedMembership = initialMembership.copyWith(
+        startDate: DateTime(2026, 10, 22),
+        endDate: DateTime(2026, 11, 22),
+        feeAmount: paymentAmount,
+        personalTrainingFee: effectivePtFee,
+        updatedAt: DateTime(2026, 10, 22),
+      );
+
+      expect(renewedMembership.feeAmount, 2800.0);
+      expect(renewedMembership.personalTrainingFee, 1000.0);
+      final renewedBasePlanFee = renewedMembership.feeAmount - renewedMembership.personalTrainingFee;
+      expect(renewedBasePlanFee, customPlanFee);
+    });
+
+    test('Plan change records audit log with custom fee transitions', () {
+      const oldFee = 2800.0;
+      const newCustomPlanFee = 15000.0; // Standard annual might be 18000
+      const newPtFee = 3000.0;
+      const newTotalFee = newCustomPlanFee + newPtFee; // 18000.0
+
+      final log = MembershipChangeLogModel(
+        id: 'log-1',
+        memberId: 'm-1',
+        previousMembershipId: 'mem-custom-1',
+        newMembershipId: 'mem-custom-2',
+        previousPlanNameSnapshot: 'Monthly Gold',
+        newPlanNameSnapshot: 'Annual Platinum',
+        previousFeeAmount: oldFee,
+        newFeeAmount: newTotalFee,
+        reason: 'Upgraded to Annual with negotiated discount',
+        changedAt: DateTime.now().toIso8601String(),
+      );
+
+      expect(log.previousFeeAmount, 2800.0);
+      expect(log.newFeeAmount, 18000.0);
+      expect(log.reason, 'Upgraded to Annual with negotiated discount');
+
+      final map = log.toMap();
+      final restored = MembershipChangeLogModel.fromMap(map);
+      expect(restored.previousFeeAmount, 2800.0);
+      expect(restored.newFeeAmount, 18000.0);
+    });
+  });
 }
+
 

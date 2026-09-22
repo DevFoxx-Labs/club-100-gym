@@ -8,11 +8,13 @@ import '../../core/utils/member_photo_picker.dart';
 import '../../data/models/member_model.dart';
 import '../../data/models/membership_model.dart';
 import '../../data/models/payment_model.dart';
+import '../../data/models/plan_model.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/models/membership_change_log_model.dart';
 import '../../data/models/trainer_change_log_model.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/payment_repository.dart';
+import '../../data/repositories/plan_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
 import '../../shared/widgets/status_badge.dart';
@@ -37,11 +39,13 @@ class MemberProfileScreen extends StatefulWidget {
 class _MemberProfileScreenState extends State<MemberProfileScreen> {
   final _memberRepo = MemberRepository();
   final _paymentRepo = PaymentRepository();
+  final _planRepo = PlanRepository();
   final _settingsRepo = SettingsRepository();
   final _trainerRepo = TrainerRepository();
 
   MemberModel? _member;
   MembershipModel? _membership;
+  PlanModel? _plan;
   TrainerModel? _trainer;
   List<PaymentModel> _payments = [];
   List<MembershipChangeLogModel> _planChangeLogs = [];
@@ -87,11 +91,17 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     final planLogs = await _memberRepo.getMembershipChangeLogs(widget.memberId);
     final trainerLogs = await _trainerRepo.getTrainerChangeLogsForMember(widget.memberId);
 
+    PlanModel? plan;
+    if (membership != null) {
+      plan = await _planRepo.getPlanById(membership.planId);
+    }
+
     if (mounted) {
       setState(() {
         _gymName = gym.name;
         _member = member;
         _membership = membership;
+        _plan = plan;
         _trainer = trainer;
         _payments = payments;
         _planChangeLogs = planLogs;
@@ -597,6 +607,28 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                         _DetailRow(
                           label: 'Base Plan Fee',
                           value: '₹${((_membership!.feeAmount >= _membership!.personalTrainingFee) ? (_membership!.feeAmount - _membership!.personalTrainingFee) : _membership!.feeAmount).toStringAsFixed(0)}',
+                          trailingBadge: (_plan != null &&
+                                  ((_membership!.feeAmount >= _membership!.personalTrainingFee)
+                                          ? (_membership!.feeAmount - _membership!.personalTrainingFee)
+                                          : _membership!.feeAmount) !=
+                                      _plan!.defaultFee)
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.neonLime.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.4)),
+                                  ),
+                                  child: Text(
+                                    'Custom',
+                                    style: TextStyle(
+                                      color: AppTheme.neonLime,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                )
+                              : null,
                         ),
                         const Divider(color: AppTheme.darkBorder, height: 18),
                         _DetailRow(label: 'Personal Training Fee', value: '₹${_membership!.personalTrainingFee.toStringAsFixed(0)}'),
@@ -604,7 +636,28 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                         _DetailRow(label: 'Total Membership Fee', value: '₹${_membership!.feeAmount.toStringAsFixed(0)}', isHighlight: true),
                       ] else ...[
                         const Divider(color: AppTheme.darkBorder, height: 18),
-                        _DetailRow(label: 'Membership Fee', value: '₹${_membership!.feeAmount.toStringAsFixed(0)}'),
+                        _DetailRow(
+                          label: 'Membership Fee',
+                          value: '₹${_membership!.feeAmount.toStringAsFixed(0)}',
+                          trailingBadge: (_plan != null && _membership!.feeAmount != _plan!.defaultFee)
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.neonLime.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.4)),
+                                  ),
+                                  child: Text(
+                                    'Custom',
+                                    style: TextStyle(
+                                      color: AppTheme.neonLime,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                )
+                              : null,
+                        ),
                       ],
                       if (_trainer != null) ...[
                         const Divider(color: AppTheme.darkBorder, height: 18),
@@ -817,11 +870,13 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
   final bool isHighlight;
+  final Widget? trailingBadge;
 
   const _DetailRow({
     required this.label,
     required this.value,
     this.isHighlight = false,
+    this.trailingBadge,
   });
 
   @override
@@ -840,18 +895,25 @@ class _DetailRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: isHighlight ? AppTheme.neonLime : AppTheme.textWhite,
-              fontSize: isHighlight ? 14 : 13,
-              fontWeight: FontWeight.bold,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (trailingBadge != null) ...[
+              trailingBadge!,
+              const SizedBox(width: 6),
+            ],
+            Text(
+              value,
+              textAlign: TextAlign.end,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isHighlight ? AppTheme.neonLime : AppTheme.textWhite,
+                fontSize: isHighlight ? 14 : 13,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
+          ],
         ),
       ],
     );
