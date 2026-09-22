@@ -4,6 +4,7 @@ import '../../data/models/gym_info_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/events/events_calendar_screen.dart';
+import '../../features/expenses/expenses_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/receipts/qr_scanner_screen.dart';
 import '../../features/settings/archived_members_screen.dart';
@@ -194,6 +195,14 @@ class _AppDrawerState extends State<AppDrawer> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsCalendarScreen()));
+              },
+            ),
+            _buildDrawerTile(
+              icon: Icons.receipt_long_outlined,
+              title: 'Expense Tracker',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen()));
               },
             ),
             _buildDrawerTile(

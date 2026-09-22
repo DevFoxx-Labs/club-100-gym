@@ -21,7 +21,7 @@ class AppDatabase {
 
     final db = await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -68,6 +68,11 @@ class AppDatabase {
       await db.execute(DbTables.announcements);
     } catch (_) {}
 
+    // Ensure expenses table exists for the Expense Tracker feature
+    try {
+      await db.execute(DbTables.expenses);
+    } catch (_) {}
+
     return db;
   }
 
@@ -89,6 +94,7 @@ class AppDatabase {
     await db.execute(DbTables.notificationSettings);
     await db.execute(DbTables.appSettings);
     await db.execute(DbTables.announcements);
+    await db.execute(DbTables.expenses);
 
     // Seed default packages and plans
     const uuid = Uuid();
@@ -226,6 +232,12 @@ class AppDatabase {
         await db.execute(DbTables.announcements);
       } catch (_) {}
     }
+
+    if (oldVersion < 6) {
+      try {
+        await db.execute(DbTables.expenses);
+      } catch (_) {}
+    }
   }
 
   Future<void> close() async {
@@ -251,6 +263,7 @@ class AppDatabase {
     await db.delete('receipts');
     await db.delete('notifications');
     await db.delete('announcements');
+    await db.delete('expenses');
     await db.delete('app_settings');
   }
 }

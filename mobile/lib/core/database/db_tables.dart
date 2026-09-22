@@ -242,6 +242,20 @@ class DbTables {
     );
   ''';
 
+  static const String expenses = '''
+    CREATE TABLE IF NOT EXISTS expenses (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'Other',
+      amount REAL NOT NULL,
+      expenseDate TEXT NOT NULL,
+      paymentMethod TEXT NOT NULL DEFAULT 'Cash',
+      notes TEXT,
+      createdAt TEXT NOT NULL,
+      updatedAt TEXT NOT NULL
+    );
+  ''';
+
   static const String membershipChangeLogs = '''
     CREATE TABLE IF NOT EXISTS membership_change_logs (
       id TEXT PRIMARY KEY,

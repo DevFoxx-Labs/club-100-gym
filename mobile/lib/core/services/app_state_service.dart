@@ -9,6 +9,7 @@ enum AppStateEventType {
   packagesChanged,
   eventsChanged,
   notificationsChanged,
+  expensesChanged,
   all,
 }
 
@@ -65,6 +66,12 @@ class AppStateService extends ChangeNotifier {
 
   void notifyNotificationsChanged() {
     _lastEventType = AppStateEventType.notificationsChanged;
+    _lastUpdatedAt = DateTime.now();
+    notifyListeners();
+  }
+
+  void notifyExpensesChanged() {
+    _lastEventType = AppStateEventType.expensesChanged;
     _lastUpdatedAt = DateTime.now();
     notifyListeners();
   }
