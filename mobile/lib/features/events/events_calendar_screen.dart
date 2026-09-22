@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../data/models/event_model.dart';
 import '../../data/repositories/event_repository.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/notifications/notification_service.dart';
 import 'event_form_screen.dart';
 
 class EventsCalendarScreen extends StatefulWidget {
@@ -52,6 +53,7 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
         _isLoading = false;
       });
     }
+    NotificationService().syncAllUpcomingEventNotifications();
   }
 
   void _onDateSelected(DateTime date) async {
@@ -309,6 +311,11 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
     final color = event.colorValue != null ? Color(event.colorValue!) : const Color(0xFFD4FF00);
 
     return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.08), width: 1),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () async {
@@ -320,53 +327,84 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
         },
         child: IntrinsicHeight(
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                width: 6,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    bottomLeft: Radius.circular(16),
-                  ),
-                ),
+                width: 5,
+                color: color,
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Text(
                               event.title,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15.5,
+                                color: Colors.white,
+                                height: 1.25,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Text(
-                            timeStr,
-                            style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: color.withValues(alpha: 0.35)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.access_time_filled, size: 11, color: color),
+                                const SizedBox(width: 4),
+                                Text(
+                                  timeStr,
+                                  style: TextStyle(
+                                    color: color,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                      if (event.description != null && event.description!.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                      if (event.description != null && event.description!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 6),
                         Text(
-                          event.description!,
-                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                          event.description!.trim(),
+                          style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.3),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                      if (event.location != null && event.location!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
+                      if (event.location != null && event.location!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(Icons.location_on_outlined, size: 14, color: Colors.white54),
+                            Icon(Icons.location_on_rounded, size: 14, color: color.withValues(alpha: 0.85)),
                             const SizedBox(width: 4),
-                            Text(
-                              event.location!,
-                              style: const TextStyle(color: Colors.white54, fontSize: 12),
+                            Expanded(
+                              child: Text(
+                                event.location!.trim(),
+                                style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
@@ -376,8 +414,10 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
                 ),
               ),
               const Padding(
-                padding: EdgeInsets.only(right: 12),
-                child: Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white38),
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: Center(
+                  child: Icon(Icons.arrow_forward_ios, size: 13, color: Colors.white38),
+                ),
               ),
             ],
           ),

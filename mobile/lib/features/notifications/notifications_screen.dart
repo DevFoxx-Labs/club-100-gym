@@ -5,8 +5,10 @@ import '../../core/notifications/notification_service.dart';
 import '../../core/services/app_state_service.dart';
 import '../../data/models/event_model.dart';
 import '../../data/models/member_model.dart';
+import '../../data/models/notification_model.dart';
 import '../../data/repositories/event_repository.dart';
 import '../../data/repositories/member_repository.dart';
+import '../../data/repositories/notification_repository.dart';
 import '../events/event_form_screen.dart';
 import '../members/member_profile_screen.dart';
 import '../settings/notification_settings_screen.dart';
@@ -21,6 +23,7 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final _memberRepo = MemberRepository();
   final _eventRepo = EventRepository();
+  final _notificationRepo = NotificationRepository();
 
   List<Map<String, dynamic>> _allNotifications = [];
   String _selectedCategory = 'All'; // 'All', 'Events', 'Fee Dues', 'Overdue'
@@ -57,110 +60,182 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final today = DateTime(now.year, now.month, now.day);
 
     // 1. Load Fee & Membership Reminders
-    final members = await _memberRepo.getMembers();
-    for (var m in members) {
-      final ms = await _memberRepo.getLatestMembership(m.id);
-      if (ms != null) {
-        final endDate = DateTime(ms.endDate.year, ms.endDate.month, ms.endDate.day);
-        final diffDays = endDate.difference(today).inDays;
+    try {
+      final members = await _memberRepo.getMembers();
+      for (var m in members) {
+        final ms = await _memberRepo.getLatestMembership(m.id);
+        if (ms != null) {
+          final endDate = DateTime(ms.endDate.year, ms.endDate.month, ms.endDate.day);
+          final diffDays = endDate.difference(today).inDays;
 
-        if (diffDays < 0) {
-          items.add({
-            'category': 'Overdue',
-            'type': 'OVERDUE',
-            'member': m,
-            'title': 'Fee Overdue: ${m.name}',
-            'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} is overdue by ${diffDays.abs()} days.',
-            'date': endDate,
-            'priority': 1,
-          });
-        } else if (diffDays == 0) {
-          items.add({
-            'category': 'Fee Dues',
-            'type': 'DUE_TODAY',
-            'member': m,
-            'title': 'Fee Due Today: ${m.name}',
-            'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} expires and is due today.',
-            'date': endDate,
-            'priority': 2,
-          });
-        } else if (diffDays <= 7) {
-          items.add({
-            'category': 'Fee Dues',
-            'type': 'DUE_SOON',
-            'member': m,
-            'title': 'Fee Due Soon: ${m.name}',
-            'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} is due in $diffDays days.',
-            'date': endDate,
-            'priority': 4,
-          });
+          if (diffDays < 0) {
+            items.add({
+              'id': 'fee_overdue_${m.id}',
+              'category': 'Overdue',
+              'type': 'OVERDUE',
+              'member': m,
+              'title': 'Fee Overdue: ${m.name}',
+              'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} is overdue by ${diffDays.abs()} days.',
+              'date': endDate,
+              'priority': 1,
+              'isRead': false,
+            });
+          } else if (diffDays == 0) {
+            items.add({
+              'id': 'fee_due_${m.id}',
+              'category': 'Fee Dues',
+              'type': 'DUE_TODAY',
+              'member': m,
+              'title': 'Fee Due Today: ${m.name}',
+              'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} expires and is due today.',
+              'date': endDate,
+              'priority': 2,
+              'isRead': false,
+            });
+          } else if (diffDays <= 7) {
+            items.add({
+              'id': 'fee_soon_${m.id}',
+              'category': 'Fee Dues',
+              'type': 'DUE_SOON',
+              'member': m,
+              'title': 'Fee Due Soon: ${m.name}',
+              'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} is due in $diffDays days.',
+              'date': endDate,
+              'priority': 4,
+              'isRead': false,
+            });
+          }
         }
       }
+    } catch (e) {
+      debugPrint('Error loading member fee reminders: $e');
     }
 
     // 2. Load Gym Events & Classes Reminders
-    final events = await _eventRepo.getUpcomingEvents(daysAhead: 30);
-    final timeFormat = DateFormat('hh:mm a');
-    final dateFormat = DateFormat('EEE, dd MMM');
+    try {
+      final events = await _eventRepo.getAllEvents();
+      final timeFormat = DateFormat('hh:mm a');
+      final dateFormat = DateFormat('EEE, dd MMM');
 
-    for (var event in events) {
-      final start = DateTime.tryParse(event.startTime);
-      final end = DateTime.tryParse(event.endTime);
-      if (start == null || end == null) continue;
+      for (var event in events) {
+        final start = DateTime.tryParse(event.startTime);
+        final end = DateTime.tryParse(event.endTime);
+        if (start == null || end == null) continue;
 
-      // Skip past events
-      if (end.isBefore(now)) continue;
+        final isToday = start.year == now.year && start.month == now.month && start.day == now.day;
+        final isLive = start.isBefore(now) && end.isAfter(now);
+        final isEndedToday = isToday && end.isBefore(now);
+        final isUpcoming = start.isAfter(now) && start.difference(now).inDays <= 30;
+        final isRecent = !isToday && start.isBefore(now) && now.difference(start).inDays <= 3;
 
-      final isLive = start.isBefore(now) && end.isAfter(now);
-      final isToday = start.year == now.year && start.month == now.month && start.day == now.day;
+        // Keep all today's events (even if earlier today), upcoming within 30 days, or recent within 3 days
+        if (!isToday && !isUpcoming && !isRecent) continue;
 
-      final locationStr = (event.location != null && event.location!.trim().isNotEmpty)
-          ? ' • ${event.location!.trim()}'
-          : '';
+        final locationStr = (event.location != null && event.location!.trim().isNotEmpty)
+            ? ' • ${event.location!.trim()}'
+            : '';
 
-      String title;
-      String timeDisplay;
-      String badge;
-      int priority;
+        String title;
+        String timeDisplay;
+        String badge;
+        int priority;
 
-      if (isLive) {
-        title = 'Live Now: ${event.title}';
-        timeDisplay = 'Started at ${timeFormat.format(start)} (Ends ${timeFormat.format(end)})$locationStr';
-        badge = 'LIVE';
-        priority = 0; // Highest priority
-      } else if (isToday) {
-        title = 'Event Today: ${event.title}';
-        timeDisplay = 'Today at ${timeFormat.format(start)} - ${timeFormat.format(end)}$locationStr';
-        badge = 'TODAY';
-        priority = 1;
-      } else {
-        title = 'Upcoming Event: ${event.title}';
-        timeDisplay = '${dateFormat.format(start)} at ${timeFormat.format(start)}$locationStr';
-        badge = 'UPCOMING';
-        priority = 3;
+        if (isLive) {
+          title = 'Live Now: ${event.title}';
+          timeDisplay = 'Started at ${timeFormat.format(start)} (Ends ${timeFormat.format(end)})$locationStr';
+          badge = 'LIVE';
+          priority = 0; // Highest priority
+        } else if (isToday) {
+          if (isEndedToday) {
+            title = 'Gym Event: ${event.title}';
+            timeDisplay = 'Today at ${timeFormat.format(start)} - ${timeFormat.format(end)}$locationStr';
+            badge = 'TODAY';
+            priority = 2;
+          } else {
+            title = 'Event Today: ${event.title}';
+            timeDisplay = 'Today at ${timeFormat.format(start)} - ${timeFormat.format(end)}$locationStr';
+            badge = 'TODAY';
+            priority = 1;
+          }
+        } else if (isUpcoming) {
+          title = 'Upcoming Event: ${event.title}';
+          timeDisplay = '${dateFormat.format(start)} at ${timeFormat.format(start)}$locationStr';
+          badge = 'UPCOMING';
+          priority = 3;
+        } else {
+          title = 'Recent Event: ${event.title}';
+          timeDisplay = '${dateFormat.format(start)} at ${timeFormat.format(start)}$locationStr';
+          badge = 'RECENT';
+          priority = 5;
+        }
+
+        items.add({
+          'id': 'event_${event.id}',
+          'category': 'Events',
+          'type': isLive ? 'EVENT_LIVE' : (isToday ? 'EVENT_TODAY' : 'EVENT_UPCOMING'),
+          'event': event,
+          'title': title,
+          'body': timeDisplay,
+          'badge': badge,
+          'color': event.colorValue != null ? Color(event.colorValue!) : AppTheme.neonLime,
+          'date': start,
+          'priority': priority,
+          'isRead': isEndedToday || isRecent,
+        });
       }
-
-      items.add({
-        'category': 'Events',
-        'type': isLive ? 'EVENT_LIVE' : (isToday ? 'EVENT_TODAY' : 'EVENT_UPCOMING'),
-        'event': event,
-        'title': title,
-        'body': timeDisplay,
-        'badge': badge,
-        'color': event.colorValue != null ? Color(event.colorValue!) : AppTheme.neonLime,
-        'date': start,
-        'priority': priority,
-      });
+    } catch (e) {
+      debugPrint('Error loading event notifications: $e');
     }
 
-    // Sort by priority, then date
+    // 3. Load Logged / Push Notifications from NotificationRepository
+    try {
+      final persistedNotifs = await _notificationRepo.getAllNotifications(limit: 50);
+      for (var p in persistedNotifs) {
+        // Avoid duplicate items if event or fee alert already added
+        if (items.any((i) => i['id'] == p.id)) continue;
+
+        String cat = 'All';
+        Color color = AppTheme.neonLime;
+        if (p.type.contains('EVENT')) {
+          cat = 'Events';
+          color = AppTheme.neonLime;
+        } else if (p.type.contains('OVERDUE')) {
+          cat = 'Overdue';
+          color = AppTheme.statusOverdue;
+        } else {
+          cat = 'Fee Dues';
+          color = AppTheme.statusDueSoon;
+        }
+
+        final date = p.triggeredAt ?? p.scheduledAt;
+        final timeStr = _formatNotificationDate(date);
+
+        items.add({
+          'id': p.id,
+          'category': cat,
+          'type': p.type,
+          'title': p.title,
+          'body': '${p.message} ($timeStr)',
+          'badge': p.type.replaceAll('_', ' '),
+          'color': color,
+          'date': date,
+          'priority': p.isRead ? 4 : 1,
+          'isRead': p.isRead,
+          'persisted': p,
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading persisted notifications: $e');
+    }
+
+    // Sort by priority, then date descending (newest first)
     items.sort((a, b) {
       final pA = a['priority'] as int? ?? 5;
       final pB = b['priority'] as int? ?? 5;
       if (pA != pB) return pA.compareTo(pB);
       final dateA = a['date'] as DateTime? ?? now;
       final dateB = b['date'] as DateTime? ?? now;
-      return dateA.compareTo(dateB);
+      return dateB.compareTo(dateA);
     });
 
     if (mounted) {
@@ -169,6 +244,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  String _formatNotificationDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24 && date.day == now.day) return DateFormat('hh:mm a').format(date);
+    return DateFormat('dd MMM, hh:mm a').format(date);
   }
 
   List<Map<String, dynamic>> get _filteredItems {
@@ -309,9 +393,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             itemCount: _filteredItems.length,
                             itemBuilder: (context, index) {
                               final item = _filteredItems[index];
-                              final isEvent = item['category'] == 'Events';
-
-                              if (isEvent) {
+                              if (item['persisted'] != null) {
+                                return _buildPersistedTile(item);
+                              } else if (item['category'] == 'Events') {
                                 return _buildEventTile(item);
                               } else {
                                 return _buildFeeTile(item);
@@ -490,6 +574,113 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ],
         ),
         trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
+      ),
+    );
+  }
+
+  Widget _buildPersistedTile(Map<String, dynamic> item) {
+    final n = item['persisted'] as NotificationItemModel;
+    final color = item['color'] as Color? ?? AppTheme.neonLime;
+    final isUnread = !(item['isRead'] as bool? ?? true);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        onTap: () async {
+          await _notificationRepo.markAsRead(n.id);
+          setState(() => item['isRead'] = true);
+
+          if (n.id.startsWith('event_')) {
+            final eventId = n.id.replaceFirst('event_', '');
+            final event = await _eventRepo.getEventById(eventId);
+            if (event != null && mounted) {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => EventFormScreen(event: event)),
+              );
+              _loadNotifications();
+            }
+          } else if (n.memberId != null && n.memberId!.isNotEmpty && mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => MemberProfileScreen(memberId: n.memberId!)),
+            );
+          }
+        },
+        leading: Stack(
+          children: [
+            CircleAvatar(
+              backgroundColor: color.withValues(alpha: 0.18),
+              child: Icon(
+                n.type.contains('EVENT') ? Icons.event_note_rounded : Icons.notifications_active_rounded,
+                color: color,
+                size: 22,
+              ),
+            ),
+            if (isUnread)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  width: 9,
+                  height: 9,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFD4FF00),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                n.title,
+                style: TextStyle(
+                  color: AppTheme.textWhite,
+                  fontWeight: isUnread ? FontWeight.w900 : FontWeight.w600,
+                  fontSize: 14,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: color.withValues(alpha: 0.5), width: 0.8),
+              ),
+              child: Text(
+                item['badge'] ?? 'ALERT',
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 9.5,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            item['body'],
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.close_rounded, size: 18, color: Colors.white38),
+          onPressed: () async {
+            await _notificationRepo.deleteNotification(n.id);
+            _loadNotifications(showSpinner: false);
+          },
+        ),
       ),
     );
   }

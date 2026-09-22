@@ -4,8 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../../data/models/event_model.dart';
+import '../../data/models/notification_model.dart';
 import '../../data/repositories/event_repository.dart';
 import '../../data/repositories/settings_repository.dart';
+import '../../data/repositories/notification_repository.dart';
+import '../services/app_state_service.dart';
+import 'package:uuid/uuid.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -14,8 +18,50 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  Future<void> init() async {
+  /// Configures tz.local to match the device's system timezone and offset.
+  static void configureLocalTimeZone() {
     tz.initializeTimeZones();
+    try {
+      final now = DateTime.now();
+      final offsetMs = now.timeZoneOffset.inMilliseconds;
+      final timeZoneName = now.timeZoneName;
+
+      // 1. Direct match by name
+      if (tz.timeZoneDatabase.locations.containsKey(timeZoneName)) {
+        tz.setLocalLocation(tz.getLocation(timeZoneName));
+        return;
+      }
+
+      // 2. Known common regions matching current offset
+      const preferred = [
+        'Asia/Kolkata', 'Asia/Calcutta', 'UTC', 'America/New_York',
+        'America/Los_Angeles', 'America/Chicago', 'Europe/London',
+        'Europe/Paris', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo'
+      ];
+      for (final p in preferred) {
+        if (tz.timeZoneDatabase.locations.containsKey(p)) {
+          final loc = tz.getLocation(p);
+          if (loc.currentTimeZone.offset == offsetMs) {
+            tz.setLocalLocation(loc);
+            return;
+          }
+        }
+      }
+
+      // 3. Fallback: Any location matching device offset
+      for (final loc in tz.timeZoneDatabase.locations.values) {
+        if (loc.currentTimeZone.offset == offsetMs) {
+          tz.setLocalLocation(loc);
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('configureLocalTimeZone fallback: $e');
+    }
+  }
+
+  Future<void> init() async {
+    configureLocalTimeZone();
 
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notification');
@@ -72,6 +118,68 @@ class NotificationService {
       notificationDetails,
       payload: payload,
     );
+
+    // Persist to notification repository so it appears on Notifications Screen
+    try {
+      await NotificationRepository().insertNotification(
+        NotificationItemModel(
+          id: const Uuid().v4(),
+          type: 'ALERT',
+          title: title,
+          message: body,
+          scheduledAt: DateTime.now(),
+          triggeredAt: DateTime.now(),
+          isRead: false,
+          createdAt: DateTime.now(),
+        ),
+      );
+      AppStateService.instance.notifyNotificationsChanged();
+    } catch (_) {}
+  }
+
+  /// Safely schedules a zoned notification with fallback to inexact alarms if exact is disallowed.
+  Future<void> _safeZonedSchedule({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+    required NotificationDetails notificationDetails,
+    String? payload,
+  }) async {
+    final now = DateTime.now();
+    if (scheduledDate.isBefore(now)) return;
+
+    final tzDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
+    try {
+      await _notificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tzDateTime,
+        notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint('Exact alarm scheduling failed, trying inexact: $e');
+      try {
+        await _notificationsPlugin.zonedSchedule(
+          id,
+          title,
+          body,
+          tzDateTime,
+          notificationDetails,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: payload,
+        );
+      } catch (e2) {
+        debugPrint('Inexact alarm scheduling failed: $e2');
+      }
+    }
   }
 
   Future<void> scheduleNotification({
@@ -81,8 +189,6 @@ class NotificationService {
     required DateTime scheduledDate,
     String? payload,
   }) async {
-    if (scheduledDate.isBefore(DateTime.now())) return;
-
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'gym_reminders_channel',
       'Fee & Membership Reminders',
@@ -97,75 +203,156 @@ class NotificationService {
       iOS: DarwinNotificationDetails(),
     );
 
-    await _notificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledDate, tz.local),
-      notificationDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+    await _safeZonedSchedule(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: scheduledDate,
+      notificationDetails: notificationDetails,
       payload: payload,
     );
   }
 
-  /// Schedules a reminder notification for an upcoming event/class.
+  /// Schedules multi-tier reminder notifications for an upcoming event/class.
+  /// Tier 1: 30 minutes before start
+  /// Tier 2: 15 minutes before start (or immediately if starting in <15m)
+  /// Tier 3: Exactly at event start time
   Future<void> scheduleEventNotification(EventModel event) async {
     final start = DateTime.tryParse(event.startTime);
     if (start == null) return;
 
     final now = DateTime.now();
-    if (start.isBefore(now)) return; // Event already started or ended
+    // If event has already started more than 15 minutes ago, skip
+    if (now.difference(start) > const Duration(minutes: 15)) return;
 
     final settings = await SettingsRepository().getNotificationSettings();
     if (settings['eventReminders'] == false) return;
 
-    // Calculate alert time: default 30 minutes before, or earlier if within 30 min window
     final bool alert30m = settings['event30m'] ?? true;
-    DateTime notifyTime = alert30m ? start.subtract(const Duration(minutes: 30)) : start;
-    if (notifyTime.isBefore(now)) {
-      // If event starts in less than 30 mins, alert in 10 seconds so user gets notified
-      notifyTime = now.add(const Duration(seconds: 10));
-    }
+    final bool alert15m = settings['event15m'] ?? true;
+    final bool alertAtStart = settings['eventAtStart'] ?? true;
 
-    final int notifId = event.id.hashCode.abs() % 100000 + 10000;
+    final int baseId = event.id.hashCode.abs() % 100000 + 10000;
     final timeStr = DateFormat('hh:mm a').format(start);
     final locationStr = (event.location != null && event.location!.trim().isNotEmpty)
         ? ' • ${event.location!.trim()}'
         : '';
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails eventAndroidDetails = AndroidNotificationDetails(
       'gym_events_channel',
       'Gym Events & Classes',
       channelDescription: 'Reminders and notifications for scheduled gym events and classes',
-      importance: Importance.high,
+      importance: Importance.max,
       priority: Priority.high,
+      enableVibration: true,
+      playSound: true,
       color: Color(0xFFD4FF00),
     );
 
-    const NotificationDetails notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: DarwinNotificationDetails(),
+    const NotificationDetails eventNotificationDetails = NotificationDetails(
+      android: eventAndroidDetails,
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
     );
 
-    await _notificationsPlugin.zonedSchedule(
-      notifId,
-      'Gym Event: ${event.title}',
-      'Starts at $timeStr$locationStr. Don\'t miss out!',
-      tz.TZDateTime.from(notifyTime, tz.local),
-      notificationDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: 'event:${event.id}',
-    );
+    // 1. T-30 minutes reminder (ID: baseId)
+    if (alert30m) {
+      final notify30m = start.subtract(const Duration(minutes: 30));
+      if (notify30m.isAfter(now)) {
+        await _safeZonedSchedule(
+          id: baseId,
+          title: 'Upcoming Gym Event: ${event.title}',
+          body: 'Starts in 30 minutes at $timeStr$locationStr. Get ready!',
+          scheduledDate: notify30m,
+          notificationDetails: eventNotificationDetails,
+          payload: 'event:${event.id}',
+        );
+      }
+    }
+
+    // 2. T-15 minutes reminder (ID: baseId + 1)
+    if (alert15m) {
+      final notify15m = start.subtract(const Duration(minutes: 15));
+      if (notify15m.isAfter(now)) {
+        await _safeZonedSchedule(
+          id: baseId + 1,
+          title: 'Gym Event Starting Soon: ${event.title}',
+          body: 'Starts in 15 minutes at $timeStr$locationStr!',
+          scheduledDate: notify15m,
+          notificationDetails: eventNotificationDetails,
+          payload: 'event:${event.id}',
+        );
+      } else if (start.isAfter(now)) {
+        // Event starts in <= 15 minutes! Send an immediate alert so user doesn't miss it!
+        final remainingMins = start.difference(now).inMinutes;
+        final countdownText = remainingMins <= 1 ? 'in 1 minute' : 'in $remainingMins minutes';
+        await _safeZonedSchedule(
+          id: baseId + 1,
+          title: 'Gym Event Starting Soon: ${event.title}',
+          body: 'Starts $countdownText at $timeStr$locationStr!',
+          scheduledDate: now.add(const Duration(seconds: 4)),
+          notificationDetails: eventNotificationDetails,
+          payload: 'event:${event.id}',
+        );
+      }
+    }
+
+    // 3. At Event Start Time reminder (ID: baseId + 2)
+    if (alertAtStart) {
+      if (start.isAfter(now)) {
+        await _safeZonedSchedule(
+          id: baseId + 2,
+          title: 'Gym Event Starting Now: ${event.title}',
+          body: '${event.title} is starting now$locationStr. Join in!',
+          scheduledDate: start,
+          notificationDetails: eventNotificationDetails,
+          payload: 'event:${event.id}',
+        );
+      } else if (now.difference(start) < const Duration(minutes: 10)) {
+        // Event started in last few minutes: notify user that it's live
+        await _safeZonedSchedule(
+          id: baseId + 2,
+          title: 'Gym Event In Progress: ${event.title}',
+          body: '${event.title} is now in progress$locationStr.',
+          scheduledDate: now.add(const Duration(seconds: 3)),
+          notificationDetails: eventNotificationDetails,
+          payload: 'event:${event.id}',
+        );
+      }
+    }
+
+    // Persist event notification entry so it is visible in the in-app notification screen
+    try {
+      await NotificationRepository().insertNotification(
+        NotificationItemModel(
+          id: 'event_${event.id}',
+          memberId: event.trainerId,
+          type: 'EVENT',
+          title: 'Gym Event: ${event.title}',
+          message: 'Starts at $timeStr$locationStr. Don\'t miss out!',
+          scheduledAt: start,
+          triggeredAt: now.isAfter(start) ? start : null,
+          isRead: false,
+          createdAt: DateTime.now(),
+        ),
+      );
+      AppStateService.instance.notifyNotificationsChanged();
+    } catch (_) {}
   }
 
-  /// Cancels any scheduled notification for the given event ID.
+  /// Cancels all scheduled notifications for the given event ID.
   Future<void> cancelEventNotification(String eventId) async {
-    final int notifId = eventId.hashCode.abs() % 100000 + 10000;
-    await cancelNotification(notifId);
+    final int baseId = eventId.hashCode.abs() % 100000 + 10000;
+    await cancelNotification(baseId);
+    await cancelNotification(baseId + 1);
+    await cancelNotification(baseId + 2);
+    try {
+      await NotificationRepository().deleteNotification('event_$eventId');
+      AppStateService.instance.notifyNotificationsChanged();
+    } catch (_) {}
   }
 
   /// Synchronizes scheduled notifications for all upcoming gym events.
@@ -181,10 +368,18 @@ class NotificationService {
   }
 
   Future<void> cancelNotification(int id) async {
-    await _notificationsPlugin.cancel(id);
+    try {
+      await _notificationsPlugin.cancel(id);
+    } catch (e) {
+      debugPrint('cancelNotification error: $e');
+    }
   }
 
   Future<void> cancelAllNotifications() async {
-    await _notificationsPlugin.cancelAll();
+    try {
+      await _notificationsPlugin.cancelAll();
+    } catch (e) {
+      debugPrint('cancelAllNotifications error: $e');
+    }
   }
 }

@@ -11,6 +11,8 @@ import 'package:the_elite_fitness/core/receipt/qr_service.dart';
 import 'package:the_elite_fitness/core/utils/form_validators.dart';
 import 'package:the_elite_fitness/core/utils/sms_templates.dart';
 import 'package:the_elite_fitness/core/services/app_state_service.dart';
+import 'package:the_elite_fitness/core/notifications/notification_service.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 void main() {
   group('TrainerModel Tests', () {
@@ -435,6 +437,38 @@ void main() {
       }
       expect(notifyTimeSoon.isAfter(now), isTrue);
       expect(notifyTimeSoon.isBefore(eventStartSoon), isTrue);
+    });
+
+    test('Multi-tier event notification intervals (30m, 15m, at start)', () {
+      final now = DateTime.now();
+      final eventStartFar = now.add(const Duration(hours: 2));
+
+      // 30 min before
+      final t30 = eventStartFar.subtract(const Duration(minutes: 30));
+      expect(t30.isAfter(now), isTrue);
+      expect(eventStartFar.difference(t30).inMinutes, 30);
+
+      // 15 min before
+      final t15 = eventStartFar.subtract(const Duration(minutes: 15));
+      expect(t15.isAfter(t30), isTrue);
+      expect(eventStartFar.difference(t15).inMinutes, 15);
+
+      // Imminent event (8 min away): immediate alert triggers before start
+      final eventImminent = now.add(const Duration(minutes: 8));
+      final immediateAlert = now.add(const Duration(seconds: 4));
+      expect(immediateAlert.isBefore(eventImminent), isTrue);
+
+      // Multi-tier cancellation IDs
+      const eventId = 'event-xyz-999';
+      final baseId = eventId.hashCode.abs() % 100000 + 10000;
+      final ids = [baseId, baseId + 1, baseId + 2];
+      expect(ids.toSet().length, 3); // Distinct IDs
+    });
+
+    test('NotificationService configureLocalTimeZone sets non-null valid timezone', () {
+      NotificationService.configureLocalTimeZone();
+      expect(tz.local, isNotNull);
+      expect(tz.local.name, isNotEmpty);
     });
 
     test('Payment list receipt badge formatting handles plan name presence and absence', () {

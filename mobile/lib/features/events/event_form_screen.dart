@@ -67,7 +67,11 @@ class _EventFormScreenState extends State<EventFormScreen> {
       _selectedTrainerId = e.trainerId;
       _color = e.colorValue != null ? Color(e.colorValue!) : const Color(0xFFD4FF00);
     } else {
-      _date = widget.initialDate ?? DateTime.now();
+      final now = DateTime.now();
+      _date = widget.initialDate ?? DateTime(now.year, now.month, now.day);
+      final nextHour = (now.hour + 1) % 24;
+      _startTime = TimeOfDay(hour: nextHour, minute: 0);
+      _endTime = TimeOfDay(hour: (nextHour + 1) % 24, minute: 0);
     }
     _loadTrainers();
   }

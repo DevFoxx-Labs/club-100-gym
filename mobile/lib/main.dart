@@ -28,6 +28,7 @@ void main() async {
   // Initialize notifications (non-fatal: app must still start if this fails)
   try {
     await NotificationService().init();
+    NotificationService().syncAllUpcomingEventNotifications();
   } catch (e, stackTrace) {
     debugPrint('NotificationService init failed: $e\n$stackTrace');
   }
