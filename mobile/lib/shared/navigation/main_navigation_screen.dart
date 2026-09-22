@@ -65,7 +65,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
         onNavigateToMembers: (filter) => _onTabSelected(1, filter: filter),
         onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
       ),
-      MembersListScreen(initialFilter: _membersFilter),
+      MembersListScreen(
+        initialFilter: _membersFilter,
+        onOpenDrawer: () => _scaffoldKey.currentState?.openDrawer(),
+        onNavigateToNotifications: () => _onTabSelected(3),
+      ),
       const PaymentsListScreen(),
       const NotificationsScreen(),
       const SettingsScreen(),
