@@ -5,6 +5,8 @@ import '../../features/members/members_list_screen.dart';
 import '../../features/payments/payments_list_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../core/notifications/reminder_scheduler.dart';
+import '../../core/notifications/notification_service.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final int initialIndex;
@@ -20,7 +22,7 @@ class MainNavigationScreen extends StatefulWidget {
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
+class _MainNavigationScreenState extends State<MainNavigationScreen> with WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late int _currentIndex;
   String? _membersFilter;
@@ -28,8 +30,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _currentIndex = widget.initialIndex;
     _membersFilter = widget.initialFilter;
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ReminderScheduler().runDailyScan();
+      NotificationService().syncAllUpcomingEventNotifications();
+    }
   }
 
   void _onTabSelected(int index, {String? filter}) {

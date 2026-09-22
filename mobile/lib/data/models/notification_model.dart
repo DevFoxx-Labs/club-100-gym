@@ -56,5 +56,29 @@ class NotificationItemModel {
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
     );
   }
+
+  NotificationItemModel copyWith({
+    String? id,
+    String? memberId,
+    String? type,
+    String? title,
+    String? message,
+    DateTime? scheduledAt,
+    DateTime? triggeredAt,
+    bool? isRead,
+    DateTime? createdAt,
+  }) {
+    return NotificationItemModel(
+      id: id ?? this.id,
+      memberId: memberId ?? this.memberId,
+      type: type ?? this.type,
+      title: title ?? this.title,
+      message: message ?? this.message,
+      scheduledAt: scheduledAt ?? this.scheduledAt,
+      triggeredAt: triggeredAt ?? this.triggeredAt,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
 

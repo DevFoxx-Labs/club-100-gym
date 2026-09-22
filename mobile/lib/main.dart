@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'core/theme/app_theme.dart';
 import 'core/security/security_service.dart';
 import 'core/notifications/notification_service.dart';
+import 'core/notifications/reminder_scheduler.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/auth/login_screen.dart';
 
@@ -25,10 +26,11 @@ void main() async {
     ),
   );
 
-  // Initialize notifications (non-fatal: app must still start if this fails)
+  // Initialize notifications and run automated scans (non-fatal)
   try {
     await NotificationService().init();
     NotificationService().syncAllUpcomingEventNotifications();
+    ReminderScheduler().runDailyScan();
   } catch (e, stackTrace) {
     debugPrint('NotificationService init failed: $e\n$stackTrace');
   }

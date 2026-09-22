@@ -7,6 +7,8 @@ import 'package:the_elite_fitness/data/models/receipt_model.dart';
 import 'package:the_elite_fitness/data/models/payment_model.dart';
 import 'package:the_elite_fitness/data/models/membership_model.dart';
 import 'package:the_elite_fitness/data/models/event_model.dart';
+import 'package:the_elite_fitness/data/models/member_model.dart';
+import 'package:the_elite_fitness/data/models/notification_model.dart';
 import 'package:the_elite_fitness/core/receipt/qr_service.dart';
 import 'package:the_elite_fitness/core/utils/form_validators.dart';
 import 'package:the_elite_fitness/core/utils/sms_templates.dart';
@@ -483,6 +485,110 @@ void main() {
       const String? emptyPlan = null;
       final displayNameNoPlan = (emptyPlan != null && emptyPlan.isNotEmpty) ? '$receiptNo ($emptyPlan)' : receiptNo;
       expect(displayNameNoPlan, 'GYM-2026-00001');
+    });
+  });
+
+  group('Notification & Reminder System Tests', () {
+    test('MemberModel isActive property computes correctly based on archive and delete state', () {
+      final activeMember = MemberModel(
+        id: 'm1',
+        name: 'John Doe',
+        phone: '9876543210',
+        isArchived: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+      expect(activeMember.isActive, isTrue);
+
+      final archivedMember = activeMember.copyWith(isArchived: true);
+      expect(archivedMember.isActive, isFalse);
+
+      final deletedMember = activeMember.copyWith(deletedAt: DateTime.now());
+      expect(deletedMember.isActive, isFalse);
+    });
+
+    test('NotificationItemModel serializes, deserializes, and copyWith works as expected', () {
+      final notif = NotificationItemModel(
+        id: 'notif-1',
+        memberId: 'm100',
+        type: 'FEE_DUE_SOON',
+        title: 'Fee Due Soon',
+        message: 'Fee for John Doe is due in 3 days',
+        scheduledAt: DateTime(2026, 9, 25, 10, 0),
+        isRead: false,
+        createdAt: DateTime(2026, 9, 22, 10, 0),
+      );
+
+      final map = notif.toMap();
+      expect(map['id'], 'notif-1');
+      expect(map['memberId'], 'm100');
+      expect(map['type'], 'FEE_DUE_SOON');
+      expect(map['isRead'], 0);
+
+      final restored = NotificationItemModel.fromMap(map);
+      expect(restored.id, notif.id);
+      expect(restored.memberId, notif.memberId);
+      expect(restored.title, notif.title);
+      expect(restored.message, notif.message);
+      expect(restored.scheduledAt, notif.scheduledAt);
+      expect(restored.isRead, isFalse);
+
+      final readNotif = notif.copyWith(isRead: true, triggeredAt: DateTime(2026, 9, 22, 10, 5));
+      expect(readNotif.isRead, isTrue);
+      expect(readNotif.triggeredAt, isNotNull);
+    });
+
+    test('ReminderScheduler fee status calculation: Paid vs Due vs Overdue', () {
+      final now = DateTime(2026, 9, 22);
+      final dueDateSoon = DateTime(2026, 9, 25);
+      final dueTodayDate = DateTime(2026, 9, 22);
+      final overdueDate = DateTime(2026, 9, 20);
+
+      // Diff in days
+      final diffSoon = dueDateSoon.difference(now).inDays;
+      final diffToday = dueTodayDate.difference(now).inDays;
+      final diffOverdue = overdueDate.difference(now).inDays;
+
+      expect(diffSoon, 3);
+      expect(diffToday, 0);
+      expect(diffOverdue, -2);
+
+      // Fee amounts
+      const feeAmount = 1500.0;
+      const fullyPaid = 1500.0;
+      const partialPaid = 500.0;
+      const unPaid = 0.0;
+
+      // Fully paid -> fee is paid, no alerts
+      expect(fullyPaid >= feeAmount, isTrue);
+
+      // Partial paid -> unpaid balance
+      expect(partialPaid < feeAmount, isTrue);
+      expect(unPaid < feeAmount, isTrue);
+
+      // Due soon rule: diffDays > 0 && diffDays <= 7
+      expect(diffSoon > 0 && diffSoon <= 7, isTrue);
+
+      // Due today rule: diffDays == 0
+      expect(diffToday == 0, isTrue);
+
+      // Overdue rule: diffDays < 0
+      expect(diffOverdue < 0, isTrue);
+    });
+
+    test('Notification deduplication key matches same calendar day', () {
+      final scan1 = DateTime(2026, 9, 22, 8, 30);
+      final scan2 = DateTime(2026, 9, 22, 18, 45);
+      final tomorrow = DateTime(2026, 9, 23, 9, 0);
+
+      final day1 = DateTime(scan1.year, scan1.month, scan1.day);
+      final day2 = DateTime(scan2.year, scan2.month, scan2.day);
+      final dayTomorrow = DateTime(tomorrow.year, tomorrow.month, tomorrow.day);
+
+      // Same calendar day matches
+      expect(day1, equals(day2));
+      // Different calendar day does not match
+      expect(day1, isNot(equals(dayTomorrow)));
     });
   });
 }

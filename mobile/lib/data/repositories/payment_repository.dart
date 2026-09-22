@@ -100,5 +100,17 @@ class PaymentRepository {
     await db.delete('payments', where: 'id = ?', whereArgs: [paymentId]);
     await db.delete('receipts', where: 'paymentId = ?', whereArgs: [paymentId]);
   }
+
+  Future<double> getTotalPaidForMembership(String membershipId) async {
+    final db = await AppDatabase.instance.database;
+    final result = await db.rawQuery(
+      'SELECT SUM(amount) AS total FROM payments WHERE membershipId = ?',
+      [membershipId],
+    );
+    if (result.isNotEmpty && result.first['total'] != null) {
+      return (result.first['total'] as num).toDouble();
+    }
+    return 0.0;
+  }
 }
 

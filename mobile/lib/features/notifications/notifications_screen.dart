@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/notifications/notification_service.dart';
+import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/services/app_state_service.dart';
 import '../../data/models/event_model.dart';
 import '../../data/models/member_model.dart';
-import '../../data/models/notification_model.dart';
 import '../../data/repositories/event_repository.dart';
 import '../../data/repositories/member_repository.dart';
+import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../events/event_form_screen.dart';
 import '../members/member_profile_screen.dart';
 import '../settings/notification_settings_screen.dart';
+import '../../shared/widgets/confirmation_dialog.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -23,10 +25,11 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final _memberRepo = MemberRepository();
   final _eventRepo = EventRepository();
+  final _paymentRepo = PaymentRepository();
   final _notificationRepo = NotificationRepository();
 
   List<Map<String, dynamic>> _allNotifications = [];
-  String _selectedCategory = 'All'; // 'All', 'Events', 'Fee Dues', 'Overdue'
+  String _selectedCategory = 'All'; // 'All', 'Events', 'Fee Dues', 'Overdue', 'Expiries'
   bool _isLoading = true;
 
   @override
@@ -34,8 +37,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     super.initState();
     _loadNotifications();
     AppStateService.instance.addListener(_onAppStateChanged);
-    // Background sync scheduled alerts
+    // Background sync of scheduled alerts and daily fee scan
     NotificationService().syncAllUpcomingEventNotifications();
+    ReminderScheduler().runDailyScan();
   }
 
   @override
@@ -59,56 +63,110 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // 1. Load Fee & Membership Reminders
+    // 1. Load Real-Time Fee & Membership Dues
     try {
       final members = await _memberRepo.getMembers();
       for (var m in members) {
+        if (!m.isActive || m.deletedAt != null) continue;
+
         final ms = await _memberRepo.getLatestMembership(m.id);
         if (ms != null) {
           final endDate = DateTime(ms.endDate.year, ms.endDate.month, ms.endDate.day);
           final diffDays = endDate.difference(today).inDays;
 
-          if (diffDays < 0) {
+          final totalPaid = await _paymentRepo.getTotalPaidForMembership(ms.id);
+          final isPaidInFull = totalPaid >= ms.feeAmount;
+
+          if (!isPaidInFull) {
+            if (diffDays < 0) {
+              items.add({
+                'id': 'fee_overdue_${m.id}',
+                'memberId': m.id,
+                'category': 'Overdue',
+                'type': 'FEE_OVERDUE',
+                'member': m,
+                'title': 'Fee Overdue: ${m.name}',
+                'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} is overdue by ${diffDays.abs()} days.',
+                'badge': 'OVERDUE',
+                'color': AppTheme.statusOverdue,
+                'icon': Icons.warning_amber_outlined,
+                'date': endDate,
+                'priority': 1,
+                'isRead': false,
+              });
+            } else if (diffDays == 0) {
+              items.add({
+                'id': 'fee_due_${m.id}',
+                'memberId': m.id,
+                'category': 'Fee Dues',
+                'type': 'FEE_DUE_TODAY',
+                'member': m,
+                'title': 'Fee Due Today: ${m.name}',
+                'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} expires and is due today.',
+                'badge': 'DUE TODAY',
+                'color': Colors.orange,
+                'icon': Icons.today_outlined,
+                'date': endDate,
+                'priority': 2,
+                'isRead': false,
+              });
+            } else if (diffDays <= 7) {
+              items.add({
+                'id': 'fee_soon_${m.id}',
+                'memberId': m.id,
+                'category': 'Fee Dues',
+                'type': 'FEE_DUE_SOON',
+                'member': m,
+                'title': 'Fee Due in $diffDays Days: ${m.name}',
+                'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} is due in $diffDays days.',
+                'badge': 'DUE SOON',
+                'color': Colors.blue,
+                'icon': Icons.schedule,
+                'date': endDate,
+                'priority': 4,
+                'isRead': false,
+              });
+            }
+          }
+
+          // Membership Expiry Notifications
+          if (diffDays <= 7) {
+            final isExpired = diffDays < 0;
+            final isExpiringToday = diffDays == 0;
+            final badgeText = isExpired
+                ? 'EXPIRED'
+                : (isExpiringToday ? 'EXPIRES TODAY' : 'EXPIRING');
+            final titleText = isExpired
+                ? 'Membership Expired: ${m.name}'
+                : (isExpiringToday
+                    ? 'Membership Expires Today: ${m.name}'
+                    : 'Membership Expiring in $diffDays Days: ${m.name}');
+            final bodyText = isExpired
+                ? "${m.name}'s gym membership expired ${diffDays.abs()} days ago."
+                : (isExpiringToday
+                    ? "${m.name}'s gym membership expires at the end of today."
+                    : "${m.name}'s gym membership expires in $diffDays days.");
+
             items.add({
-              'id': 'fee_overdue_${m.id}',
-              'category': 'Overdue',
-              'type': 'OVERDUE',
+              'id': 'expiry_${m.id}',
+              'memberId': m.id,
+              'category': 'Expiries',
+              'type': isExpired ? 'MEMBERSHIP_EXPIRED' : 'MEMBERSHIP_EXPIRING',
               'member': m,
-              'title': 'Fee Overdue: ${m.name}',
-              'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} is overdue by ${diffDays.abs()} days.',
+              'title': titleText,
+              'body': bodyText,
+              'badge': badgeText,
+              'color': isExpired ? Colors.purpleAccent : Colors.purple,
+              'icon': Icons.hourglass_bottom,
               'date': endDate,
-              'priority': 1,
-              'isRead': false,
-            });
-          } else if (diffDays == 0) {
-            items.add({
-              'id': 'fee_due_${m.id}',
-              'category': 'Fee Dues',
-              'type': 'DUE_TODAY',
-              'member': m,
-              'title': 'Fee Due Today: ${m.name}',
-              'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} expires and is due today.',
-              'date': endDate,
-              'priority': 2,
-              'isRead': false,
-            });
-          } else if (diffDays <= 7) {
-            items.add({
-              'id': 'fee_soon_${m.id}',
-              'category': 'Fee Dues',
-              'type': 'DUE_SOON',
-              'member': m,
-              'title': 'Fee Due Soon: ${m.name}',
-              'body': 'Membership fee of ₹${ms.feeAmount.toStringAsFixed(0)} is due in $diffDays days.',
-              'date': endDate,
-              'priority': 4,
+              'priority': isExpired ? 3 : 4,
               'isRead': false,
             });
           }
         }
       }
     } catch (e) {
-      debugPrint('Error loading member fee reminders: $e');
+      debugPrint('Error loading member fee/expiry dues: $e');
     }
 
     // 2. Load Gym Events & Classes Reminders
@@ -128,7 +186,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         final isUpcoming = start.isAfter(now) && start.difference(now).inDays <= 30;
         final isRecent = !isToday && start.isBefore(now) && now.difference(start).inDays <= 3;
 
-        // Keep all today's events (even if earlier today), upcoming within 30 days, or recent within 3 days
+        // Keep all today's events (including earlier today), upcoming, or recent within 3 days
         if (!isToday && !isUpcoming && !isRecent) continue;
 
         final locationStr = (event.location != null && event.location!.trim().isNotEmpty)
@@ -144,7 +202,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           title = 'Live Now: ${event.title}';
           timeDisplay = 'Started at ${timeFormat.format(start)} (Ends ${timeFormat.format(end)})$locationStr';
           badge = 'LIVE';
-          priority = 0; // Highest priority
+          priority = 0;
         } else if (isToday) {
           if (isEndedToday) {
             title = 'Gym Event: ${event.title}';
@@ -178,6 +236,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           'body': timeDisplay,
           'badge': badge,
           'color': event.colorValue != null ? Color(event.colorValue!) : AppTheme.neonLime,
+          'icon': isLive ? Icons.sensors_rounded : Icons.event_available_rounded,
           'date': start,
           'priority': priority,
           'isRead': isEndedToday || isRecent,
@@ -187,24 +246,33 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       debugPrint('Error loading event notifications: $e');
     }
 
-    // 3. Load Logged / Push Notifications from NotificationRepository
+    // 3. Load Logged / Persisted Push Notifications from SQLite
     try {
-      final persistedNotifs = await _notificationRepo.getAllNotifications(limit: 50);
+      final persistedNotifs = await _notificationRepo.getAllNotifications(limit: 60);
       for (var p in persistedNotifs) {
-        // Avoid duplicate items if event or fee alert already added
+        // Skip duplicate if already represented by active dues or events
         if (items.any((i) => i['id'] == p.id)) continue;
 
         String cat = 'All';
         Color color = AppTheme.neonLime;
+        IconData icon = Icons.notifications_active_rounded;
+
         if (p.type.contains('EVENT')) {
           cat = 'Events';
           color = AppTheme.neonLime;
+          icon = Icons.event_note_rounded;
         } else if (p.type.contains('OVERDUE')) {
           cat = 'Overdue';
           color = AppTheme.statusOverdue;
+          icon = Icons.warning_amber_outlined;
+        } else if (p.type.contains('EXPIR')) {
+          cat = 'Expiries';
+          color = Colors.purple;
+          icon = Icons.hourglass_bottom;
         } else {
           cat = 'Fee Dues';
-          color = AppTheme.statusDueSoon;
+          color = Colors.blue;
+          icon = Icons.schedule;
         }
 
         final date = p.triggeredAt ?? p.scheduledAt;
@@ -212,12 +280,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
         items.add({
           'id': p.id,
+          'memberId': p.memberId,
           'category': cat,
           'type': p.type,
           'title': p.title,
           'body': '${p.message} ($timeStr)',
           'badge': p.type.replaceAll('_', ' '),
           'color': color,
+          'icon': icon,
           'date': date,
           'priority': p.isRead ? 4 : 1,
           'isRead': p.isRead,
@@ -228,7 +298,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       debugPrint('Error loading persisted notifications: $e');
     }
 
-    // Sort by priority, then date descending (newest first)
+    // Sort by priority first, then descending by date (newest alerts on top)
     items.sort((a, b) {
       final pA = a['priority'] as int? ?? 5;
       final pB = b['priority'] as int? ?? 5;
@@ -257,52 +327,142 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   List<Map<String, dynamic>> get _filteredItems {
     if (_selectedCategory == 'All') return _allNotifications;
-    if (_selectedCategory == 'Events') {
-      return _allNotifications.where((i) => i['category'] == 'Events').toList();
-    }
-    if (_selectedCategory == 'Fee Dues') {
-      return _allNotifications.where((i) => i['category'] == 'Fee Dues').toList();
-    }
-    if (_selectedCategory == 'Overdue') {
-      return _allNotifications.where((i) => i['category'] == 'Overdue').toList();
-    }
-    return _allNotifications;
+    return _allNotifications.where((i) => i['category'] == _selectedCategory).toList();
   }
 
   int _countFor(String cat) {
     if (cat == 'All') return _allNotifications.length;
-    if (cat == 'Events') return _allNotifications.where((i) => i['category'] == 'Events').length;
-    if (cat == 'Fee Dues') return _allNotifications.where((i) => i['category'] == 'Fee Dues').length;
-    if (cat == 'Overdue') return _allNotifications.where((i) => i['category'] == 'Overdue').length;
-    return 0;
+    return _allNotifications.where((i) => i['category'] == cat).length;
+  }
+
+  Map<String, List<Map<String, dynamic>>> _groupByDay(List<Map<String, dynamic>> items) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    final Map<String, List<Map<String, dynamic>>> groups = {};
+
+    for (final item in items) {
+      final date = item['date'] as DateTime? ?? now;
+      final day = DateTime(date.year, date.month, date.day);
+
+      String label;
+      if (day == today) {
+        label = 'Today';
+      } else if (day == yesterday) {
+        label = 'Yesterday';
+      } else if (day.isAfter(today)) {
+        label = 'Upcoming (${DateFormat('EEE, dd MMM').format(day)})';
+      } else {
+        label = DateFormat('dd MMM yyyy').format(day);
+      }
+
+      groups.putIfAbsent(label, () => []).add(item);
+    }
+
+    return groups;
+  }
+
+  Future<void> _markAllAsRead() async {
+    await _notificationRepo.markAllAsRead();
+    if (mounted) {
+      setState(() {
+        for (var item in _allNotifications) {
+          item['isRead'] = true;
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All notifications marked as read'),
+          backgroundColor: Color(0xFF1E1E1E),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _clearAllNotifications() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => const ConfirmationDialog(
+        title: 'Clear Notifications?',
+        message: 'Are you sure you want to dismiss and clear all notification history?',
+        confirmLabel: 'Clear All',
+        isDestructive: true,
+      ),
+    );
+
+    if (confirm == true) {
+      await _notificationRepo.clearAll();
+      _loadNotifications();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final filtered = _filteredItems;
+    final groups = _groupByDay(filtered);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('NOTIFICATIONS & ALERTS'),
+        title: const Text('NOTIFICATIONS'),
         actions: [
           IconButton(
-            tooltip: 'Add Gym Event',
-            icon: const Icon(Icons.add_alert_rounded, color: AppTheme.neonLime),
-            onPressed: () async {
-              final res = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const EventFormScreen()),
-              );
-              if (res == true) _loadNotifications();
-            },
+            tooltip: 'Mark All Read',
+            icon: const Icon(Icons.done_all_rounded, color: AppTheme.neonLime),
+            onPressed: _markAllAsRead,
           ),
-          IconButton(
-            tooltip: 'Reminder Settings',
-            icon: const Icon(Icons.tune_rounded, color: AppTheme.textMuted),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()),
-              );
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded, color: AppTheme.textMuted),
+            color: AppTheme.darkSurface,
+            onSelected: (val) async {
+              if (val == 'clear') {
+                _clearAllNotifications();
+              } else if (val == 'add_event') {
+                final res = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EventFormScreen()),
+                );
+                if (res == true) _loadNotifications();
+              } else if (val == 'settings') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()),
+                );
+              }
             },
+            itemBuilder: (ctx) => [
+              const PopupMenuItem(
+                value: 'add_event',
+                child: Row(
+                  children: [
+                    Icon(Icons.add_alert_rounded, color: AppTheme.textMuted, size: 20),
+                    SizedBox(width: 10),
+                    Text('Add Gym Event', style: TextStyle(color: AppTheme.textWhite)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'settings',
+                child: Row(
+                  children: [
+                    Icon(Icons.tune_rounded, color: AppTheme.textMuted, size: 20),
+                    SizedBox(width: 10),
+                    Text('Reminder Settings', style: TextStyle(color: AppTheme.textWhite)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'clear',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_sweep_outlined, color: Colors.redAccent, size: 20),
+                    SizedBox(width: 10),
+                    Text('Clear All Alerts', style: TextStyle(color: Colors.redAccent)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -316,7 +476,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-                  children: ['All', 'Events', 'Fee Dues', 'Overdue'].map((category) {
+                  children: ['All', 'Events', 'Fee Dues', 'Overdue', 'Expiries'].map((category) {
                     final isSelected = _selectedCategory == category;
                     final count = _countFor(category);
 
@@ -350,11 +510,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ),
             ),
 
-            // Notifications List
+            // Notifications Feed
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
-                  : _filteredItems.isEmpty
+                  : filtered.isEmpty
                       ? RefreshIndicator(
                           color: AppTheme.neonLime,
                           onRefresh: () => _loadNotifications(showSpinner: false),
@@ -375,7 +535,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                     const SizedBox(height: 6),
                                     Text(
                                       _selectedCategory == 'All'
-                                          ? 'No pending fee dues or scheduled gym events.'
+                                          ? 'No pending fee dues, expirations, or scheduled gym events.'
                                           : 'No notifications in "$_selectedCategory".',
                                       style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                                     ),
@@ -388,19 +548,61 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       : RefreshIndicator(
                           color: AppTheme.neonLime,
                           onRefresh: () => _loadNotifications(showSpinner: false),
-                          child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            itemCount: _filteredItems.length,
-                            itemBuilder: (context, index) {
-                              final item = _filteredItems[index];
-                              if (item['persisted'] != null) {
-                                return _buildPersistedTile(item);
-                              } else if (item['category'] == 'Events') {
-                                return _buildEventTile(item);
-                              } else {
-                                return _buildFeeTile(item);
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                            children: groups.entries.expand((entry) sync* {
+                              yield Padding(
+                                padding: const EdgeInsets.only(top: 14, bottom: 8, left: 4),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      entry.key.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: AppTheme.neonLime,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.1,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.darkSurface,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        '${entry.value.length}',
+                                        style: const TextStyle(color: Colors.white54, fontSize: 10.5, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              for (final item in entry.value) {
+                                yield Dismissible(
+                                  key: ValueKey(item['id']),
+                                  direction: DismissDirection.endToStart,
+                                  background: Container(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.shade900,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    alignment: Alignment.centerRight,
+                                    padding: const EdgeInsets.only(right: 20),
+                                    child: const Icon(Icons.delete_outline, color: Colors.white, size: 22),
+                                  ),
+                                  onDismissed: (_) async {
+                                    final id = item['id'] as String;
+                                    await _notificationRepo.deleteNotification(id);
+                                    _loadNotifications(showSpinner: false);
+                                  },
+                                  child: _buildItemCard(item),
+                                );
                               }
-                            },
+                            }).toList(),
                           ),
                         ),
             ),
@@ -410,201 +612,50 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 
-  Widget _buildEventTile(Map<String, dynamic> item) {
-    final event = item['event'] as EventModel;
-    final badge = item['badge'] as String;
-    final eventColor = item['color'] as Color? ?? AppTheme.neonLime;
-    final isLive = badge == 'LIVE';
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        onTap: () async {
-          final res = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => EventFormScreen(event: event)),
-          );
-          if (res == true) _loadNotifications();
-        },
-        leading: CircleAvatar(
-          backgroundColor: eventColor.withValues(alpha: 0.18),
-          child: Icon(
-            isLive ? Icons.sensors_rounded : Icons.event_available_rounded,
-            color: eventColor,
-            size: 22,
-          ),
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                event.title,
-                style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14.5),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: (isLive ? const Color(0xFF00E676) : eventColor).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: (isLive ? const Color(0xFF00E676) : eventColor).withValues(alpha: 0.6),
-                  width: 0.8,
-                ),
-              ),
-              child: Text(
-                badge,
-                style: TextStyle(
-                  color: isLive ? const Color(0xFF00E676) : eventColor,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 10,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.schedule_rounded, color: AppTheme.neonLime, size: 12),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    item['body'],
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            if (event.description != null && event.description!.trim().isNotEmpty) ...[
-              const SizedBox(height: 2),
-              Text(
-                event.description!.trim(),
-                style: const TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ],
-        ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
-      ),
-    );
-  }
-
-  Widget _buildFeeTile(Map<String, dynamic> item) {
-    final member = item['member'] as MemberModel;
-    final isOverdue = item['type'] == 'OVERDUE';
-    final isDueToday = item['type'] == 'DUE_TODAY';
-
-    final Color statusColor = isOverdue
-        ? AppTheme.statusOverdue
-        : (isDueToday ? Colors.amber : AppTheme.statusDueSoon);
-
-    final String badgeText = isOverdue
-        ? 'OVERDUE'
-        : (isDueToday ? 'DUE TODAY' : 'DUE SOON');
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => MemberProfileScreen(memberId: member.id)),
-          );
-        },
-        leading: CircleAvatar(
-          backgroundColor: statusColor.withValues(alpha: 0.15),
-          child: Icon(
-            isOverdue ? Icons.warning_rounded : Icons.notifications_active_rounded,
-            color: statusColor,
-            size: 22,
-          ),
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                item['title'],
-                style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: statusColor.withValues(alpha: 0.5), width: 0.8),
-              ),
-              child: Text(
-                badgeText,
-                style: TextStyle(
-                  color: statusColor,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 10,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              item['body'],
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-            ),
-          ],
-        ),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
-      ),
-    );
-  }
-
-  Widget _buildPersistedTile(Map<String, dynamic> item) {
-    final n = item['persisted'] as NotificationItemModel;
+  Widget _buildItemCard(Map<String, dynamic> item) {
     final color = item['color'] as Color? ?? AppTheme.neonLime;
-    final isUnread = !(item['isRead'] as bool? ?? true);
+    final icon = item['icon'] as IconData? ?? Icons.notifications_active_rounded;
+    final badge = item['badge'] as String? ?? 'ALERT';
+    final isUnread = !(item['isRead'] as bool? ?? false);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isUnread ? color.withValues(alpha: 0.45) : Colors.white.withValues(alpha: 0.08),
+          width: isUnread ? 1.2 : 0.8,
+        ),
+      ),
+      color: isUnread ? color.withValues(alpha: 0.05) : AppTheme.darkSurface,
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         onTap: () async {
-          await _notificationRepo.markAsRead(n.id);
-          setState(() => item['isRead'] = true);
+          // Mark as read
+          final id = item['id'] as String;
+          await _notificationRepo.markAsRead(id);
+          if (mounted) setState(() => item['isRead'] = true);
+          if (!mounted) return;
 
-          if (n.id.startsWith('event_')) {
-            final eventId = n.id.replaceFirst('event_', '');
-            final event = await _eventRepo.getEventById(eventId);
-            if (event != null && mounted) {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => EventFormScreen(event: event)),
-              );
-              _loadNotifications();
-            }
-          } else if (n.memberId != null && n.memberId!.isNotEmpty && mounted) {
+          // Handle navigation
+          if (item['event'] != null) {
+            final event = item['event'] as EventModel;
+            final res = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => EventFormScreen(event: event)),
+            );
+            if (res == true) _loadNotifications();
+          } else if (item['member'] != null) {
+            final member = item['member'] as MemberModel;
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => MemberProfileScreen(memberId: n.memberId!)),
+              MaterialPageRoute(builder: (_) => MemberProfileScreen(memberId: member.id)),
+            );
+          } else if (item['memberId'] != null) {
+            final memberId = item['memberId'] as String;
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => MemberProfileScreen(memberId: memberId)),
             );
           }
         },
@@ -612,11 +663,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             CircleAvatar(
               backgroundColor: color.withValues(alpha: 0.18),
-              child: Icon(
-                n.type.contains('EVENT') ? Icons.event_note_rounded : Icons.notifications_active_rounded,
-                color: color,
-                size: 22,
-              ),
+              child: Icon(icon, color: color, size: 22),
             ),
             if (isUnread)
               Positioned(
@@ -625,9 +672,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: Container(
                   width: 9,
                   height: 9,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFD4FF00),
+                  decoration: BoxDecoration(
+                    color: color,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.8),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -637,11 +691,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             Expanded(
               child: Text(
-                n.title,
+                item['title'],
                 style: TextStyle(
                   color: AppTheme.textWhite,
-                  fontWeight: isUnread ? FontWeight.w900 : FontWeight.w600,
-                  fontSize: 14,
+                  fontWeight: isUnread ? FontWeight.w900 : FontWeight.bold,
+                  fontSize: 14.5,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -651,16 +705,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
+                color: color.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(color: color.withValues(alpha: 0.5), width: 0.8),
               ),
               child: Text(
-                item['badge'] ?? 'ALERT',
+                badge,
                 style: TextStyle(
                   color: color,
                   fontWeight: FontWeight.w900,
-                  fontSize: 9.5,
+                  fontSize: 10,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -674,13 +728,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.close_rounded, size: 18, color: Colors.white38),
-          onPressed: () async {
-            await _notificationRepo.deleteNotification(n.id);
-            _loadNotifications(showSpinner: false);
-          },
-        ),
+        trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),
       ),
     );
   }

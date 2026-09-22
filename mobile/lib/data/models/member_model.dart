@@ -92,5 +92,7 @@ class MemberModel {
       deletedAt: deletedAt ?? this.deletedAt,
     );
   }
+
+  bool get isActive => !isArchived && deletedAt == null;
 }
 
