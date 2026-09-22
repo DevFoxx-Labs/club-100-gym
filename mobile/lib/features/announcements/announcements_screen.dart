@@ -723,9 +723,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               SizedBox(height: 2),
               Text(
                 'Send important updates to all gym members.',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
+                maxLines: 2,
+                style: TextStyle(color: AppTheme.textMuted, fontSize: 11, height: 1.2),
               ),
             ],
           ),
@@ -892,7 +891,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   onTap: _pickImage,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 5),
               Expanded(
                 child: _buildActionChip(
                   icon: Icons.push_pin_outlined,
@@ -902,7 +901,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   onTap: () => setState(() => _isImportant = !_isImportant),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 5),
               Expanded(
                 child: _buildActionChip(
                   icon: Icons.calendar_today_outlined,
@@ -959,7 +958,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
           color: const Color(0xFF0F121A),
           borderRadius: BorderRadius.circular(12),
@@ -969,36 +968,37 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 15, color: isActive ? const Color(0xFF69F0AE) : AppTheme.textMuted),
-            const SizedBox(width: 5),
+            Icon(icon, size: 13, color: isActive ? const Color(0xFF69F0AE) : AppTheme.textMuted),
+            const SizedBox(width: 3),
             Flexible(
               child: Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.w700,
                   color: isActive ? AppTheme.textWhite : AppTheme.textMuted,
                 ),
               ),
             ),
             if (hasSwitch) ...[
-              const SizedBox(width: 5),
+              const SizedBox(width: 3),
               Container(
-                width: 22,
-                height: 13,
-                padding: const EdgeInsets.all(1.5),
+                width: 16,
+                height: 10,
+                padding: const EdgeInsets.all(1),
                 decoration: BoxDecoration(
                   color: isActive ? const Color(0xFF69F0AE) : const Color(0xFF2E3445),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Align(
                   alignment: isActive ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
-                    width: 10,
-                    height: 10,
+                    width: 7,
+                    height: 7,
                     decoration: BoxDecoration(
                       color: isActive ? Colors.black : Colors.white60,
                       shape: BoxShape.circle,

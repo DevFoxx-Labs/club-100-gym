@@ -12,11 +12,11 @@ class AnnouncementRepository {
 
   Future<List<AnnouncementModel>> getAll() async {
     final db = await _db;
-    final count = Sqflite.firstIntValue(
-      await db.rawQuery('SELECT COUNT(*) FROM announcements'),
+    final hasSeed = Sqflite.firstIntValue(
+      await db.rawQuery("SELECT COUNT(*) FROM announcements WHERE id = 'seed-zumba-1'"),
     ) ?? 0;
 
-    if (count == 0) {
+    if (hasSeed == 0) {
       await _seedDefaultAnnouncements(db);
     }
 
