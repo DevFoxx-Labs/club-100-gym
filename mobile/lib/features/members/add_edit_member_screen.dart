@@ -8,6 +8,8 @@ import '../../core/utils/form_validators.dart';
 import '../../core/services/app_state_service.dart';
 import '../../data/models/member_model.dart';
 import '../../data/models/membership_model.dart';
+import '../../data/models/package_model.dart';
+import '../../data/repositories/package_repository.dart';
 import '../../data/models/plan_model.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/repositories/member_repository.dart';
@@ -29,6 +31,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   final _formKey = GlobalKey<FormState>();
   final _memberRepo = MemberRepository();
   final _planRepo = PlanRepository();
+  final _packageRepo = PackageRepository();
   final _trainerRepo = TrainerRepository();
 
   late TextEditingController _nameController;
@@ -40,6 +43,8 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
 
   String? _photoPath;
   String _gender = 'Male';
+  List<PackageModel> _packages = [];
+  PackageModel? _selectedPackage;
   List<PlanModel> _plans = [];
   PlanModel? _selectedPlan;
   List<TrainerModel> _trainers = [];
@@ -76,10 +81,19 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   }
 
   Future<void> _loadData() async {
-    final plans = await _planRepo.getPlans();
+    final packages = await _packageRepo.getAllPackages();
     final trainers = await _trainerRepo.getAllTrainers();
 
+    List<PlanModel> plans = [];
+    PackageModel? selectedPackage;
+    if (packages.isNotEmpty) {
+      selectedPackage = packages.first;
+      plans = await _planRepo.getPlansByPackageId(selectedPackage.id);
+    }
+
     setState(() {
+      _packages = packages;
+      _selectedPackage = selectedPackage;
       _plans = plans;
       _trainers = trainers;
       if (plans.isNotEmpty) {
@@ -111,10 +125,25 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   }
 
   void _recalculateTotalFee() {
-    if (_selectedPlan == null) return;
+    if (_selectedPlan == null) {
+      _feeController.text = '0';
+      return;
+    }
     final base = _selectedPlan!.defaultFee;
     final pt = double.tryParse(_ptFeeController.text.trim()) ?? 0.0;
     _feeController.text = (base + pt).toStringAsFixed(0);
+  }
+
+  Future<void> _onPackageSelected(PackageModel? pkg) async {
+    if (pkg == null) return;
+    final plans = await _planRepo.getPlansByPackageId(pkg.id);
+    if (!mounted) return;
+    setState(() {
+      _selectedPackage = pkg;
+      _plans = plans;
+      _selectedPlan = plans.isNotEmpty ? plans.first : null;
+      _recalculateTotalFee();
+    });
   }
 
   Future<void> _saveMember() async {
@@ -270,6 +299,37 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
 
                 if (!isEdit) ...[
                   const Text(
+                    'MEMBERSHIP PACKAGE *',
+                    style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.darkBackground,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppTheme.darkBorder),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<PackageModel>(
+                        value: _selectedPackage,
+                        isExpanded: true,
+                        hint: const Text('No packages available', style: TextStyle(color: AppTheme.textMuted)),
+                        dropdownColor: AppTheme.darkSurface,
+                        style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w700),
+                        items: _packages
+                            .map((pkg) => DropdownMenuItem(
+                                  value: pkg,
+                                  child: Text(pkg.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                ))
+                            .toList(),
+                        onChanged: _onPackageSelected,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  const Text(
                     'MEMBERSHIP PLAN *',
                     style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
                   ),
@@ -285,6 +345,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                       child: DropdownButton<PlanModel>(
                         value: _selectedPlan,
                         isExpanded: true,
+                        hint: const Text('No plans in this package', style: TextStyle(color: AppTheme.textMuted)),
                         dropdownColor: AppTheme.darkSurface,
                         style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w700),
                         items: _plans
