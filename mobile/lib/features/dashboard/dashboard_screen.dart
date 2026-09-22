@@ -139,335 +139,611 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy');
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+
+    // Format gym name with dual-tone styling
+    final gymName = (_gymInfo?.name != null && _gymInfo!.name.isNotEmpty)
+        ? _gymInfo!.name.toUpperCase().trim()
+        : 'THE ELITE FITNESS GYM';
+    final words = gymName.split(' ');
+    String firstPart = gymName;
+    String lastPart = '';
+    if (words.length > 1) {
+      lastPart = words.removeLast();
+      firstPart = words.join(' ');
+    }
+
+    final adminFirstName = (_admin?.name != null && _admin!.name.isNotEmpty)
+        ? _admin!.name.split(' ').first
+        : 'Admin';
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0C0F14),
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppTheme.neonLime),
+          icon: const Icon(Icons.menu_rounded, color: AppTheme.neonLime, size: 28),
           tooltip: 'Open Menu',
           onPressed: widget.onOpenDrawer,
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              (_gymInfo?.name ?? 'ELITE FITNESS GYM').toUpperCase(),
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$firstPart ',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: AppTheme.textWhite,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  if (lastPart.isNotEmpty)
+                    TextSpan(
+                      text: lastPart,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: AppTheme.neonLime,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                ],
+              ),
             ),
+            const SizedBox(height: 1),
             const Text(
               'Admin Operations Dashboard',
-              style: TextStyle(fontSize: 11, color: AppTheme.neonLime, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 11,
+                color: AppTheme.textMuted,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
         actions: [
-          IconButton(
-            onPressed: _loadDashboardData,
-            icon: const Icon(Icons.refresh_rounded, color: AppTheme.textWhite),
+          Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: Material(
+              color: const Color(0xFF161922),
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _loadDashboardData,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF222838), width: 1),
+                  ),
+                  child: const Icon(Icons.refresh_rounded, color: AppTheme.textWhite, size: 20),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadDashboardData,
-          color: AppTheme.neonLime,
-          backgroundColor: AppTheme.darkSurface,
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
-              : SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(20, 20, 20, 36 + MediaQuery.paddingOf(context).bottom),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header Welcome Banner with Gym Logo
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: AppTheme.darkSurface,
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.3)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.neonLime.withValues(alpha: 0.08),
-                              blurRadius: 20,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
+        children: [
+          // Subtle top-right athlete overlay
+          Positioned(
+            top: 0,
+            right: 0,
+            left: 0,
+            height: 240,
+            child: ShaderMask(
+              shaderCallback: (rect) {
+                return LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.black.withValues(alpha: 0.8),
+                    const Color(0xFF0C0F14),
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ).createShader(rect);
+              },
+              blendMode: BlendMode.dstIn,
+              child: Image.asset(
+                'assets/images/login_bg.jpg',
+                fit: BoxFit.cover,
+                alignment: Alignment.topRight,
+                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+
+          // Main Scrollable Content
+          SafeArea(
+            child: RefreshIndicator(
+              onRefresh: _loadDashboardData,
+              color: AppTheme.neonLime,
+              backgroundColor: AppTheme.darkSurface,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.fromLTRB(16, 12, 16, 36 + safeBottom),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Greeting & Slogan Banner Row
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Left: Greeting
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 3,
+                                          height: 11,
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.neonLime,
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        RichText(
+                                          text: TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: 'Good ',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: AppTheme.neonLime,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: '${_greeting.replaceFirst('Good ', '')},',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: AppTheme.textMuted,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      '$adminFirstName 👋',
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppTheme.textWhite,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    const Text(
+                                      "Here's what's happening today.",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Right: Vertical Slogan
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: RichText(
+                                  textAlign: TextAlign.right,
+                                  text: const TextSpan(
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      height: 1.25,
+                                      letterSpacing: 0.6,
+                                    ),
+                                    children: [
+                                      TextSpan(text: "STRONGER\n", style: TextStyle(color: AppTheme.neonLime)),
+                                      TextSpan(text: "PEOPLE BUILD\n", style: TextStyle(color: Colors.white)),
+                                      TextSpan(text: "STRONGER\n", style: TextStyle(color: Colors.white)),
+                                      TextSpan(text: "COMMUNITIES", style: TextStyle(color: AppTheme.neonLime)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Quick Actions Grid (4 Cards)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _QuickActionCard(
+                                  icon: Icons.person_add_alt_1_rounded,
+                                  label: 'Add Member',
+                                  badgeColor: const Color(0xFF132B1A),
+                                  iconColor: AppTheme.neonLime,
+                                  onTap: () async {
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const AddEditMemberScreen()),
+                                    );
+                                    _loadDashboardData();
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _QuickActionCard(
+                                  icon: Icons.credit_card_rounded,
+                                  label: 'Record Fee',
+                                  badgeColor: const Color(0xFF102138),
+                                  iconColor: const Color(0xFF389BF2),
+                                  onTap: () => widget.onNavigateToMembers('All'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _QuickActionCard(
+                                  icon: Icons.event_note_rounded,
+                                  label: 'Events',
+                                  badgeColor: const Color(0xFF261536),
+                                  iconColor: const Color(0xFFA855F7),
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const EventsCalendarScreen()),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: _QuickActionCard(
+                                  icon: Icons.people_alt_rounded,
+                                  label: 'Trainers',
+                                  badgeColor: const Color(0xFF332014),
+                                  iconColor: const Color(0xFFF97316),
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const TrainersListScreen()),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 22),
+
+                          // Section 1 Header: MEMBERSHIP METRICS
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
                                 children: [
-                                  Text(
-                                    '$_greeting${_admin?.name != null && _admin!.name.isNotEmpty ? ', ${_admin!.name.split(' ').first}' : ''}',
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppTheme.neonLime, letterSpacing: 0.5),
+                                  Container(
+                                    width: 3,
+                                    height: 14,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.neonLime,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _gymInfo?.name ?? 'Elite Fitness Gym',
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
-                                  ),
-                                  const SizedBox(height: 2),
+                                  const SizedBox(width: 8),
                                   const Text(
-                                    'Tap cards below to filter members',
-                                    style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                                    'MEMBERSHIP METRICS',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppTheme.textMuted,
+                                      letterSpacing: 1.2,
+                                    ),
                                   ),
                                 ],
                               ),
-                            ),
-                            GymLogoView(
-                              size: 54,
-                              logoPath: _gymInfo?.logoPath,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 18),
+                              InkWell(
+                                onTap: () => widget.onNavigateToMembers('All'),
+                                borderRadius: BorderRadius.circular(8),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        'View All',
+                                        style: TextStyle(
+                                          color: AppTheme.neonLime,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(width: 3),
+                                      Icon(Icons.arrow_forward_rounded, color: AppTheme.neonLime, size: 14),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
 
-                      // Quick Actions Grid (4 options)
-                      const Text(
-                        'QUICK ACTIONS',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _QuickActionButton(
-                              icon: Icons.person_add_alt_1_rounded,
-                              label: 'Add Member',
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const AddEditMemberScreen()),
+                          // 2x3 Metric Cards Grid
+                          GridView.count(
+                            crossAxisCount: 2,
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                            childAspectRatio: 1.15,
+                            children: [
+                              SummaryCard(
+                                title: 'Total Members',
+                                count: _totalMembers,
+                                subtitle: 'All registered members',
+                                icon: Icons.people_alt_rounded,
+                                accentColor: AppTheme.neonLime,
+                                onTap: () => widget.onNavigateToMembers('All'),
+                              ),
+                              SummaryCard(
+                                title: 'Active Members',
+                                count: _activeMembers,
+                                subtitle: 'Currently active',
+                                icon: Icons.check_circle_rounded,
+                                accentColor: const Color(0xFF10B981),
+                                onTap: () => widget.onNavigateToMembers('Active'),
+                              ),
+                              SummaryCard(
+                                title: 'Fees Due Soon',
+                                count: _feesDueSoon,
+                                subtitle: 'In next 7 days',
+                                icon: Icons.access_time_filled_rounded,
+                                accentColor: const Color(0xFFF59E0B),
+                                onTap: () => widget.onNavigateToMembers('Due Soon'),
+                              ),
+                              SummaryCard(
+                                title: 'Fees Due Today',
+                                count: _feesDueToday,
+                                subtitle: 'Due today',
+                                icon: Icons.notifications_active_rounded,
+                                accentColor: const Color(0xFFEAB308),
+                                onTap: () => widget.onNavigateToMembers('Due Soon'),
+                              ),
+                              SummaryCard(
+                                title: 'Overdue Fees',
+                                count: _overdueFees,
+                                subtitle: 'Pending payments',
+                                icon: Icons.warning_rounded,
+                                accentColor: const Color(0xFFEF4444),
+                                onTap: () => widget.onNavigateToMembers('Overdue'),
+                              ),
+                              SummaryCard(
+                                title: 'Expiring Soon',
+                                count: _expiringSoon,
+                                subtitle: 'In next 30 days',
+                                icon: Icons.access_time_rounded,
+                                accentColor: const Color(0xFFA855F7),
+                                onTap: () => widget.onNavigateToMembers('Due Soon'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Section 2 Header: RECENT ACTIVITY
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 3,
+                                    height: 14,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.neonLime,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'RECENT ACTIVITY',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppTheme.textMuted,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              InkWell(
+                                onTap: () => widget.onNavigateToMembers('All'),
+                                borderRadius: BorderRadius.circular(8),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        'View All',
+                                        style: TextStyle(
+                                          color: AppTheme.neonLime,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(width: 3),
+                                      Icon(Icons.arrow_forward_rounded, color: AppTheme.neonLime, size: 14),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Activity Content
+                          if (_recentPayments.isEmpty)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF161922),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFF222838), width: 1),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.05),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: const Icon(
+                                      Icons.description_outlined,
+                                      color: AppTheme.textMuted,
+                                      size: 26,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  const Text(
+                                    'No recent activity',
+                                    style: TextStyle(
+                                      color: AppTheme.textWhite,
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Activity will appear here as you manage members, payments, and events.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: AppTheme.textMuted.withValues(alpha: 0.8),
+                                      fontSize: 11.5,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _recentPayments.length,
+                              itemBuilder: (context, index) {
+                                final pay = _recentPayments[index];
+                                final memberName = _memberNames[pay.memberId] ?? 'Member';
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF161922),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: const Color(0xFF222838)),
+                                  ),
+                                  child: ListTile(
+                                    leading: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.neonLime.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime, size: 20),
+                                    ),
+                                    title: Text(
+                                      memberName,
+                                      style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                    subtitle: Text(
+                                      'Receipt #${pay.receiptNumber} • ${pay.paymentMethod} • ${dateFormat.format(pay.paymentDate)}',
+                                      style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '₹${pay.amount.toStringAsFixed(0)}',
+                                          style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 15),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted, size: 18),
+                                      ],
+                                    ),
+                                    onTap: () async {
+                                      final receipt = await _paymentRepo.getReceiptByPaymentId(pay.id);
+                                      if (receipt != null && context.mounted) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => ReceiptPreviewScreen(receipt: receipt)),
+                                        );
+                                      }
+                                    },
+                                  ),
                                 );
-                                _loadDashboardData();
                               },
                             ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _QuickActionButton(
-                              icon: Icons.payments_outlined,
-                              label: 'Record Fee',
-                              onTap: () => widget.onNavigateToMembers('All'),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _QuickActionButton(
-                              icon: Icons.event_note_rounded,
-                              label: 'Events',
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const EventsCalendarScreen()),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _QuickActionButton(
-                              icon: Icons.sports_gymnastics_rounded,
-                              label: 'Trainers',
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const TrainersListScreen()),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
-                      const SizedBox(height: 22),
-
-                      const Text(
-                        'MEMBERSHIP METRICS',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // 2x3 Metric Cards Grid
-                      GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.98,
-                        children: [
-                          SummaryCard(
-                            title: 'Total Members',
-                            count: _totalMembers,
-                            icon: Icons.people_alt_rounded,
-                            accentColor: AppTheme.textWhite,
-                            onTap: () => widget.onNavigateToMembers('All'),
-                          ),
-                          SummaryCard(
-                            title: 'Active Members',
-                            count: _activeMembers,
-                            icon: Icons.check_circle_rounded,
-                            accentColor: AppTheme.statusActive,
-                            onTap: () => widget.onNavigateToMembers('Active'),
-                          ),
-                          SummaryCard(
-                            title: 'Fees Due Soon',
-                            count: _feesDueSoon,
-                            icon: Icons.access_time_rounded,
-                            accentColor: AppTheme.statusDueSoon,
-                            onTap: () => widget.onNavigateToMembers('Due Soon'),
-                          ),
-                          SummaryCard(
-                            title: 'Fees Due Today',
-                            count: _feesDueToday,
-                            icon: Icons.notifications_active_rounded,
-                            accentColor: Colors.amber,
-                            onTap: () => widget.onNavigateToMembers('Due Soon'),
-                          ),
-                          SummaryCard(
-                            title: 'Overdue Fees',
-                            count: _overdueFees,
-                            icon: Icons.warning_rounded,
-                            accentColor: AppTheme.statusOverdue,
-                            onTap: () => widget.onNavigateToMembers('Overdue'),
-                          ),
-                          SummaryCard(
-                            title: 'Expiring Soon',
-                            count: _expiringSoon,
-                            icon: Icons.timelapse_rounded,
-                            accentColor: Colors.orangeAccent,
-                            onTap: () => widget.onNavigateToMembers('Due Soon'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Recent Payments Section
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'RECENT PAYMENTS',
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
-                          ),
-                          TextButton(
-                            onPressed: () => widget.onNavigateToMembers('All'),
-                            child: const Text('View All', style: TextStyle(color: AppTheme.neonLime, fontSize: 12, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      if (_recentPayments.isEmpty)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppTheme.darkSurface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppTheme.darkBorder),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'No payments recorded yet',
-                              style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
-                            ),
-                          ),
-                        )
-                      else
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _recentPayments.length,
-                          itemBuilder: (context, index) {
-                            final pay = _recentPayments[index];
-                            final memberName = _memberNames[pay.memberId] ?? 'Member';
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.darkSurface,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: AppTheme.darkBorder),
-                              ),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: AppTheme.neonLime.withValues(alpha: 0.15),
-                                  child: const Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime, size: 20),
-                                ),
-                                title: Text(
-                                  memberName,
-                                  style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14),
-                                ),
-                                subtitle: Text(
-                                  'Receipt #${pay.receiptNumber} • ${pay.paymentMethod} • ${dateFormat.format(pay.paymentDate)}',
-                                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      '₹${pay.amount.toStringAsFixed(0)}',
-                                      style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 15),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted, size: 18),
-                                  ],
-                                ),
-                                onTap: () async {
-                                  final receipt = await _paymentRepo.getReceiptByPaymentId(pay.id);
-                                  if (receipt != null && context.mounted) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => ReceiptPreviewScreen(receipt: receipt)),
-                                    );
-                                  }
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                    ],
-                  ),
-                ),
-        ),
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _QuickActionButton extends StatelessWidget {
+class _QuickActionCard extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color badgeColor;
+  final Color iconColor;
   final VoidCallback onTap;
 
-  const _QuickActionButton({
+  const _QuickActionCard({
     required this.icon,
     required this.label,
+    required this.badgeColor,
+    required this.iconColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppTheme.darkSurface,
+      color: const Color(0xFF161922),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.darkBorder),
+            border: Border.all(color: const Color(0xFF222838), width: 1),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: AppTheme.neonLime, size: 22),
-              const SizedBox(height: 6),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: badgeColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(height: 8),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
@@ -477,7 +753,7 @@ class _QuickActionButton extends StatelessWidget {
                   style: const TextStyle(
                     color: AppTheme.textWhite,
                     fontWeight: FontWeight.w700,
-                    fontSize: 10,
+                    fontSize: 11,
                   ),
                 ),
               ),
