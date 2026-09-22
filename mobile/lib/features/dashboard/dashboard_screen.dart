@@ -246,8 +246,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(0xFF0C0F14).withValues(alpha: 0.55),
-                    const Color(0xFF0C0F14).withValues(alpha: 0.78),
+                    const Color(0xFF0C0F14).withValues(alpha: 0.82),
+                    const Color(0xFF0C0F14).withValues(alpha: 0.94),
                   ],
                 ),
               ),
@@ -586,7 +586,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF161922).withValues(alpha: 0.55),
+                                color: const Color(0xFF161922).withValues(alpha: 0.90),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: const Color(0xFF222838), width: 1),
                               ),
@@ -640,7 +640,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 8),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF161922).withValues(alpha: 0.55),
+                                    color: const Color(0xFF161922).withValues(alpha: 0.90),
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(color: const Color(0xFF222838)),
                                   ),
@@ -715,7 +715,7 @@ class _QuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF161922).withValues(alpha: 0.55),
+      color: const Color(0xFF161922).withValues(alpha: 0.90),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
