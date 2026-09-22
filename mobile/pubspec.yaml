@@ -53,6 +53,7 @@ dependencies:
   image_picker: ^1.1.2
   flutter_contacts: ^1.1.9+2
   flutter_color_picker_plus: ^2.2.1
+  fl_chart: ^0.69.2
 
 dependency_overrides:
   flutter_plugin_android_lifecycle: 2.0.20

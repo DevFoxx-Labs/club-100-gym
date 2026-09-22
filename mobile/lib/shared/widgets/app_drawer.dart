@@ -7,6 +7,7 @@ import '../../features/events/events_calendar_screen.dart';
 import '../../features/expenses/expenses_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/receipts/qr_scanner_screen.dart';
+import '../../features/reports/reports_screen.dart';
 import '../../features/settings/archived_members_screen.dart';
 import '../../features/settings/backup_screen.dart';
 import '../../features/settings/edit_gym_screen.dart';
@@ -203,6 +204,14 @@ class _AppDrawerState extends State<AppDrawer> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen()));
+              },
+            ),
+            _buildDrawerTile(
+              icon: Icons.insert_chart_outlined_rounded,
+              title: 'Reports & Analytics',
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()));
               },
             ),
             _buildDrawerTile(
