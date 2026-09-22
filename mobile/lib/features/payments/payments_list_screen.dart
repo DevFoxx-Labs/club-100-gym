@@ -5,6 +5,7 @@ import '../../data/models/payment_model.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../core/services/app_state_service.dart';
 import '../receipts/receipt_preview_screen.dart';
+import 'select_member_for_payment_screen.dart';
 
 class PaymentsListScreen extends StatefulWidget {
   const PaymentsListScreen({super.key});
@@ -75,9 +76,23 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy');
 
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('PAYMENT TRANSACTIONS'),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SelectMemberForPaymentScreen()),
+          );
+        },
+        backgroundColor: AppTheme.neonLime,
+        foregroundColor: AppTheme.darkBackground,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('ADD PAYMENT', style: TextStyle(fontWeight: FontWeight.w800)),
       ),
       body: SafeArea(
         child: Column(
@@ -107,7 +122,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
                           child: Text('No payment history found', style: TextStyle(color: AppTheme.textMuted)),
                         )
                       : ListView.builder(
-                          padding: EdgeInsets.fromLTRB(20, 10, 20, 24 + MediaQuery.paddingOf(context).bottom),
+                          padding: EdgeInsets.fromLTRB(20, 10, 20, safeBottom + 108),
                           itemCount: _filteredPayments.length,
                           itemBuilder: (context, index) {
                             final pay = _filteredPayments[index];
