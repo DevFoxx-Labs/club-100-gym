@@ -127,11 +127,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Row(
+              Row(
                 children: [
                   Icon(Icons.help_outline_rounded, color: AppTheme.neonLime, size: 24),
-                  SizedBox(width: 10),
-                  Text(
+                  const SizedBox(width: 10),
+                  const Text(
                     'Need Help Logging In?',
                     style: TextStyle(
                       fontSize: 18,
@@ -209,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFF262C3A), width: 1.2),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.fingerprint_rounded,
               color: AppTheme.neonLime,
               size: 28,
@@ -364,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       border: Border.all(color: AppTheme.neonLime, width: 2),
                                       color: AppTheme.darkSurface,
                                     ),
-                                    child: const Icon(Icons.fitness_center_rounded, color: AppTheme.neonLime, size: 36),
+                                    child: Icon(Icons.fitness_center_rounded, color: AppTheme.neonLime, size: 36),
                                   ),
                                 ),
                                 TextButton(
@@ -372,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   style: TextButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'Need Help?',
                                     style: TextStyle(
                                       color: AppTheme.neonLime,
@@ -418,7 +418,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             if (lastPart.isNotEmpty)
                                               TextSpan(
                                                 text: lastPart,
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   fontSize: 24,
                                                   fontWeight: FontWeight.w900,
                                                   color: AppTheme.neonLime,
@@ -623,8 +623,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (_isBiometricEnabled)
                               TextButton.icon(
                                 onPressed: _authenticateBiometric,
-                                icon: const Icon(Icons.fingerprint_rounded, color: AppTheme.neonLime, size: 20),
-                                label: const Text(
+                                icon: Icon(Icons.fingerprint_rounded, color: AppTheme.neonLime, size: 20),
+                                label: Text(
                                   'Use Fingerprint',
                                   style: TextStyle(
                                     color: AppTheme.neonLime,

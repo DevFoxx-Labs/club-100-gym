@@ -23,13 +23,13 @@ class WelcomeScreen extends StatelessWidget {
                     const SizedBox(height: 10),
 
                     // Brand Hero Header
-                    const Column(
+                    Column(
                       children: [
-                        GymLogoView(
+                        const GymLogoView(
                           size: 100,
                         ),
-                        SizedBox(height: 24),
-                        Text(
+                        const SizedBox(height: 24),
+                        const Text(
                           'ELITE FITNESS GYM',
                           style: TextStyle(
                             fontSize: 26,
@@ -38,7 +38,7 @@ class WelcomeScreen extends StatelessWidget {
                             letterSpacing: 1.5,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
                           'Gym Member & Fee Management App',
                           style: TextStyle(
@@ -47,8 +47,8 @@ class WelcomeScreen extends StatelessWidget {
                             color: AppTheme.neonLime,
                           ),
                         ),
-                        SizedBox(height: 16),
-                        Text(
+                        const SizedBox(height: 16),
+                        const Text(
                           'Manage members, track membership dues, record payments, and generate digital PDF receipts offline on your device.',
                           textAlign: TextAlign.center,
                           style: TextStyle(

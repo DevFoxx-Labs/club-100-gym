@@ -192,7 +192,7 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
                       lastDate: DateTime(2035),
                       builder: (context, child) => Theme(
                         data: ThemeData.dark().copyWith(
-                          colorScheme: const ColorScheme.dark(
+                          colorScheme: ColorScheme.dark(
                             primary: AppTheme.neonLime,
                             onPrimary: AppTheme.darkBackground,
                             surface: AppTheme.darkSurface,
@@ -213,7 +213,7 @@ class _AddEditExpenseScreenState extends State<AddEditExpenseScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.calendar_today_rounded, color: AppTheme.neonLime, size: 18),
+                        Icon(Icons.calendar_today_rounded, color: AppTheme.neonLime, size: 18),
                         const SizedBox(width: 10),
                         Text(
                           dateFormat.format(_expenseDate),

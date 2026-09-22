@@ -100,7 +100,7 @@ class _SelectMemberForPaymentScreenState extends State<SelectMemberForPaymentScr
             ),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
                   : _filteredMembers.isEmpty
                       ? const Center(
                           child: Text('No members found', style: TextStyle(color: AppTheme.textMuted)),
@@ -131,7 +131,7 @@ class _SelectMemberForPaymentScreenState extends State<SelectMemberForPaymentScr
                                   style: const TextStyle(color: AppTheme.textMuted, fontSize: 12.5),
                                 ),
                                 trailing: isNavigating
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 20,
                                         height: 20,
                                         child: CircularProgressIndicator(color: AppTheme.neonLime, strokeWidth: 2.4),

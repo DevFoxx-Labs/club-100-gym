@@ -158,11 +158,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0C0F14),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppTheme.neonLime, size: 28),
+          icon: Icon(Icons.menu_rounded, color: AppTheme.neonLime, size: 28),
           tooltip: 'Open Menu',
           onPressed: widget.onOpenDrawer,
         ),
@@ -184,7 +185,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   if (lastPart.isNotEmpty)
                     TextSpan(
                       text: lastPart,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
                         color: AppTheme.neonLime,
@@ -229,31 +230,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: Stack(
         children: [
-          // Subtle top-right athlete overlay
-          Positioned(
-            top: 0,
-            right: 0,
-            left: 0,
-            height: 240,
-            child: ShaderMask(
-              shaderCallback: (rect) {
-                return LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
+          // Fullscreen background image
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/app-bg-2.png',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+            ),
+          ),
+          // Readability scrim over the background image
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.35),
-                    Colors.black.withValues(alpha: 0.8),
-                    const Color(0xFF0C0F14),
+                    const Color(0xFF0C0F14).withValues(alpha: 0.55),
+                    const Color(0xFF0C0F14).withValues(alpha: 0.78),
                   ],
-                  stops: const [0.0, 0.5, 1.0],
-                ).createShader(rect);
-              },
-              blendMode: BlendMode.dstIn,
-              child: Image.asset(
-                'assets/images/login_bg.jpg',
-                fit: BoxFit.cover,
-                alignment: Alignment.topRight,
-                errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                ),
               ),
             ),
           ),
@@ -265,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: AppTheme.neonLime,
               backgroundColor: AppTheme.darkSurface,
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
                   : SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: EdgeInsets.fromLTRB(16, 12, 16, 36 + safeBottom),
@@ -295,7 +291,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         RichText(
                                           text: TextSpan(
                                             children: [
-                                              const TextSpan(
+                                              TextSpan(
                                                 text: 'Good ',
                                                 style: TextStyle(
                                                   fontSize: 12,
@@ -343,8 +339,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 padding: const EdgeInsets.only(top: 2),
                                 child: RichText(
                                   textAlign: TextAlign.right,
-                                  text: const TextSpan(
-                                    style: TextStyle(
+                                  text: TextSpan(
+                                    style: const TextStyle(
                                       fontSize: 9.5,
                                       fontWeight: FontWeight.w900,
                                       height: 1.25,
@@ -352,8 +348,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                     children: [
                                       TextSpan(text: "STRONGER\n", style: TextStyle(color: AppTheme.neonLime)),
-                                      TextSpan(text: "PEOPLE BUILD\n", style: TextStyle(color: Colors.white)),
-                                      TextSpan(text: "STRONGER\n", style: TextStyle(color: Colors.white)),
+                                      const TextSpan(text: "PEOPLE BUILD\n", style: TextStyle(color: Colors.white)),
+                                      const TextSpan(text: "STRONGER\n", style: TextStyle(color: Colors.white)),
                                       TextSpan(text: "COMMUNITIES", style: TextStyle(color: AppTheme.neonLime)),
                                     ],
                                   ),
@@ -450,8 +446,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               InkWell(
                                 onTap: () => widget.onNavigateToMembers('All'),
                                 borderRadius: BorderRadius.circular(8),
-                                child: const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                                   child: Row(
                                     children: [
                                       Text(
@@ -462,7 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      SizedBox(width: 3),
+                                      const SizedBox(width: 3),
                                       Icon(Icons.arrow_forward_rounded, color: AppTheme.neonLime, size: 14),
                                     ],
                                   ),
@@ -562,8 +558,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               InkWell(
                                 onTap: () => widget.onNavigateToMembers('All'),
                                 borderRadius: BorderRadius.circular(8),
-                                child: const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                                   child: Row(
                                     children: [
                                       Text(
@@ -574,7 +570,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      SizedBox(width: 3),
+                                      const SizedBox(width: 3),
                                       Icon(Icons.arrow_forward_rounded, color: AppTheme.neonLime, size: 14),
                                     ],
                                   ),
@@ -590,7 +586,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF161922),
+                                color: const Color(0xFF161922).withValues(alpha: 0.55),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: const Color(0xFF222838), width: 1),
                               ),
@@ -644,7 +640,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 8),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF161922),
+                                    color: const Color(0xFF161922).withValues(alpha: 0.55),
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(color: const Color(0xFF222838)),
                                   ),
@@ -656,7 +652,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         color: AppTheme.neonLime.withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime, size: 20),
+                                      child: Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime, size: 20),
                                     ),
                                     title: Text(
                                       memberName,
@@ -671,7 +667,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       children: [
                                         Text(
                                           '₹${pay.amount.toStringAsFixed(0)}',
-                                          style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 15),
+                                          style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 15),
                                         ),
                                         const SizedBox(width: 4),
                                         const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted, size: 18),
@@ -719,7 +715,7 @@ class _QuickActionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF161922),
+      color: const Color(0xFF161922).withValues(alpha: 0.55),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),

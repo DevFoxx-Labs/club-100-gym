@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/theme/app_theme.dart';
 import 'core/security/security_service.dart';
+import 'core/services/app_state_service.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/notifications/reminder_scheduler.dart';
+import 'data/repositories/settings_repository.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/auth/login_screen.dart';
 
@@ -39,13 +41,48 @@ void main() async {
   final security = SecurityService();
   final isComplete = await security.isSetupComplete();
 
+  // Apply the admin's saved favorite highlight color, if any, before first paint
+  try {
+    final savedAccentColor = await SettingsRepository().getAccentColor();
+    if (savedAccentColor != null) {
+      AppTheme.setAccentColor(savedAccentColor);
+    }
+  } catch (e) {
+    debugPrint('Failed to load saved accent color: $e');
+  }
+
   runApp(Club100GymApp(isSetupComplete: isComplete));
 }
 
-class Club100GymApp extends StatelessWidget {
+class Club100GymApp extends StatefulWidget {
   final bool isSetupComplete;
 
   const Club100GymApp({super.key, required this.isSetupComplete});
+
+  @override
+  State<Club100GymApp> createState() => _Club100GymAppState();
+}
+
+class _Club100GymAppState extends State<Club100GymApp> {
+  @override
+  void initState() {
+    super.initState();
+    AppStateService.instance.addListener(_onAppStateChanged);
+  }
+
+  @override
+  void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
+    super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    // Rebuilding the root widget cascades a fresh build down the whole tree,
+    // so every screen picks up the newly selected AppTheme.neonLime immediately.
+    if (AppStateService.instance.lastEventType == AppStateEventType.themeChanged && mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +90,7 @@ class Club100GymApp extends StatelessWidget {
       title: 'Elite Fitness Gym',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: isSetupComplete ? const LoginScreen() : const WelcomeScreen(),
+      home: widget.isSetupComplete ? const LoginScreen() : const WelcomeScreen(),
     );
   }
 }

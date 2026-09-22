@@ -338,7 +338,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                               ),
                               if (isSelected) ...[
                                 const SizedBox(width: 8),
-                                const Icon(Icons.check_circle_rounded, color: AppTheme.neonLime, size: 18),
+                                Icon(Icons.check_circle_rounded, color: AppTheme.neonLime, size: 18),
                               ],
                             ],
                           ),
@@ -498,7 +498,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
         backgroundColor: AppTheme.darkBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppTheme.neonLime),
+          icon: Icon(Icons.menu_rounded, color: AppTheme.neonLime),
           tooltip: 'Open Menu',
           onPressed: widget.onOpenDrawer,
         ),
@@ -522,7 +522,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   child: Container(
                     width: 9,
                     height: 9,
-                    decoration: const BoxDecoration(color: AppTheme.neonLime, shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: AppTheme.neonLime, shape: BoxShape.circle),
                   ),
                 ),
             ],
@@ -549,8 +549,8 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               _buildRecentHeader(),
               const SizedBox(height: 12),
               if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
                   child: Center(child: CircularProgressIndicator(color: AppTheme.neonLime)),
                 )
               else if (filtered.isEmpty)
@@ -576,7 +576,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
           style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.textWhite, letterSpacing: 0.5),
           children: [
             TextSpan(text: parts[0]),
-            const TextSpan(text: 'FITNESS', style: TextStyle(color: AppTheme.neonLime)),
+            TextSpan(text: 'FITNESS', style: TextStyle(color: AppTheme.neonLime)),
             if (parts.length > 1) TextSpan(text: parts[1]),
           ],
         ),
@@ -617,7 +617,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                 color: AppTheme.neonLime.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.campaign_rounded, color: AppTheme.neonLime, size: 24),
+              child: Icon(Icons.campaign_rounded, color: AppTheme.neonLime, size: 24),
             ),
             const SizedBox(width: 12),
             const Expanded(
@@ -658,7 +658,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.groups_rounded, color: AppTheme.neonLime, size: 16),
+                  Icon(Icons.groups_rounded, color: AppTheme.neonLime, size: 16),
                   const SizedBox(width: 6),
                   ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.5),
@@ -666,11 +666,11 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                       _audienceLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w800, fontSize: 12),
+                      style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w800, fontSize: 12),
                     ),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.neonLime, size: 16),
+                  Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.neonLime, size: 16),
                 ],
               ),
             ),
@@ -703,7 +703,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                   color: AppTheme.neonLime.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.campaign_rounded, color: AppTheme.neonLime, size: 20),
+                child: Icon(Icons.campaign_rounded, color: AppTheme.neonLime, size: 20),
               ),
               const SizedBox(width: 12),
               const Expanded(
@@ -753,7 +753,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
               hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.darkBorder)),
               enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.darkBorder)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppTheme.neonLime, width: 1.5)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.neonLime, width: 1.5)),
             ),
           ),
           if (_pickedImagePath != null) ...[
@@ -978,7 +978,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                     value: f,
                     child: Row(
                       children: [
-                        if (_selectedFilter == f) const Icon(Icons.check_rounded, color: AppTheme.neonLime, size: 16),
+                        if (_selectedFilter == f) Icon(Icons.check_rounded, color: AppTheme.neonLime, size: 16),
                         if (_selectedFilter == f) const SizedBox(width: 8),
                         Text(f, style: const TextStyle(color: AppTheme.textWhite)),
                       ],
@@ -1076,7 +1076,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: AppTheme.neonLime.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(6)),
-                            child: const Text('Pinned', style: TextStyle(color: AppTheme.neonLime, fontSize: 9.5, fontWeight: FontWeight.w900)),
+                            child: Text('Pinned', style: TextStyle(color: AppTheme.neonLime, fontSize: 9.5, fontWeight: FontWeight.w900)),
                           ),
                         ],
                       ],

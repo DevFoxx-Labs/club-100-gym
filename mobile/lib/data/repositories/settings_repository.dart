@@ -1,9 +1,34 @@
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
 import '../models/gym_info_model.dart';
 import '../models/admin_model.dart';
 
 class SettingsRepository {
+  static const _accentColorKey = 'accentColorHex';
+
+  /// Returns the admin's saved favorite highlight color, or null if never customized.
+  Future<Color?> getAccentColor() async {
+    final db = await AppDatabase.instance.database;
+    final maps = await db.query('app_settings', where: 'key = ?', whereArgs: [_accentColorKey], limit: 1);
+    if (maps.isEmpty) return null;
+    final hex = maps.first['value'] as String?;
+    if (hex == null || hex.isEmpty) return null;
+    final value = int.tryParse(hex, radix: 16);
+    if (value == null) return null;
+    return Color(value);
+  }
+
+  Future<void> saveAccentColor(Color color) async {
+    final db = await AppDatabase.instance.database;
+    final hex = color.toARGB32().toRadixString(16).padLeft(8, '0');
+    await db.insert(
+      'app_settings',
+      {'key': _accentColorKey, 'value': hex},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   Future<GymInfoModel> getGymInfo() async {
     final db = await AppDatabase.instance.database;
     final List<Map<String, dynamic>> maps = await db.query('gym', limit: 1);

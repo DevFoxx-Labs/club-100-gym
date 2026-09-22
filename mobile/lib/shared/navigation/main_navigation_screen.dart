@@ -120,7 +120,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
                         color: const Color(0xFF1E3A20),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.grid_view_rounded, color: AppTheme.neonLime, size: 20),
+                      child: Icon(Icons.grid_view_rounded, color: AppTheme.neonLime, size: 20),
                     )
                   : const Icon(Icons.grid_view_rounded, size: 22),
               label: 'Dashboard',

@@ -148,7 +148,7 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(color: AppTheme.neonLime, width: 1.5),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.fingerprint_rounded,
                             size: 48,
                             color: AppTheme.neonLime,

@@ -116,7 +116,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+            ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Form(

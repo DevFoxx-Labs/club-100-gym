@@ -5,7 +5,22 @@ class AppTheme {
   static const Color darkSurface = Color(0xFF13151B);
   static const Color darkCard = Color(0xFF1A1D26);
   static const Color darkBorder = Color(0xFF1E222D);
-  static const Color neonLime = Color(0xFFB5F63D);
+
+  /// The factory-default highlight color, used until the admin picks a favorite color
+  /// in Settings, and offered as a "Reset to Default" option in the color picker.
+  static const Color defaultAccentColor = Color(0xFFB5F63D);
+
+  static Color _accentColor = defaultAccentColor;
+
+  /// The app-wide highlight/accent color. Historically named `neonLime` because that
+  /// was the original fixed brand color; kept as the name so the hundreds of existing
+  /// call sites don't need to change when this became admin-customizable.
+  static Color get neonLime => _accentColor;
+
+  static void setAccentColor(Color color) {
+    _accentColor = color;
+  }
+
   static const Color textWhite = Color(0xFFFFFFFF);
   static const Color textMuted = Color(0xFF94A3B8);
   static const Color statusOverdue = Color(0xFFEF4444);
@@ -17,7 +32,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: darkBackground,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: ColorScheme.dark(
         surface: darkSurface,
         primary: neonLime,
         secondary: neonLime,
@@ -45,14 +60,14 @@ class AppTheme {
         ),
         iconTheme: IconThemeData(color: textWhite),
       ),
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: darkSurface,
         selectedItemColor: neonLime,
         unselectedItemColor: textMuted,
         type: BottomNavigationBarType.fixed,
         elevation: 10,
-        selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-        unselectedLabelStyle: TextStyle(fontSize: 11),
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+        unselectedLabelStyle: const TextStyle(fontSize: 11),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -70,7 +85,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: neonLime, width: 1.5),
+          borderSide: BorderSide(color: neonLime, width: 1.5),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

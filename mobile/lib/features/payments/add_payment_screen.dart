@@ -278,10 +278,10 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
+                        Row(
                           children: [
                             Icon(Icons.fitness_center_rounded, color: AppTheme.neonLime, size: 18),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
                               'PERSONAL TRAINING INCLUDED',
                               style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5),
@@ -312,7 +312,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('Personal Training Fee:', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
-                            Text('₹${_ptFee.toStringAsFixed(0)}', style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 13)),
+                            Text('₹${_ptFee.toStringAsFixed(0)}', style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 13)),
                           ],
                         ),
                         const Divider(color: AppTheme.darkBorder, height: 16),
@@ -322,7 +322,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                             const Text('Total Plan + PT Due:', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13)),
                             Text(
                               '₹${(_baseFee + _ptFee).toStringAsFixed(0)}',
-                              style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 15),
+                              style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 15),
                             ),
                           ],
                         ),
@@ -339,7 +339,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                     const Text('RECEIPT NO:', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
                     Text(
                       _generatedReceiptNo,
-                      style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 14),
+                      style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 14),
                     ),
                   ],
                 ),

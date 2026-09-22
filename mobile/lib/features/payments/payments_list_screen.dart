@@ -116,7 +116,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
             ),
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
                   : _filteredPayments.isEmpty
                       ? const Center(
                           child: Text('No payment history found', style: TextStyle(color: AppTheme.textMuted)),
@@ -149,7 +149,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
                                   backgroundColor: AppTheme.neonLime.withValues(alpha: 0.15),
                                   child: Text(
                                     initialLetter,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: AppTheme.neonLime,
                                       fontWeight: FontWeight.w900,
                                       fontSize: 16,
@@ -185,11 +185,11 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const Icon(Icons.receipt_rounded, color: AppTheme.neonLime, size: 12),
+                                              Icon(Icons.receipt_rounded, color: AppTheme.neonLime, size: 12),
                                               const SizedBox(width: 4),
                                               Text(
                                                 'Receipt #${pay.receiptNumber}',
-                                                style: const TextStyle(
+                                                style: TextStyle(
                                                   color: AppTheme.neonLime,
                                                   fontWeight: FontWeight.w800,
                                                   fontSize: 11.5,
@@ -225,7 +225,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
                                 ),
                                 trailing: Text(
                                   '₹${pay.amount.toStringAsFixed(0)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AppTheme.neonLime,
                                     fontWeight: FontWeight.w900,
                                     fontSize: 16,

@@ -294,7 +294,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         actions: [
           IconButton(
             tooltip: 'Mark All Read',
-            icon: const Icon(Icons.done_all_rounded, color: AppTheme.neonLime),
+            icon: Icon(Icons.done_all_rounded, color: AppTheme.neonLime),
             onPressed: _allNotifications.any((n) => n['isRead'] == false) ? _markAllAsRead : null,
           ),
           PopupMenuButton<String>(
@@ -399,7 +399,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             // Content List
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
                   : filtered.isEmpty
                       ? _buildEmptyState()
                       : RefreshIndicator(
@@ -426,7 +426,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                       children: [
                                         Text(
                                           groupName.toUpperCase(),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             color: AppTheme.neonLime,
                                             fontWeight: FontWeight.w900,
                                             fontSize: 12,
@@ -684,7 +684,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                   ),
                   const Spacer(),
-                  const Text(
+                  Text(
                     'Tap to view',
                     style: TextStyle(
                       color: AppTheme.neonLime,
@@ -693,7 +693,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(Icons.chevron_right_rounded, size: 14, color: AppTheme.neonLime),
+                  Icon(Icons.chevron_right_rounded, size: 14, color: AppTheme.neonLime),
                 ],
               ),
             ],

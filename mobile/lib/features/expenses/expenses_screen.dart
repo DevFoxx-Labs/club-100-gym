@@ -137,7 +137,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+            ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
             : RefreshIndicator(
                 color: AppTheme.neonLime,
                 onRefresh: _loadExpenses,

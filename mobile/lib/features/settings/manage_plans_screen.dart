@@ -120,14 +120,14 @@ class _ManagePlansScreenState extends State<ManagePlansScreen> {
         title: const Text('MEMBERSHIP PLANS'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_rounded, color: AppTheme.neonLime),
+            icon: Icon(Icons.add_rounded, color: AppTheme.neonLime),
             onPressed: () => _showAddEditPlanModal(),
           ),
         ],
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+            ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
             : ListView.builder(
                 padding: EdgeInsets.fromLTRB(20, 20, 20, 24 + MediaQuery.paddingOf(context).bottom),
                 itemCount: _plans.length,
@@ -142,7 +142,7 @@ class _ManagePlansScreenState extends State<ManagePlansScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 4),
-                          Text('${p.durationDays} Days • ₹${p.defaultFee.toStringAsFixed(0)}', style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold)),
+                          Text('${p.durationDays} Days • ₹${p.defaultFee.toStringAsFixed(0)}', style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold)),
                           if (p.description != null && p.description!.isNotEmpty)
                             Text(p.description!, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                         ],

@@ -17,16 +17,16 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _CategoryColors {
-  static const List<Color> palette = [
+  static final List<Color> palette = [
     AppTheme.neonLime,
-    Color(0xFF389BF2),
+    const Color(0xFF389BF2),
     AppTheme.statusOverdue,
-    Color(0xFFF97316),
-    Color(0xFFA855F7),
+    const Color(0xFFF97316),
+    const Color(0xFFA855F7),
     AppTheme.statusDueSoon,
-    Color(0xFF25D366),
-    Color(0xFFEC4899),
-    Color(0xFF64748B),
+    const Color(0xFF25D366),
+    const Color(0xFFEC4899),
+    const Color(0xFF64748B),
   ];
 }
 
@@ -145,7 +145,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+            ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
             : RefreshIndicator(
                 color: AppTheme.neonLime,
                 onRefresh: _loadData,

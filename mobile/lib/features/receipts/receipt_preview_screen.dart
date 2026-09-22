@@ -40,7 +40,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
         title: Text('RECEIPT #${widget.receipt.receiptNumber}'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.neonLime),
+            icon: Icon(Icons.qr_code_scanner_rounded, color: AppTheme.neonLime),
             onPressed: () {
               Navigator.push(
                 context,
@@ -103,7 +103,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                                     if (_gymInfo?.website != null && _gymInfo!.website!.trim().isNotEmpty)
                                       Text(
                                         _gymInfo!.website!.trim(),
-                                        style: const TextStyle(fontSize: 11, color: AppTheme.neonLime),
+                                        style: TextStyle(fontSize: 11, color: AppTheme.neonLime),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),

@@ -310,7 +310,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    const Text(
+                    Text(
                       'SORT BY',
                       style: TextStyle(
                         color: AppTheme.neonLime,
@@ -401,7 +401,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
               ),
               children: [
                 TextSpan(text: parts[0]),
-                const TextSpan(
+                TextSpan(
                   text: 'FITNESS',
                   style: TextStyle(color: AppTheme.neonLime),
                 ),
@@ -560,7 +560,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
         backgroundColor: AppTheme.darkBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppTheme.neonLime),
+          icon: Icon(Icons.menu_rounded, color: AppTheme.neonLime),
           tooltip: 'Open Menu',
           onPressed: widget.onOpenDrawer,
         ),
@@ -581,7 +581,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                   child: Container(
                     width: 9,
                     height: 9,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppTheme.neonLime,
                       shape: BoxShape.circle,
                     ),
@@ -654,7 +654,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                               color: AppTheme.neonLime.withValues(alpha: 0.16),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.groups_rounded,
                               color: AppTheme.neonLime,
                               size: 18,
@@ -810,7 +810,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
             // Members List (Safe-area aware bottom padding)
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
                   : _filteredMembers.isEmpty
                       ? Center(
                           child: Column(

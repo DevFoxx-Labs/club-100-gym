@@ -57,7 +57,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
                 children: [
                   Text('Receipt No: ${result['recNo']}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textWhite)),
                   Text('Member: ${result['member']}', style: const TextStyle(color: AppTheme.textWhite)),
-                  Text('Amount: ₹${result['amount']}', style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold)),
+                  Text('Amount: ₹${result['amount']}', style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold)),
                   Text('Plan: ${result['plan']}', style: const TextStyle(color: AppTheme.textMuted)),
                   Text('Date: ${result['date']}', style: const TextStyle(color: AppTheme.textMuted)),
                 ],

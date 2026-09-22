@@ -16,6 +16,7 @@ import '../trainers/trainers_list_screen.dart';
 import '../events/events_calendar_screen.dart';
 import 'backup_screen.dart';
 import 'change_mpin_screen.dart';
+import 'accent_color_screen.dart';
 import '../notifications/notifications_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -105,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
+            ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
             : ListView(
                 padding: EdgeInsets.fromLTRB(20, 20, 20, 36 + MediaQuery.paddingOf(context).bottom),
                 children: [
@@ -137,6 +138,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Events & Calendar',
                     subtitle: 'Gym events, challenges, and workshops',
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EventsCalendarScreen())),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Appearance Section
+                  const _SectionHeader(title: 'APPEARANCE'),
+                  _SettingsTile(
+                    icon: Icons.palette_rounded,
+                    title: 'Highlight Color',
+                    subtitle: 'Pick your favorite color to replace the app accent',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AccentColorScreen())),
                   ),
                   const SizedBox(height: 18),
 
@@ -212,7 +223,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         const SizedBox(height: 4),
                         GestureDetector(
                           onTap: () => launchUrl(Uri.parse('https://devfoxxlabs.com'), mode: LaunchMode.externalApplication),
-                          child: const Text('Designed and developed by DevFoxx Labs', style: TextStyle(color: AppTheme.neonLime, fontSize: 10, fontWeight: FontWeight.w600)),
+                          child: Text('Designed and developed by DevFoxx Labs', style: TextStyle(color: AppTheme.neonLime, fontSize: 10, fontWeight: FontWeight.w600)),
                         ),
                       ],
                     ),
@@ -235,7 +246,7 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8, top: 4),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.neonLime, letterSpacing: 1),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.neonLime, letterSpacing: 1),
       ),
     );
   }
@@ -246,14 +257,14 @@ class _SettingsTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  final Color iconColor;
+  final Color? iconColor;
 
   const _SettingsTile({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.iconColor = AppTheme.neonLime,
+    this.iconColor,
   });
 
   @override
@@ -262,7 +273,7 @@ class _SettingsTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
         onTap: onTap,
-        leading: Icon(icon, color: iconColor),
+        leading: Icon(icon, color: iconColor ?? AppTheme.neonLime),
         title: Text(title, style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14)),
         subtitle: Text(subtitle, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
         trailing: const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted),

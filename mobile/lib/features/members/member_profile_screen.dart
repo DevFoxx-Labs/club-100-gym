@@ -278,7 +278,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'SEND NOTIFICATION MESSAGE',
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.neonLime, letterSpacing: 1),
@@ -335,7 +335,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                             OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppTheme.neonLime,
-                                side: const BorderSide(color: AppTheme.neonLime),
+                                side: BorderSide(color: AppTheme.neonLime),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                               ),
@@ -365,7 +365,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     final dateFormat = DateFormat('dd MMM yyyy');
 
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppTheme.neonLime)));
+      return Scaffold(body: Center(child: CircularProgressIndicator(color: AppTheme.neonLime)));
     }
 
     if (_member == null) {
@@ -400,13 +400,13 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
               }
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'sync_contacts',
                 child: Row(
                   children: [
                     Icon(Icons.contact_phone_rounded, color: AppTheme.neonLime, size: 18),
-                    SizedBox(width: 10),
-                    Text('Save to Phone Contacts', style: TextStyle(color: AppTheme.textWhite)),
+                    const SizedBox(width: 10),
+                    const Text('Save to Phone Contacts', style: TextStyle(color: AppTheme.textWhite)),
                   ],
                 ),
               ),
@@ -467,7 +467,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                           const SizedBox(height: 2),
                           Text(
                             _member!.phone,
-                            style: const TextStyle(fontSize: 13, color: AppTheme.neonLime, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 13, color: AppTheme.neonLime, fontWeight: FontWeight.bold),
                           ),
                           if (_member!.email != null && _member!.email!.isNotEmpty) ...[
                             const SizedBox(height: 2),
@@ -661,7 +661,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                             children: [
                               Text(
                                 '${log.previousPlanName} ➔ ${log.newPlanName}',
-                                style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 13),
+                                style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 13),
                               ),
                               Text(
                                 dateFormat.format(log.effectiveDate),
@@ -775,7 +775,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                             children: [
                               Text(
                                 '₹${pay.amount.toStringAsFixed(0)}',
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.neonLime),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.neonLime),
                               ),
                               const SizedBox(height: 2),
                               Text(
@@ -789,7 +789,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                             ],
                           ),
                           IconButton(
-                            icon: const Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime),
+                            icon: Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime),
                             onPressed: () async {
                               final nav = Navigator.of(context);
                               final receipt = await _paymentRepo.getReceiptByPaymentId(pay.id);
