@@ -183,6 +183,7 @@ class DbTables {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       phone TEXT NOT NULL,
+      role TEXT DEFAULT 'Trainer',
       specialization TEXT,
       monthlySalary REAL,
       photoPath TEXT,

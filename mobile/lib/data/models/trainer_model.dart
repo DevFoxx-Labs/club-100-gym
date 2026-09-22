@@ -2,6 +2,7 @@ class TrainerModel {
   final String id;
   final String name;
   final String phone;
+  final String role;
   final String? specialization;
   final double? monthlySalary;
   final String? photoPath;
@@ -14,6 +15,7 @@ class TrainerModel {
     required this.id,
     required this.name,
     required this.phone,
+    this.role = 'Trainer',
     this.specialization,
     this.monthlySalary,
     this.photoPath,
@@ -25,11 +27,17 @@ class TrainerModel {
 
   String get speciality => (specialization != null && specialization!.isNotEmpty) ? specialization! : 'General';
 
+  /// Splits the comma-separated specialization field into individual tag labels.
+  List<String> get specializationTags => (specialization == null || specialization!.trim().isEmpty)
+      ? []
+      : specialization!.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
       'phone': phone,
+      'role': role,
       'specialization': specialization,
       'monthlySalary': monthlySalary,
       'photoPath': photoPath,
@@ -45,6 +53,7 @@ class TrainerModel {
       id: map['id'] as String,
       name: map['name'] as String,
       phone: map['phone'] as String,
+      role: (map['role'] as String?) ?? 'Trainer',
       specialization: map['specialization'] as String?,
       monthlySalary: (map['monthlySalary'] as num?)?.toDouble(),
       photoPath: map['photoPath'] as String?,
@@ -59,6 +68,7 @@ class TrainerModel {
     String? id,
     String? name,
     String? phone,
+    String? role,
     String? specialization,
     double? monthlySalary,
     String? photoPath,
@@ -71,6 +81,7 @@ class TrainerModel {
       id: id ?? this.id,
       name: name ?? this.name,
       phone: phone ?? this.phone,
+      role: role ?? this.role,
       specialization: specialization ?? this.specialization,
       monthlySalary: monthlySalary ?? this.monthlySalary,
       photoPath: photoPath ?? this.photoPath,
@@ -81,4 +92,3 @@ class TrainerModel {
     );
   }
 }
-

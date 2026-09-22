@@ -29,6 +29,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
   String? _photoPath;
   bool _isLoading = false;
   bool _isActive = true;
+  String _role = 'Trainer';
 
   @override
   void initState() {
@@ -41,6 +42,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
       _salaryController.text = t.monthlySalary != null ? t.monthlySalary!.toStringAsFixed(0) : '';
       _photoPath = t.photoPath;
       _isActive = t.isActive;
+      _role = t.role;
     }
   }
 
@@ -65,6 +67,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
       final updated = widget.trainer!.copyWith(
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
+        role: _role,
         specialization: spec.isEmpty ? null : spec,
         monthlySalary: salary,
         photoPath: _photoPath,
@@ -77,6 +80,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
         id: const Uuid().v4(),
         name: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
+        role: _role,
         specialization: spec.isEmpty ? null : spec,
         monthlySalary: salary,
         photoPath: _photoPath,
@@ -136,6 +140,48 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 validator: (val) => FormValidators.validatePhone(val, fieldName: 'Phone number'),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'STAFF ROLE',
+                style: TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    selected: _role == 'Trainer',
+                    label: const Text('Trainer'),
+                    avatar: const Icon(Icons.fitness_center_rounded, size: 16),
+                    selectedColor: const Color(0xFFD4FF00),
+                    backgroundColor: const Color(0xFF1E1E1E),
+                    labelStyle: TextStyle(
+                      color: _role == 'Trainer' ? const Color(0xFF121212) : Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                    onSelected: (val) {
+                      if (val) setState(() => _role = 'Trainer');
+                    },
+                  ),
+                  ChoiceChip(
+                    selected: _role == 'Staff',
+                    label: const Text('Staff'),
+                    avatar: const Icon(Icons.badge_outlined, size: 16),
+                    selectedColor: const Color(0xFFD4FF00),
+                    backgroundColor: const Color(0xFF1E1E1E),
+                    labelStyle: TextStyle(
+                      color: _role == 'Staff' ? const Color(0xFF121212) : Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                    onSelected: (val) {
+                      if (val) setState(() => _role = 'Staff');
+                    },
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               CustomTextField(

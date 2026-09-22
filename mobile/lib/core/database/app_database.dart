@@ -21,7 +21,7 @@ class AppDatabase {
 
     final db = await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -236,6 +236,12 @@ class AppDatabase {
     if (oldVersion < 6) {
       try {
         await db.execute(DbTables.expenses);
+      } catch (_) {}
+    }
+
+    if (oldVersion < 7) {
+      try {
+        await db.execute("ALTER TABLE trainers ADD COLUMN role TEXT DEFAULT 'Trainer';");
       } catch (_) {}
     }
   }
