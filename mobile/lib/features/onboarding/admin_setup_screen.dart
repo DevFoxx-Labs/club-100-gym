@@ -117,6 +117,7 @@ class _AdminSetupScreenState extends State<AdminSetupScreen> {
                     }
                   },
                 ),
+                SizedBox(height: 16 + MediaQuery.paddingOf(context).bottom),
               ],
             ),
           ),

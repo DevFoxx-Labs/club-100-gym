@@ -122,7 +122,7 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
               backgroundColor: const Color(0xFF1E1E1E),
               onRefresh: _loadData,
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 100 + MediaQuery.paddingOf(context).bottom),
                 children: [
                   // Packages with nested plans
                   if (_packages.isEmpty && _plans.isEmpty)
@@ -236,7 +236,13 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('No plans added under this package yet.', style: TextStyle(color: Colors.white38, fontSize: 13)),
+                    const Expanded(
+                      child: Text(
+                        'No plans added under this package yet.',
+                        style: TextStyle(color: Colors.white38, fontSize: 13),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     TextButton.icon(
                       onPressed: () async {
                         final res = await Navigator.push(

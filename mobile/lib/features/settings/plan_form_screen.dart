@@ -193,6 +193,7 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
                 isLoading: _isLoading,
                 onPressed: _savePlan,
               ),
+              SizedBox(height: 16 + MediaQuery.paddingOf(context).bottom),
             ],
           ),
         ),

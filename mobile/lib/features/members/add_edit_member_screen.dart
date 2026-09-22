@@ -446,6 +446,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                   isLoading: _isLoading,
                   onPressed: _saveMember,
                 ),
+                SizedBox(height: 16 + MediaQuery.paddingOf(context).bottom),
               ],
             ),
           ),

@@ -41,67 +41,72 @@ class _ManagePlansScreenState extends State<ManagePlansScreen> {
 
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: AppTheme.darkSurface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                plan == null ? 'ADD MEMBERSHIP PLAN' : 'EDIT PLAN',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(label: 'Plan Name *', controller: nameController),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(child: CustomTextField(label: 'Duration (Days) *', controller: durationController, keyboardType: TextInputType.number)),
-                  const SizedBox(width: 12),
-                  Expanded(child: CustomTextField(label: 'Default Fee (₹) *', controller: feeController, keyboardType: TextInputType.number)),
-                ],
-              ),
-              const SizedBox(height: 12),
-              CustomTextField(label: 'Description', controller: descController, maxLines: 2),
-              const SizedBox(height: 24),
-              NeonButton(
-                text: 'Save Plan',
-                width: double.infinity,
-                onPressed: () async {
-                  final nav = Navigator.of(context);
-                  const uuid = Uuid();
-                  final now = DateTime.now();
+        final bottomInset = MediaQuery.paddingOf(context).bottom;
+        return SafeArea(
+          top: false,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 24,
+              bottom: MediaQuery.of(context).viewInsets.bottom + (bottomInset > 0 ? bottomInset + 12 : 24),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  plan == null ? 'ADD MEMBERSHIP PLAN' : 'EDIT PLAN',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(label: 'Plan Name *', controller: nameController),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(child: CustomTextField(label: 'Duration (Days) *', controller: durationController, keyboardType: TextInputType.number)),
+                    const SizedBox(width: 12),
+                    Expanded(child: CustomTextField(label: 'Default Fee (₹) *', controller: feeController, keyboardType: TextInputType.number)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                CustomTextField(label: 'Description', controller: descController, maxLines: 2),
+                const SizedBox(height: 24),
+                NeonButton(
+                  text: 'Save Plan',
+                  width: double.infinity,
+                  onPressed: () async {
+                    final nav = Navigator.of(context);
+                    const uuid = Uuid();
+                    final now = DateTime.now();
 
-                  final newPlan = PlanModel(
-                    id: plan?.id ?? uuid.v4(),
-                    name: nameController.text.trim(),
-                    durationDays: int.tryParse(durationController.text.trim()) ?? 30,
-                    defaultFee: double.tryParse(feeController.text.trim()) ?? 1500.0,
-                    description: descController.text.trim(),
-                    createdAt: plan?.createdAt ?? now,
-                    updatedAt: now,
-                  );
+                    final newPlan = PlanModel(
+                      id: plan?.id ?? uuid.v4(),
+                      name: nameController.text.trim(),
+                      durationDays: int.tryParse(durationController.text.trim()) ?? 30,
+                      defaultFee: double.tryParse(feeController.text.trim()) ?? 1500.0,
+                      description: descController.text.trim(),
+                      createdAt: plan?.createdAt ?? now,
+                      updatedAt: now,
+                    );
 
-                  if (plan == null) {
-                    await _planRepo.addPlan(newPlan);
-                  } else {
-                    await _planRepo.updatePlan(newPlan);
-                  }
+                    if (plan == null) {
+                      await _planRepo.addPlan(newPlan);
+                    } else {
+                      await _planRepo.updatePlan(newPlan);
+                    }
 
-                  nav.pop();
-                  _loadPlans();
-                },
-              ),
-            ],
+                    nav.pop();
+                    _loadPlans();
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -124,7 +129,7 @@ class _ManagePlansScreenState extends State<ManagePlansScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
             : ListView.builder(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 24 + MediaQuery.paddingOf(context).bottom),
                 itemCount: _plans.length,
                 itemBuilder: (context, index) {
                   final p = _plans[index];

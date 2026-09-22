@@ -173,18 +173,24 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      widget.member.name,
-                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                                    ),
-                                    Text(
-                                      widget.member.phone,
-                                      style: const TextStyle(color: Colors.white60, fontSize: 12),
-                                    ),
-                                  ],
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.member.name,
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        widget.member.phone,
+                                        style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -192,17 +198,22 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Current Assigned Trainer', style: TextStyle(color: Colors.white54, fontSize: 12)),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      _currentTrainer != null ? _currentTrainer!.name : 'None (Self-Trained)',
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                                    ),
-                                  ],
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text('Current Assigned Trainer', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _currentTrainer != null ? _currentTrainer!.name : 'None (Self-Trained)',
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                                const SizedBox(width: 12),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
@@ -336,6 +347,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                       isLoading: _isLoading,
                       onPressed: _submitChangeTrainer,
                     ),
+                    SizedBox(height: 16 + MediaQuery.paddingOf(context).bottom),
                   ],
                 ),
               ),

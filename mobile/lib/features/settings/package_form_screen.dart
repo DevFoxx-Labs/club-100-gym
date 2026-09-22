@@ -86,34 +86,37 @@ class _PackageFormScreenState extends State<PackageFormScreen> {
           style: const TextStyle(letterSpacing: 1.2, fontWeight: FontWeight.bold, fontSize: 18),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CustomTextField(
-                label: 'PACKAGE CATEGORY NAME *',
-                hint: 'e.g. Standard Gym Access, Strength & CrossFit, Zumba + Cardio',
-                controller: _nameController,
-                validator: (v) => FormValidators.validateName(v, fieldName: 'Package category name'),
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                label: 'DESCRIPTION (OPTIONAL)',
-                hint: 'e.g. Full floor access, free weights, locker room, cardio machines',
-                controller: _descController,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 32),
-              NeonButton(
-                text: widget.isEdit ? 'Save Changes' : 'Create Package',
-                icon: Icons.check,
-                isLoading: _isLoading,
-                onPressed: _savePackage,
-              ),
-            ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CustomTextField(
+                  label: 'PACKAGE CATEGORY NAME *',
+                  hint: 'e.g. Standard Gym Access, Strength & CrossFit, Zumba + Cardio',
+                  controller: _nameController,
+                  validator: (v) => FormValidators.validateName(v, fieldName: 'Package category name'),
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: 'DESCRIPTION (OPTIONAL)',
+                  hint: 'e.g. Full floor access, free weights, locker room, cardio machines',
+                  controller: _descController,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 32),
+                NeonButton(
+                  text: widget.isEdit ? 'Save Changes' : 'Create Package',
+                  icon: Icons.check,
+                  isLoading: _isLoading,
+                  onPressed: _savePackage,
+                ),
+                SizedBox(height: 16 + MediaQuery.paddingOf(context).bottom),
+              ],
+            ),
           ),
         ),
       ),

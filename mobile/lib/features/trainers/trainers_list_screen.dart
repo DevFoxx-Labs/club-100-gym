@@ -70,7 +70,7 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
                   backgroundColor: const Color(0xFF1E1E1E),
                   onRefresh: _loadTrainers,
                   child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, 100 + MediaQuery.paddingOf(context).bottom),
                     itemCount: _trainers.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
@@ -216,15 +216,19 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
                     Row(
                       children: [
                         if (trainer.specialization != null && trainer.specialization!.isNotEmpty) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFD4FF00).withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              trainer.specialization!,
-                              style: const TextStyle(color: Color(0xFFD4FF00), fontSize: 11, fontWeight: FontWeight.w600),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD4FF00).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                trainer.specialization!,
+                                style: const TextStyle(color: Color(0xFFD4FF00), fontSize: 11, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),

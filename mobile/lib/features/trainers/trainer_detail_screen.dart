@@ -281,7 +281,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
         backgroundColor: const Color(0xFF1E1E1E),
         onRefresh: _loadData,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + MediaQuery.paddingOf(context).bottom),
           children: [
             // Profile Card
             Card(

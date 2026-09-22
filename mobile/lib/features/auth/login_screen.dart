@@ -92,132 +92,141 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Gym Logo & Title
-              Column(
-                children: [
-                  const SizedBox(height: 20),
-                  GymLogoView(
-                    size: 80,
-                    logoPath: _gymLogoPath,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _gymName.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.textWhite,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Welcome Back! Enter your MPIN to continue.',
-                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // MPIN Indicator Dots
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(6, (index) {
-                      final isFilled = index < _mpin.length;
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isFilled ? AppTheme.neonLime : AppTheme.darkBackground,
-                          border: Border.all(
-                            color: isFilled ? AppTheme.neonLime : AppTheme.darkBorder,
-                            width: 2,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(24, 16, 24, 16 + MediaQuery.paddingOf(context).bottom),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 32 - MediaQuery.paddingOf(context).bottom),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Gym Logo & Title
+                    Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        GymLogoView(
+                          size: 80,
+                          logoPath: _gymLogoPath,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _gymName.toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: AppTheme.textWhite,
+                            letterSpacing: 1.2,
                           ),
                         ),
-                      );
-                    }),
-                  ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Welcome Back! Enter your MPIN to continue.',
+                          style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                        ),
+                        const SizedBox(height: 24),
 
-                  if (_errorMsg != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      _errorMsg!,
-                      style: const TextStyle(color: AppTheme.statusOverdue, fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ],
-              ),
-
-              // Custom Numeric Keypad Grid
-              Column(
-                children: [
-                  for (var row in [
-                    ['1', '2', '3'],
-                    ['4', '5', '6'],
-                    ['7', '8', '9'],
-                    [_isBiometricEnabled ? 'BIO' : '', '0', 'DEL']
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: row.map((key) {
-                          if (key == '') return const SizedBox(width: 70, height: 54);
-                          if (key == 'BIO') {
-                            return IconButton(
-                              onPressed: _authenticateBiometric,
-                              icon: const Icon(Icons.fingerprint_rounded, color: AppTheme.neonLime),
-                              iconSize: 32,
-                            );
-                          }
-                          if (key == 'DEL') {
-                            return IconButton(
-                              onPressed: _onBackspace,
-                              icon: const Icon(Icons.backspace_outlined, color: AppTheme.textWhite),
-                              iconSize: 24,
-                            );
-                          }
-                          return InkWell(
-                            onTap: () => _onKeyPress(key),
-                            borderRadius: BorderRadius.circular(35),
-                            child: Container(
-                              width: 70,
-                              height: 54,
-                              alignment: Alignment.center,
+                        // MPIN Indicator Dots
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(6, (index) {
+                            final isFilled = index < _mpin.length;
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              width: 14,
+                              height: 14,
                               decoration: BoxDecoration(
-                                color: AppTheme.darkSurface,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(color: AppTheme.darkBorder),
-                              ),
-                              child: Text(
-                                key,
-                                style: const TextStyle(
-                                  color: AppTheme.textWhite,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w900,
+                                shape: BoxShape.circle,
+                                color: isFilled ? AppTheme.neonLime : AppTheme.darkBackground,
+                                border: Border.all(
+                                  color: isFilled ? AppTheme.neonLime : AppTheme.darkBorder,
+                                  width: 2,
                                 ),
                               ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
+                            );
+                          }),
+                        ),
 
-                  NeonButton(
-                    text: 'Login →',
-                    width: double.infinity,
-                    onPressed: _mpin.length >= 4 ? _verifyMpin : null,
-                  ),
-                ],
+                        if (_errorMsg != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _errorMsg!,
+                            style: const TextStyle(color: AppTheme.statusOverdue, fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Custom Numeric Keypad Grid
+                    Column(
+                      children: [
+                        for (var row in [
+                          ['1', '2', '3'],
+                          ['4', '5', '6'],
+                          ['7', '8', '9'],
+                          [_isBiometricEnabled ? 'BIO' : '', '0', 'DEL']
+                        ])
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: row.map((key) {
+                                if (key == '') return const SizedBox(width: 70, height: 54);
+                                if (key == 'BIO') {
+                                  return IconButton(
+                                    onPressed: _authenticateBiometric,
+                                    icon: const Icon(Icons.fingerprint_rounded, color: AppTheme.neonLime),
+                                    iconSize: 32,
+                                  );
+                                }
+                                if (key == 'DEL') {
+                                  return IconButton(
+                                    onPressed: _onBackspace,
+                                    icon: const Icon(Icons.backspace_outlined, color: AppTheme.textWhite),
+                                    iconSize: 24,
+                                  );
+                                }
+                                return InkWell(
+                                  onTap: () => _onKeyPress(key),
+                                  borderRadius: BorderRadius.circular(35),
+                                  child: Container(
+                                    width: 70,
+                                    height: 54,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.darkSurface,
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(color: AppTheme.darkBorder),
+                                    ),
+                                    child: Text(
+                                      key,
+                                      style: const TextStyle(
+                                        color: AppTheme.textWhite,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+
+                        NeonButton(
+                          text: 'Login →',
+                          width: double.infinity,
+                          onPressed: _mpin.length >= 4 ? _verifyMpin : null,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

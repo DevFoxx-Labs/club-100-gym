@@ -107,121 +107,132 @@ class _MpinSetupScreenState extends State<MpinSetupScreen> {
   Widget build(BuildContext context) {
     final currentInput = _isConfirming ? _confirmMpin : _mpin;
 
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('STEP 3 OF 4: MPIN SETUP'),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                children: [
-                  Text(
-                    _isConfirming ? 'Confirm Security MPIN' : 'Create Security MPIN',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _isConfirming
-                        ? 'Re-enter your MPIN to confirm authentication credentials.'
-                        : 'Enter a 4 to 6 digit security MPIN to lock application data.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // MPIN Indicator Dots
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(6, (index) {
-                      final isFilled = index < currentInput.length;
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isFilled ? AppTheme.neonLime : AppTheme.darkBackground,
-                          border: Border.all(
-                            color: isFilled ? AppTheme.neonLime : AppTheme.darkBorder,
-                            width: 2,
-                          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(24, 16, 24, 16 + safeBottom),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: (constraints.maxHeight - 32 - safeBottom).clamp(0, double.infinity),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      children: [
+                        Text(
+                          _isConfirming ? 'Confirm Security MPIN' : 'Create Security MPIN',
+                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
                         ),
-                      );
-                    }),
-                  ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _isConfirming
+                              ? 'Re-enter your MPIN to confirm authentication credentials.'
+                              : 'Enter a 4 to 6 digit security MPIN to lock application data.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                        ),
+                        const SizedBox(height: 30),
 
-                  if (_errorMsg != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      _errorMsg!,
-                      style: const TextStyle(color: AppTheme.statusOverdue, fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ],
-              ),
-
-              // Custom Keypad Grid
-              Column(
-                children: [
-                  for (var row in [
-                    ['1', '2', '3'],
-                    ['4', '5', '6'],
-                    ['7', '8', '9'],
-                    ['', '0', 'DEL']
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: row.map((key) {
-                          if (key == '') return const SizedBox(width: 70, height: 60);
-                          if (key == 'DEL') {
-                            return IconButton(
-                              onPressed: _onBackspace,
-                              icon: const Icon(Icons.backspace_outlined, color: AppTheme.textWhite),
-                              iconSize: 26,
-                            );
-                          }
-                          return InkWell(
-                            onTap: () => _onKeyPress(key),
-                            borderRadius: BorderRadius.circular(35),
-                            child: Container(
-                              width: 70,
-                              height: 60,
-                              alignment: Alignment.center,
+                        // MPIN Indicator Dots
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(6, (index) {
+                            final isFilled = index < currentInput.length;
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              width: 16,
+                              height: 16,
                               decoration: BoxDecoration(
-                                color: AppTheme.darkSurface,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppTheme.darkBorder),
-                              ),
-                              child: Text(
-                                key,
-                                style: const TextStyle(
-                                  color: AppTheme.textWhite,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w900,
+                                shape: BoxShape.circle,
+                                color: isFilled ? AppTheme.neonLime : AppTheme.darkBackground,
+                                border: Border.all(
+                                  color: isFilled ? AppTheme.neonLime : AppTheme.darkBorder,
+                                  width: 2,
                                 ),
                               ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  const SizedBox(height: 20),
+                            );
+                          }),
+                        ),
 
-                  NeonButton(
-                    text: _isConfirming ? 'Confirm & Next →' : 'Continue →',
-                    width: double.infinity,
-                    onPressed: currentInput.length >= 4 ? _proceed : null,
-                  ),
-                ],
+                        if (_errorMsg != null) ...[
+                          const SizedBox(height: 16),
+                          Text(
+                            _errorMsg!,
+                            style: const TextStyle(color: AppTheme.statusOverdue, fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ],
+                    ),
+
+                    // Custom Keypad Grid
+                    Column(
+                      children: [
+                        for (var row in [
+                          ['1', '2', '3'],
+                          ['4', '5', '6'],
+                          ['7', '8', '9'],
+                          ['', '0', 'DEL']
+                        ])
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: row.map((key) {
+                                if (key == '') return const SizedBox(width: 70, height: 60);
+                                if (key == 'DEL') {
+                                  return IconButton(
+                                    onPressed: _onBackspace,
+                                    icon: const Icon(Icons.backspace_outlined, color: AppTheme.textWhite),
+                                    iconSize: 26,
+                                  );
+                                }
+                                return InkWell(
+                                  onTap: () => _onKeyPress(key),
+                                  borderRadius: BorderRadius.circular(35),
+                                  child: Container(
+                                    width: 70,
+                                    height: 60,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.darkSurface,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: AppTheme.darkBorder),
+                                    ),
+                                    child: Text(
+                                      key,
+                                      style: const TextStyle(
+                                        color: AppTheme.textWhite,
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        const SizedBox(height: 20),
+
+                        NeonButton(
+                          text: _isConfirming ? 'Confirm & Next →' : 'Continue →',
+                          width: double.infinity,
+                          onPressed: currentInput.length >= 4 ? _proceed : null,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

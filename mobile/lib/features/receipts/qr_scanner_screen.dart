@@ -108,7 +108,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             ),
           ),
           Positioned(
-            bottom: 40,
+            bottom: 24 + MediaQuery.paddingOf(context).bottom,
             left: 20,
             right: 20,
             child: Container(

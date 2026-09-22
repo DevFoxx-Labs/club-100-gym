@@ -51,7 +51,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFD4FF00)))
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + MediaQuery.paddingOf(context).bottom),
               children: [
                 _buildSectionHeader('FEE DUE REMINDERS'),
                 Card(

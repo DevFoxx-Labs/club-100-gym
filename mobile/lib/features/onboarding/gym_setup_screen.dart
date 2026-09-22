@@ -184,6 +184,7 @@ class _GymSetupScreenState extends State<GymSetupScreen> {
                     }
                   },
                 ),
+                SizedBox(height: 16 + MediaQuery.paddingOf(context).bottom),
               ],
             ),
           ),

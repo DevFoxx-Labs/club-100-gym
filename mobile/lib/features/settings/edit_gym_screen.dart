@@ -184,6 +184,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
                         isLoading: _isLoading,
                         onPressed: _saveGymInfo,
                       ),
+                      SizedBox(height: 16 + MediaQuery.paddingOf(context).bottom),
                     ],
                   ),
                 ),

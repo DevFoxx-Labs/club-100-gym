@@ -128,7 +128,7 @@ class _ArchivedMembersScreenState extends State<ArchivedMembersScreen> {
                   backgroundColor: const Color(0xFF1E1E1E),
                   onRefresh: _loadArchived,
                   child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + MediaQuery.paddingOf(context).bottom),
                     itemCount: _archivedMembers.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
@@ -151,11 +151,15 @@ class _ArchivedMembersScreenState extends State<ArchivedMembersScreen> {
                                     Text(
                                       member.name,
                                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
                                       member.phone,
                                       style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),

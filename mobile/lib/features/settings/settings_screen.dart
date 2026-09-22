@@ -107,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
             : ListView(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 36 + MediaQuery.paddingOf(context).bottom),
                 children: [
                   // Gym Operations Section
                   const _SectionHeader(title: 'GYM OPERATIONS & CATALOG'),

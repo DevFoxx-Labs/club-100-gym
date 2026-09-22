@@ -35,36 +35,41 @@ Future<String?> pickProfilePhoto({
 }) async {
   final source = await showModalBottomSheet<_PhotoAction>(
     context: context,
+    useSafeArea: true,
     backgroundColor: const Color(0xFF1E1E1E),
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (context) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined, color: Color(0xFFD4FF00)),
-              title: const Text('Take Photo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              onTap: () => Navigator.pop(context, _PhotoAction.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: Color(0xFFD4FF00)),
-              title: const Text('Choose from Gallery', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              onTap: () => Navigator.pop(context, _PhotoAction.gallery),
-            ),
-            if (currentPath != null && currentPath.isNotEmpty)
+    builder: (context) {
+      final bottomInset = MediaQuery.paddingOf(context).bottom;
+      return SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(0, 8, 0, 8 + (bottomInset > 0 ? bottomInset : 8)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: Color(0xFFFF5252)),
-                title: const Text('Remove Photo', style: TextStyle(color: Color(0xFFFF5252), fontWeight: FontWeight.w600)),
-                onTap: () => Navigator.pop(context, _PhotoAction.remove),
+                leading: const Icon(Icons.photo_camera_outlined, color: Color(0xFFD4FF00)),
+                title: const Text('Take Photo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                onTap: () => Navigator.pop(context, _PhotoAction.camera),
               ),
-          ],
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined, color: Color(0xFFD4FF00)),
+                title: const Text('Choose from Gallery', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                onTap: () => Navigator.pop(context, _PhotoAction.gallery),
+              ),
+              if (currentPath != null && currentPath.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: Color(0xFFFF5252)),
+                  title: const Text('Remove Photo', style: TextStyle(color: Color(0xFFFF5252), fontWeight: FontWeight.w600)),
+                  onTap: () => Navigator.pop(context, _PhotoAction.remove),
+                ),
+            ],
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 
   if (source == null) return null;

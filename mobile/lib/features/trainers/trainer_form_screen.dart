@@ -176,6 +176,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
                 isLoading: _isLoading,
                 onPressed: _saveTrainer,
               ),
+              SizedBox(height: 16 + MediaQuery.paddingOf(context).bottom),
             ],
           ),
         ),

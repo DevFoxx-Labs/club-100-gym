@@ -177,7 +177,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
               : SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.fromLTRB(20, 20, 20, 36 + MediaQuery.paddingOf(context).bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

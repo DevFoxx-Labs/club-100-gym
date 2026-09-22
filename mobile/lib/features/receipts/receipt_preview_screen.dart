@@ -52,7 +52,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.fromLTRB(24, 24, 24, 32 + MediaQuery.paddingOf(context).bottom),
           child: Column(
             children: [
               // Digital Receipt Paper Card
@@ -75,34 +75,45 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: [
-                            GymLogoView(
-                              size: 48,
-                              logoPath: _gymInfo?.logoPath,
-                            ),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  (_gymInfo?.name ?? 'ELITE FITNESS GYM').toUpperCase(),
-                                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              GymLogoView(
+                                size: 48,
+                                logoPath: _gymInfo?.logoPath,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      (_gymInfo?.name ?? 'ELITE FITNESS GYM').toUpperCase(),
+                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (_gymInfo?.phone != null && _gymInfo!.phone.isNotEmpty)
+                                      Text(
+                                        _gymInfo!.phone,
+                                        style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    if (_gymInfo?.website != null && _gymInfo!.website!.trim().isNotEmpty)
+                                      Text(
+                                        _gymInfo!.website!.trim(),
+                                        style: const TextStyle(fontSize: 11, color: AppTheme.neonLime),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
                                 ),
-                                if (_gymInfo?.phone != null && _gymInfo!.phone.isNotEmpty)
-                                  Text(
-                                    _gymInfo!.phone,
-                                    style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                                  ),
-                                if (_gymInfo?.website != null && _gymInfo!.website!.trim().isNotEmpty)
-                                  Text(
-                                    _gymInfo!.website!.trim(),
-                                    style: const TextStyle(fontSize: 11, color: AppTheme.neonLime),
-                                  ),
-                              ],
-                            ),
-                          ],
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
@@ -226,13 +237,19 @@ class _RowInfo extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
-        Text(
-          value,
-          style: TextStyle(
-            color: isHighlight ? AppTheme.neonLime : AppTheme.textWhite,
-            fontWeight: FontWeight.bold,
-            fontSize: isHighlight ? 16 : 13,
+        Flexible(child: Text(label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12))),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: isHighlight ? AppTheme.neonLime : AppTheme.textWhite,
+              fontWeight: FontWeight.bold,
+              fontSize: isHighlight ? 16 : 13,
+            ),
           ),
         ),
       ],

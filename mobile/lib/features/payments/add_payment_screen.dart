@@ -442,6 +442,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                   isLoading: _isLoading,
                   onPressed: _processPayment,
                 ),
+                SizedBox(height: 16 + MediaQuery.paddingOf(context).bottom),
               ],
             ),
           ),

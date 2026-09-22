@@ -281,6 +281,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
                   Expanded(
                     child: Card(
                       child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         leading: const Icon(Icons.schedule, color: Color(0xFFD4FF00), size: 20),
                         title: const Text('Start Time', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         subtitle: Text(
@@ -295,6 +296,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
                   Expanded(
                     child: Card(
                       child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         leading: const Icon(Icons.schedule, color: Color(0xFFD4FF00), size: 20),
                         title: const Text('End Time', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         subtitle: Text(
@@ -369,7 +371,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
                 width: double.infinity,
                 onPressed: _saveEvent,
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 24 + MediaQuery.paddingOf(context).bottom),
             ],
           ),
         ),

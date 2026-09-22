@@ -107,7 +107,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
                           child: Text('No payment history found', style: TextStyle(color: AppTheme.textMuted)),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          padding: EdgeInsets.fromLTRB(20, 10, 20, 24 + MediaQuery.paddingOf(context).bottom),
                           itemCount: _filteredPayments.length,
                           itemBuilder: (context, index) {
                             final pay = _filteredPayments[index];

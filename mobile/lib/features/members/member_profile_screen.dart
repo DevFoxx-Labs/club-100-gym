@@ -259,14 +259,18 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
 
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
       backgroundColor: AppTheme.darkSurface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
+        final bottomInset = MediaQuery.paddingOf(context).bottom;
         return SafeArea(
+          top: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + (bottomInset > 0 ? bottomInset : 10)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -274,9 +278,13 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'SEND NOTIFICATION MESSAGE',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.neonLime, letterSpacing: 1),
+                    const Expanded(
+                      child: Text(
+                        'SEND NOTIFICATION MESSAGE',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.neonLime, letterSpacing: 1),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close, color: AppTheme.textMuted),
@@ -428,7 +436,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 32 + MediaQuery.paddingOf(context).bottom),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -821,13 +829,28 @@ class _DetailRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: TextStyle(color: isHighlight ? AppTheme.textWhite : AppTheme.textMuted, fontSize: 13, fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal)),
-        Text(
-          value,
-          style: TextStyle(
-            color: isHighlight ? AppTheme.neonLime : AppTheme.textWhite,
-            fontSize: isHighlight ? 14 : 13,
-            fontWeight: FontWeight.bold,
+        Flexible(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isHighlight ? AppTheme.textWhite : AppTheme.textMuted,
+              fontSize: 13,
+              fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: isHighlight ? AppTheme.neonLime : AppTheme.textWhite,
+              fontSize: isHighlight ? 14 : 13,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ],

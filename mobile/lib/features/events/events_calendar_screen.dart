@@ -165,7 +165,7 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
                         ),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
+                        padding: EdgeInsets.fromLTRB(16, 4, 16, 100 + MediaQuery.paddingOf(context).bottom),
                         itemCount: _selectedDateEvents.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
