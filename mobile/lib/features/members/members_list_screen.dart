@@ -259,88 +259,99 @@ class _MembersListScreenState extends State<MembersListScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.darkSurface,
+      isScrollControlled: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Filter & Sort Members',
-                        style: TextStyle(
-                          color: AppTheme.textWhite,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 18,
+            final bottomInset = MediaQuery.paddingOf(context).bottom;
+            return SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  16,
+                  20,
+                  16 + (bottomInset > 0 ? bottomInset : 10),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, color: AppTheme.textMuted),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  const Text(
-                    'SORT BY',
-                    style: TextStyle(
-                      color: AppTheme.neonLime,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                      letterSpacing: 0.5,
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _sortChoiceChip('Name (A-Z)', _MemberSortOption.nameAsc, setSheetState),
-                      _sortChoiceChip('Name (Z-A)', _MemberSortOption.nameDesc, setSheetState),
-                      _sortChoiceChip('Join Date (Newest)', _MemberSortOption.joinDateDesc, setSheetState),
-                      _sortChoiceChip('Expiry (Soonest)', _MemberSortOption.expiryAsc, setSheetState),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _applyFilters();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.neonLime,
-                        foregroundColor: AppTheme.darkBackground,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      child: const Text(
-                        'Apply Filters',
-                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Filter & Sort Members',
+                          style: TextStyle(
+                            color: AppTheme.textWhite,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, color: AppTheme.textMuted),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'SORT BY',
+                      style: TextStyle(
+                        color: AppTheme.neonLime,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _sortChoiceChip('Name (A-Z)', _MemberSortOption.nameAsc, setSheetState),
+                        _sortChoiceChip('Name (Z-A)', _MemberSortOption.nameDesc, setSheetState),
+                        _sortChoiceChip('Join Date (Newest)', _MemberSortOption.joinDateDesc, setSheetState),
+                        _sortChoiceChip('Expiry (Soonest)', _MemberSortOption.expiryAsc, setSheetState),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _applyFilters();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.neonLime,
+                          foregroundColor: AppTheme.darkBackground,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: const Text(
+                          'Apply Filters',
+                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -539,6 +550,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy');
+    final safeBottomInset = MediaQuery.paddingOf(context).bottom;
+    // 108dp padding ensures the last list item can be scrolled completely clear of FAB and bottom navigation
+    final listBottomPadding = safeBottomInset + 108.0;
 
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
@@ -579,37 +593,42 @@ class _MembersListScreenState extends State<MembersListScreen> {
         ],
       ),
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
-            // Members Headline & Total Members Stat Card
+            // Members Headline & Total Members Stat Card (Wrapped with Expanded to prevent horizontal overflow)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Members',
-                        style: TextStyle(
-                          color: AppTheme.textWhite,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 26,
-                          letterSpacing: -0.5,
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Members',
+                          style: TextStyle(
+                            color: AppTheme.textWhite,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 26,
+                            letterSpacing: -0.5,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 3),
-                      Text(
-                        'Manage and view all gym members',
-                        style: TextStyle(
-                          color: AppTheme.textMuted,
-                          fontSize: 12.5,
+                        SizedBox(height: 3),
+                        Text(
+                          'Manage and view all gym members',
+                          style: TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 12.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   InkWell(
                     onTap: () {
                       setState(() {
@@ -620,7 +639,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                     },
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
                         color: AppTheme.darkSurface,
                         borderRadius: BorderRadius.circular(16),
@@ -630,7 +649,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(7),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: AppTheme.neonLime.withValues(alpha: 0.16),
                               borderRadius: BorderRadius.circular(10),
@@ -638,10 +657,10 @@ class _MembersListScreenState extends State<MembersListScreen> {
                             child: const Icon(
                               Icons.groups_rounded,
                               color: AppTheme.neonLime,
-                              size: 20,
+                              size: 18,
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
@@ -651,7 +670,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                 style: const TextStyle(
                                   color: AppTheme.textWhite,
                                   fontWeight: FontWeight.w900,
-                                  fontSize: 17,
+                                  fontSize: 16,
                                   height: 1.1,
                                 ),
                               ),
@@ -665,11 +684,11 @@ class _MembersListScreenState extends State<MembersListScreen> {
                               ),
                             ],
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 2),
                           const Icon(
                             Icons.chevron_right_rounded,
                             color: AppTheme.textMuted,
-                            size: 18,
+                            size: 16,
                           ),
                         ],
                       ),
@@ -788,7 +807,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
               ),
             ),
 
-            // Members List
+            // Members List (Safe-area aware bottom padding)
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
@@ -824,7 +843,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
+                          padding: EdgeInsets.fromLTRB(20, 8, 20, listBottomPadding),
                           itemCount: _filteredMembers.length,
                           itemBuilder: (context, index) {
                             final member = _filteredMembers[index];
@@ -1068,7 +1087,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                         ),
                                       ),
 
-                                      // Bottom 3-column stats row
+                                      // Bottom 3-column stats row (with Flexible protection against overflow)
                                       Row(
                                         children: [
                                           // Column 1: Membership
@@ -1083,13 +1102,17 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                                       size: 14,
                                                       color: Color(0xFF00E676),
                                                     ),
-                                                    SizedBox(width: 5),
-                                                    Text(
-                                                      'Membership',
-                                                      style: TextStyle(
-                                                        color: AppTheme.textMuted,
-                                                        fontSize: 11,
-                                                        fontWeight: FontWeight.w500,
+                                                    SizedBox(width: 4),
+                                                    Flexible(
+                                                      child: Text(
+                                                        'Membership',
+                                                        style: TextStyle(
+                                                          color: AppTheme.textMuted,
+                                                          fontSize: 11,
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
                                                       ),
                                                     ),
                                                   ],
@@ -1100,7 +1123,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                                   style: const TextStyle(
                                                     color: AppTheme.textWhite,
                                                     fontWeight: FontWeight.w700,
-                                                    fontSize: 13,
+                                                    fontSize: 12.5,
                                                   ),
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
@@ -1114,7 +1137,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                             width: 1,
                                             height: 32,
                                             color: Colors.white.withValues(alpha: 0.06),
-                                            margin: const EdgeInsets.symmetric(horizontal: 10),
+                                            margin: const EdgeInsets.symmetric(horizontal: 8),
                                           ),
 
                                           // Column 2: Join Date
@@ -1129,13 +1152,17 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                                       size: 13,
                                                       color: AppTheme.textMuted,
                                                     ),
-                                                    SizedBox(width: 5),
-                                                    Text(
-                                                      'Join Date',
-                                                      style: TextStyle(
-                                                        color: AppTheme.textMuted,
-                                                        fontSize: 11,
-                                                        fontWeight: FontWeight.w500,
+                                                    SizedBox(width: 4),
+                                                    Flexible(
+                                                      child: Text(
+                                                        'Join Date',
+                                                        style: TextStyle(
+                                                          color: AppTheme.textMuted,
+                                                          fontSize: 11,
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
                                                       ),
                                                     ),
                                                   ],
@@ -1146,8 +1173,10 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                                   style: const TextStyle(
                                                     color: AppTheme.textWhite,
                                                     fontWeight: FontWeight.w700,
-                                                    fontSize: 13,
+                                                    fontSize: 12.5,
                                                   ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                               ],
                                             ),
@@ -1158,7 +1187,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                             width: 1,
                                             height: 32,
                                             color: Colors.white.withValues(alpha: 0.06),
-                                            margin: const EdgeInsets.symmetric(horizontal: 10),
+                                            margin: const EdgeInsets.symmetric(horizontal: 8),
                                           ),
 
                                           // Column 3: Expiry Date & Days Left
@@ -1173,13 +1202,17 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                                       size: 13,
                                                       color: AppTheme.textMuted,
                                                     ),
-                                                    SizedBox(width: 5),
-                                                    Text(
-                                                      'Expiry Date',
-                                                      style: TextStyle(
-                                                        color: AppTheme.textMuted,
-                                                        fontSize: 11,
-                                                        fontWeight: FontWeight.w500,
+                                                    SizedBox(width: 4),
+                                                    Flexible(
+                                                      child: Text(
+                                                        'Expiry Date',
+                                                        style: TextStyle(
+                                                          color: AppTheme.textMuted,
+                                                          fontSize: 11,
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
                                                       ),
                                                     ),
                                                   ],
@@ -1190,8 +1223,10 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                                   style: const TextStyle(
                                                     color: AppTheme.textWhite,
                                                     fontWeight: FontWeight.w700,
-                                                    fontSize: 13,
+                                                    fontSize: 12.5,
                                                   ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                                 if (daysLeftText.isNotEmpty) ...[
                                                   const SizedBox(height: 2),
@@ -1202,6 +1237,8 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                                       fontWeight: FontWeight.w700,
                                                       fontSize: 11,
                                                     ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
                                                   ),
                                                 ],
                                               ],

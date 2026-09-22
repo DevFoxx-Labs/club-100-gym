@@ -411,7 +411,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             await _loadNotifications(showSpinner: false);
                           },
                           child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: EdgeInsets.fromLTRB(16, 8, 16, 24 + MediaQuery.paddingOf(context).bottom),
                             itemCount: groups.keys.length,
                             itemBuilder: (context, groupIndex) {
                               final groupName = groups.keys.elementAt(groupIndex);
