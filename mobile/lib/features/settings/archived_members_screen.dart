@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/models/member_model.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
+import '../../shared/widgets/member_avatar.dart';
 
 class ArchivedMembersScreen extends StatefulWidget {
   const ArchivedMembersScreen({super.key});
@@ -137,12 +138,10 @@ class _ArchivedMembersScreenState extends State<ArchivedMembersScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                backgroundColor: const Color(0xFF121212),
-                                child: Text(
-                                  member.name.isNotEmpty ? member.name[0].toUpperCase() : 'M',
-                                  style: const TextStyle(color: Colors.white54, fontWeight: FontWeight.bold),
-                                ),
+                              MemberAvatar(
+                                name: member.name,
+                                photoPath: member.photoPath,
+                                radius: 20,
                               ),
                               const SizedBox(width: 14),
                               Expanded(

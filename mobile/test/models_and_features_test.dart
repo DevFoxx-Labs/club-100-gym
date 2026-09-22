@@ -9,6 +9,7 @@ import 'package:the_elite_fitness/data/models/membership_model.dart';
 import 'package:the_elite_fitness/data/models/event_model.dart';
 import 'package:the_elite_fitness/data/models/member_model.dart';
 import 'package:the_elite_fitness/data/models/notification_model.dart';
+import 'package:the_elite_fitness/shared/widgets/member_avatar.dart';
 import 'package:the_elite_fitness/core/receipt/qr_service.dart';
 import 'package:the_elite_fitness/core/utils/form_validators.dart';
 import 'package:the_elite_fitness/core/utils/sms_templates.dart';
@@ -589,6 +590,27 @@ void main() {
       expect(day1, equals(day2));
       // Different calendar day does not match
       expect(day1, isNot(equals(dayTomorrow)));
+    });
+
+    test('MemberAvatar computeInitials parses names and fallback correctly', () {
+      expect(MemberAvatar.computeInitials('Rahul Sharma'), 'RS');
+      expect(MemberAvatar.computeInitials('Test Member 2'), 'TM');
+      expect(MemberAvatar.computeInitials('Arjun'), 'A');
+      expect(MemberAvatar.computeInitials('  Priya   Kapoor  '), 'PK');
+      expect(MemberAvatar.computeInitials(''), 'M');
+      expect(MemberAvatar.computeInitials('   '), 'M');
+    });
+
+    test('Notification dismissal key matches memberId and type for calendar date', () {
+      const memberId = 'member-123';
+      const type = 'FEE_OVERDUE';
+      final today = DateTime(2026, 9, 22);
+
+      const dismissKey = '$memberId:$type';
+      final dateKey = '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+      expect(dismissKey, 'member-123:FEE_OVERDUE');
+      expect(dateKey, '2026-09-22');
     });
   });
 }

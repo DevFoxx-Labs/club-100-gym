@@ -122,25 +122,11 @@ class ReminderScheduler {
   }
 
   _ReminderRule? _evaluateFeeRule(int daysUntilEnd, Map<String, bool> settings) {
-    if (daysUntilEnd == 7 && (settings['fee7d'] ?? true)) {
+    if (daysUntilEnd < 0 && (settings['feeOverdue'] ?? true)) {
       return _ReminderRule(
-        'FEE_DUE_SOON',
-        'Fee Due in 7 Days',
-        (name, amount, days) => "$name's fee of ₹${amount.toStringAsFixed(0)} is due in 7 days.",
-      );
-    }
-    if (daysUntilEnd == 3 && (settings['fee3d'] ?? true)) {
-      return _ReminderRule(
-        'FEE_DUE_SOON',
-        'Fee Due in 3 Days',
-        (name, amount, days) => "$name's fee of ₹${amount.toStringAsFixed(0)} is due in 3 days.",
-      );
-    }
-    if (daysUntilEnd == 1 && (settings['fee1d'] ?? true)) {
-      return _ReminderRule(
-        'FEE_DUE_SOON',
-        'Fee Due Tomorrow',
-        (name, amount, days) => "$name's fee of ₹${amount.toStringAsFixed(0)} is due tomorrow.",
+        'FEE_OVERDUE',
+        'Fee Overdue',
+        (name, amount, days) => "$name's fee of ₹${amount.toStringAsFixed(0)} is overdue by ${days.abs()} days.",
       );
     }
     if (daysUntilEnd == 0 && (settings['feeDue'] ?? true)) {
@@ -150,29 +136,50 @@ class ReminderScheduler {
         (name, amount, days) => "$name's fee of ₹${amount.toStringAsFixed(0)} is due today.",
       );
     }
-    if (daysUntilEnd < 0 && (settings['feeOverdue'] ?? true)) {
+    if (daysUntilEnd == 1 && (settings['fee1d'] ?? true)) {
       return _ReminderRule(
-        'FEE_OVERDUE',
-        'Fee Overdue',
-        (name, amount, days) => "$name's fee of ₹${amount.toStringAsFixed(0)} is overdue by ${days.abs()} days.",
+        'FEE_DUE_SOON',
+        'Fee Due Tomorrow',
+        (name, amount, days) => "$name's fee of ₹${amount.toStringAsFixed(0)} is due tomorrow.",
+      );
+    }
+    if (daysUntilEnd == 3 && (settings['fee3d'] ?? true)) {
+      return _ReminderRule(
+        'FEE_DUE_SOON',
+        'Fee Due in 3 Days',
+        (name, amount, days) => "$name's fee of ₹${amount.toStringAsFixed(0)} is due in 3 days.",
+      );
+    }
+    if (daysUntilEnd == 7 && (settings['fee7d'] ?? true)) {
+      return _ReminderRule(
+        'FEE_DUE_SOON',
+        'Fee Due in 7 Days',
+        (name, amount, days) => "$name's fee of ₹${amount.toStringAsFixed(0)} is due in 7 days.",
+      );
+    }
+    if (daysUntilEnd > 0 && daysUntilEnd <= 7 && (settings['fee7d'] ?? true)) {
+      return _ReminderRule(
+        'FEE_DUE_SOON',
+        'Fee Due in $daysUntilEnd Days',
+        (name, amount, days) => "$name's fee of ₹${amount.toStringAsFixed(0)} is due in $days days.",
       );
     }
     return null;
   }
 
   _ReminderRule? _evaluateExpiryRule(int daysUntilEnd, Map<String, bool> settings) {
-    if (daysUntilEnd == 7 && (settings['expiry7d'] ?? true)) {
+    if (daysUntilEnd < 0 && (settings['expiry1d'] ?? true)) {
       return _ReminderRule(
-        'MEMBERSHIP_EXPIRING',
-        'Membership Expiring in 7 Days',
-        (name, amount, days) => "$name's gym membership expires in 7 days.",
+        'MEMBERSHIP_EXPIRED',
+        'Membership Expired',
+        (name, amount, days) => "$name's gym membership expired ${days.abs()} days ago.",
       );
     }
-    if (daysUntilEnd == 3 && (settings['expiry3d'] ?? true)) {
+    if (daysUntilEnd == 0 && (settings['expiry1d'] ?? true)) {
       return _ReminderRule(
         'MEMBERSHIP_EXPIRING',
-        'Membership Expiring in 3 Days',
-        (name, amount, days) => "$name's gym membership expires in 3 days.",
+        'Membership Expiring Today',
+        (name, amount, days) => "$name's gym membership expires today.",
       );
     }
     if (daysUntilEnd == 1 && (settings['expiry1d'] ?? true)) {
@@ -182,11 +189,25 @@ class ReminderScheduler {
         (name, amount, days) => "$name's gym membership expires tomorrow.",
       );
     }
-    if (daysUntilEnd < 0 && (settings['expiry1d'] ?? true)) {
+    if (daysUntilEnd == 3 && (settings['expiry3d'] ?? true)) {
       return _ReminderRule(
-        'MEMBERSHIP_EXPIRED',
-        'Membership Expired',
-        (name, amount, days) => "$name's gym membership expired ${days.abs()} days ago.",
+        'MEMBERSHIP_EXPIRING',
+        'Membership Expiring in 3 Days',
+        (name, amount, days) => "$name's gym membership expires in 3 days.",
+      );
+    }
+    if (daysUntilEnd == 7 && (settings['expiry7d'] ?? true)) {
+      return _ReminderRule(
+        'MEMBERSHIP_EXPIRING',
+        'Membership Expiring in 7 Days',
+        (name, amount, days) => "$name's gym membership expires in 7 days.",
+      );
+    }
+    if (daysUntilEnd > 0 && daysUntilEnd <= 7 && (settings['expiry7d'] ?? true)) {
+      return _ReminderRule(
+        'MEMBERSHIP_EXPIRING',
+        'Membership Expiring in $daysUntilEnd Days',
+        (name, amount, days) => "$name's gym membership expires in $days days.",
       );
     }
     return null;

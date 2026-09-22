@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import '../../shared/widgets/member_avatar.dart';
 
 Future<String> _savePhoto(String sourcePath, {String subfolder = 'profile_photos'}) async {
   final docsDir = await getApplicationDocumentsDirectory();
@@ -120,7 +121,7 @@ class EditableMemberAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasPhoto = photoPath != null && photoPath!.isNotEmpty && File(photoPath!).existsSync();
     final initials = (name != null && name!.trim().isNotEmpty)
-        ? name!.trim().split(' ').map((e) => e[0].toUpperCase()).take(2).join()
+        ? MemberAvatar.computeInitials(name!)
         : defaultInitials;
 
     return Center(

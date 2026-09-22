@@ -4,6 +4,7 @@ import '../../data/models/member_model.dart';
 import '../../data/models/membership_model.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../../shared/widgets/member_avatar.dart';
 import '../../core/services/app_state_service.dart';
 import 'add_edit_member_screen.dart';
 import 'member_profile_screen.dart';
@@ -252,12 +253,10 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                   _loadMembers();
                                 },
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                leading: CircleAvatar(
-                                  backgroundColor: AppTheme.neonLime.withValues(alpha: 0.2),
-                                  child: Text(
-                                    member.name.isNotEmpty ? member.name[0].toUpperCase() : 'M',
-                                    style: const TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900),
-                                  ),
+                                leading: MemberAvatar(
+                                  name: member.name,
+                                  photoPath: member.photoPath,
+                                  radius: 22,
                                 ),
                                 title: Text(
                                   member.name,

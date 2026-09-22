@@ -53,6 +53,16 @@ class AppDatabase {
       ''');
     } catch (_) {}
 
+    // Ensure dismissed_notifications table exists for tracking dismissed alerts today
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS dismissed_notifications (
+          dismissKey TEXT PRIMARY KEY,
+          dismissedDate TEXT NOT NULL
+        );
+      ''');
+    } catch (_) {}
+
     return db;
   }
 

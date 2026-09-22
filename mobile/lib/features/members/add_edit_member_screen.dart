@@ -201,6 +201,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                   child: Column(
                     children: [
                       EditableMemberAvatar(
+                        name: _nameController.text,
                         photoPath: _photoPath,
                         radius: 44,
                         onPhotoChanged: (path) => setState(() => _photoPath = path),
