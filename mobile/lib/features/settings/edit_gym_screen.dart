@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/gym_logo_picker.dart';
 import '../../core/utils/form_validators.dart';
+import '../../core/utils/phone_utils.dart';
 import '../../core/services/app_state_service.dart';
 import '../../data/models/gym_info_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../shared/widgets/phone_input_field.dart';
 
 class EditGymScreen extends StatefulWidget {
   const EditGymScreen({super.key});
@@ -31,6 +33,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
   String _currency = 'INR (₹)';
   GymInfoModel? _gymInfo;
   bool _isLoading = true;
+  final ValueNotifier<String> _phoneDialCode = ValueNotifier(PhoneUtils.defaultDialCode);
 
   @override
   void initState() {
@@ -51,6 +54,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
     _nameController.dispose();
     _ownerController.dispose();
     _phoneController.dispose();
+    _phoneDialCode.dispose();
     _emailController.dispose();
     _websiteController.dispose();
     _addressController.dispose();
@@ -64,7 +68,9 @@ class _EditGymScreenState extends State<EditGymScreen> {
       setState(() {
         _nameController.text = gym.name;
         _ownerController.text = gym.ownerName ?? '';
-        _phoneController.text = gym.phone;
+        final (dialCode, localPhone) = PhoneUtils.split(gym.phone);
+        _phoneController.text = localPhone;
+        _phoneDialCode.value = dialCode;
         _emailController.text = gym.email ?? '';
         _websiteController.text = gym.website ?? '';
         _addressController.text = gym.address;
@@ -88,7 +94,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
       id: 'default',
       name: _nameController.text.trim(),
       ownerName: _ownerController.text.trim().isNotEmpty ? _ownerController.text.trim() : null,
-      phone: _phoneController.text.trim(),
+      phone: PhoneUtils.combine(_phoneDialCode.value, _phoneController.text.trim()),
       email: _emailController.text.trim().isNotEmpty ? _emailController.text.trim() : null,
       website: _websiteController.text.trim().isNotEmpty ? _websiteController.text.trim() : null,
       address: _addressController.text.trim(),
@@ -158,11 +164,18 @@ class _EditGymScreenState extends State<EditGymScreen> {
                         controller: _ownerController,
                       ),
                       const SizedBox(height: 16),
-                      CustomTextField(
-                        label: 'Phone Number *',
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        validator: (v) => FormValidators.validatePhone(v, fieldName: 'Phone Number'),
+                      ValueListenableBuilder<String>(
+                        valueListenable: _phoneDialCode,
+                        builder: (context, dialCode, _) => PhoneInputField(
+                          label: 'Phone Number *',
+                          controller: _phoneController,
+                          dialCodeNotifier: _phoneDialCode,
+                          validator: (v) => FormValidators.validatePhoneForCountry(
+                            v,
+                            dialCode: dialCode,
+                            fieldName: 'Phone Number',
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 16),
                       CustomTextField(
@@ -184,7 +197,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
                         label: 'Address *',
                         controller: _addressController,
                         maxLines: 2,
-                        validator: (v) => FormValidators.validateRequired(v, 'Address'),
+                        validator: (v) => FormValidators.validateAddress(v, fieldName: 'Address'),
                       ),
                       const SizedBox(height: 16),
                       CustomTextField(

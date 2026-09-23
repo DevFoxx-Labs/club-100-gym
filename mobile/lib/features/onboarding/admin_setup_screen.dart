@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/form_validators.dart';
+import '../../core/utils/phone_utils.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../shared/widgets/phone_input_field.dart';
 import 'mpin_setup_screen.dart';
 
 class AdminSetupScreen extends StatefulWidget {
@@ -35,18 +37,22 @@ class _AdminSetupScreenState extends State<AdminSetupScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _adminNameController;
   late TextEditingController _adminPhoneController;
+  late ValueNotifier<String> _adminPhoneDialCode;
 
   @override
   void initState() {
     super.initState();
     _adminNameController = TextEditingController(text: widget.ownerName);
-    _adminPhoneController = TextEditingController(text: widget.phone);
+    final (dialCode, localPhone) = PhoneUtils.split(widget.phone);
+    _adminPhoneController = TextEditingController(text: localPhone);
+    _adminPhoneDialCode = ValueNotifier(dialCode);
   }
 
   @override
   void dispose() {
     _adminNameController.dispose();
     _adminPhoneController.dispose();
+    _adminPhoneDialCode.dispose();
     super.dispose();
   }
 
@@ -83,12 +89,18 @@ class _AdminSetupScreenState extends State<AdminSetupScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                CustomTextField(
-                  label: 'Mobile Number *',
-                  hint: 'Mobile number',
-                  controller: _adminPhoneController,
-                  keyboardType: TextInputType.phone,
-                  validator: (v) => FormValidators.validatePhone(v, fieldName: 'Admin mobile number'),
+                ValueListenableBuilder<String>(
+                  valueListenable: _adminPhoneDialCode,
+                  builder: (context, dialCode, _) => PhoneInputField(
+                    label: 'Mobile Number *',
+                    controller: _adminPhoneController,
+                    dialCodeNotifier: _adminPhoneDialCode,
+                    validator: (v) => FormValidators.validatePhoneForCountry(
+                      v,
+                      dialCode: dialCode,
+                      fieldName: 'Admin mobile number',
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 32),
 
@@ -110,7 +122,7 @@ class _AdminSetupScreenState extends State<AdminSetupScreen> {
                             city: widget.city,
                             currency: widget.currency,
                             adminName: _adminNameController.text.trim(),
-                            adminPhone: _adminPhoneController.text.trim(),
+                            adminPhone: PhoneUtils.combine(_adminPhoneDialCode.value, _adminPhoneController.text.trim()),
                           ),
                         ),
                       );

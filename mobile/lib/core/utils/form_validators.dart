@@ -1,3 +1,5 @@
+import 'phone_utils.dart';
+
 /// Centralized form validation utilities for Club 100 Gym / Elite Fitness Gym.
 /// Ensures production-grade data integrity and consistent user feedback across all forms.
 class FormValidators {
@@ -41,6 +43,47 @@ class FormValidators {
     }
     if (!RegExp(r'^\d{10,15}$').hasMatch(cleanPhone)) {
       return 'Enter a valid numeric $fieldName';
+    }
+    return null;
+  }
+
+  /// Validates the local part of a phone number against the expected digit
+  /// length for the selected [dialCode] (e.g. 10 digits for `+91`), falling
+  /// back to a generic 6-14 digit range for dial codes without a known length.
+  static String? validatePhoneForCountry(
+    String? value, {
+    required String dialCode,
+    String fieldName = 'Phone number',
+  }) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName is required';
+    }
+    final digits = value.trim().replaceAll(RegExp(r'\D'), '');
+    if (!RegExp(r'^\d+$').hasMatch(digits) || digits.isEmpty) {
+      return 'Enter a valid numeric $fieldName';
+    }
+    final expected = PhoneUtils.expectedLength(dialCode);
+    if (expected != null) {
+      if (digits.length != expected) {
+        return '$fieldName must be $expected digits for $dialCode';
+      }
+    } else if (digits.length < 6 || digits.length > 14) {
+      return 'Enter a valid $fieldName';
+    }
+    return null;
+  }
+
+  /// Validates a postal/street address.
+  static String? validateAddress(
+    String? value, {
+    String fieldName = 'Address',
+    int minLength = 5,
+  }) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName is required';
+    }
+    if (value.trim().length < minLength) {
+      return '$fieldName must be at least $minLength characters';
     }
     return null;
   }

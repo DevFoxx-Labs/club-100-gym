@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/utils/member_photo_picker.dart';
 import '../../core/utils/form_validators.dart';
+import '../../core/utils/phone_utils.dart';
 import '../../core/services/app_state_service.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/repositories/trainer_repository.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../shared/widgets/phone_input_field.dart';
 
 class TrainerFormScreen extends StatefulWidget {
   final TrainerModel? trainer;
@@ -30,6 +32,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
   bool _isLoading = false;
   bool _isActive = true;
   String _role = 'Trainer';
+  final ValueNotifier<String> _phoneDialCode = ValueNotifier(PhoneUtils.defaultDialCode);
 
   @override
   void initState() {
@@ -37,7 +40,9 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
     if (widget.trainer != null) {
       final t = widget.trainer!;
       _nameController.text = t.name;
-      _phoneController.text = t.phone;
+      final (dialCode, localPhone) = PhoneUtils.split(t.phone);
+      _phoneController.text = localPhone;
+      _phoneDialCode.value = dialCode;
       _specializationController.text = t.specialization ?? '';
       _salaryController.text = t.monthlySalary != null ? t.monthlySalary!.toStringAsFixed(0) : '';
       _photoPath = t.photoPath;
@@ -50,6 +55,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _phoneDialCode.dispose();
     _specializationController.dispose();
     _salaryController.dispose();
     super.dispose();
@@ -62,11 +68,12 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
     final now = DateTime.now().toIso8601String();
     final salary = double.tryParse(_salaryController.text.trim());
     final spec = _specializationController.text.trim();
+    final phone = PhoneUtils.combine(_phoneDialCode.value, _phoneController.text.trim());
 
     if (widget.isEdit) {
       final updated = widget.trainer!.copyWith(
         name: _nameController.text.trim(),
-        phone: _phoneController.text.trim(),
+        phone: phone,
         role: _role,
         specialization: spec.isEmpty ? null : spec,
         monthlySalary: salary,
@@ -79,7 +86,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
       final newTrainer = TrainerModel(
         id: const Uuid().v4(),
         name: _nameController.text.trim(),
-        phone: _phoneController.text.trim(),
+        phone: phone,
         role: _role,
         specialization: spec.isEmpty ? null : spec,
         monthlySalary: salary,
@@ -134,12 +141,18 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
                 validator: (val) => FormValidators.validateName(val, fieldName: 'Trainer name'),
               ),
               const SizedBox(height: 16),
-              CustomTextField(
-                label: 'MOBILE PHONE NUMBER *',
-                hint: 'e.g. 9876543210',
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                validator: (val) => FormValidators.validatePhone(val, fieldName: 'Phone number'),
+              ValueListenableBuilder<String>(
+                valueListenable: _phoneDialCode,
+                builder: (context, dialCode, _) => PhoneInputField(
+                  label: 'MOBILE PHONE NUMBER *',
+                  controller: _phoneController,
+                  dialCodeNotifier: _phoneDialCode,
+                  validator: (val) => FormValidators.validatePhoneForCountry(
+                    val,
+                    dialCode: dialCode,
+                    fieldName: 'Phone number',
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               const Text(

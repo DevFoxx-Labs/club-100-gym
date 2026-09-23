@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/member_photo_picker.dart';
 import '../../core/utils/contact_sync_service.dart';
 import '../../core/utils/form_validators.dart';
+import '../../core/utils/phone_utils.dart';
 import '../../core/services/app_state_service.dart';
 import '../../core/localization/app_translations.dart';
 import '../../data/models/bill_model.dart';
@@ -20,6 +21,7 @@ import '../../data/repositories/plan_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../shared/widgets/phone_input_field.dart';
 
 class AddEditMemberScreen extends StatefulWidget {
   final MemberModel? member;
@@ -56,12 +58,15 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   DateTime _startDate = DateTime.now();
   bool _syncToContacts = true;
   bool _isLoading = false;
+  late ValueNotifier<String> _phoneDialCode;
 
   @override
   void initState() {
     super.initState();
+    final (initialDialCode, initialPhone) = PhoneUtils.split(widget.member?.phone);
     _nameController = TextEditingController(text: widget.member?.name ?? '');
-    _phoneController = TextEditingController(text: widget.member?.phone ?? '');
+    _phoneController = TextEditingController(text: initialPhone);
+    _phoneDialCode = ValueNotifier(initialDialCode);
     _emailController = TextEditingController(text: widget.member?.email ?? '');
     _notesController = TextEditingController(text: widget.member?.notes ?? '');
     _planFeeController = TextEditingController(text: '1500');
@@ -77,6 +82,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _phoneDialCode.dispose();
     _emailController.dispose();
     _notesController.dispose();
     _planFeeController.dispose();
@@ -165,7 +171,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
     final member = MemberModel(
       id: memberId,
       name: _nameController.text.trim(),
-      phone: _phoneController.text.trim(),
+      phone: PhoneUtils.combine(_phoneDialCode.value, _phoneController.text.trim()),
       email: _emailController.text.trim().isNotEmpty ? _emailController.text.trim() : null,
       photoPath: _photoPath,
       gender: _gender,
@@ -281,12 +287,18 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                CustomTextField(
-                  label: tr('member_form_phone'),
-                  hint: 'e.g. 9876543210',
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  validator: (v) => FormValidators.validatePhone(v, fieldName: tr('member_form_phone_field')),
+                ValueListenableBuilder<String>(
+                  valueListenable: _phoneDialCode,
+                  builder: (context, dialCode, _) => PhoneInputField(
+                    label: tr('member_form_phone'),
+                    controller: _phoneController,
+                    dialCodeNotifier: _phoneDialCode,
+                    validator: (v) => FormValidators.validatePhoneForCountry(
+                      v,
+                      dialCode: dialCode,
+                      fieldName: tr('member_form_phone_field'),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
 
