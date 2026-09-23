@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/printing/print_format.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/localization/app_translations.dart';
 import '../../data/models/gym_info_model.dart';
 
 /// Resolves which [PrintFormat] to use for printing/sharing: if the admin has
@@ -44,14 +45,14 @@ Future<PrintFormat?> showPrintFormatSheet(BuildContext context) {
                   ),
                 ),
               ),
-              const Text(
-                'CHOOSE PAPER FORMAT',
-                style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.5),
+              Text(
+                tr('print_format_choose_title'),
+                style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 0.5),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'Select the printer or paper size for this document',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+              Text(
+                tr('print_format_choose_subtitle'),
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
               ),
               const SizedBox(height: 16),
               for (final format in PrintFormat.values) ...[

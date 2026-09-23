@@ -10,6 +10,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../../shared/widgets/member_avatar.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/localization/app_translations.dart';
 import 'add_edit_member_screen.dart';
 import 'member_profile_screen.dart';
 
@@ -295,9 +296,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Filter & Sort Members',
-                          style: TextStyle(
+                        Text(
+                          tr('members_filter_sort_title'),
+                          style: const TextStyle(
                             color: AppTheme.textWhite,
                             fontWeight: FontWeight.w800,
                             fontSize: 18,
@@ -311,7 +312,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      'SORT BY',
+                      tr('members_sort_by'),
                       style: TextStyle(
                         color: AppTheme.neonLime,
                         fontWeight: FontWeight.w800,
@@ -324,10 +325,10 @@ class _MembersListScreenState extends State<MembersListScreen> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _sortChoiceChip('Name (A-Z)', _MemberSortOption.nameAsc, setSheetState),
-                        _sortChoiceChip('Name (Z-A)', _MemberSortOption.nameDesc, setSheetState),
-                        _sortChoiceChip('Join Date (Newest)', _MemberSortOption.joinDateDesc, setSheetState),
-                        _sortChoiceChip('Expiry (Soonest)', _MemberSortOption.expiryAsc, setSheetState),
+                        _sortChoiceChip(tr('members_sort_name_asc'), _MemberSortOption.nameAsc, setSheetState),
+                        _sortChoiceChip(tr('members_sort_name_desc'), _MemberSortOption.nameDesc, setSheetState),
+                        _sortChoiceChip(tr('members_sort_join_date'), _MemberSortOption.joinDateDesc, setSheetState),
+                        _sortChoiceChip(tr('members_sort_expiry'), _MemberSortOption.expiryAsc, setSheetState),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -344,9 +345,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
-                        child: const Text(
-                          'Apply Filters',
-                          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
+                        child: Text(
+                          tr('members_apply_filters'),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
                         ),
                       ),
                     ),
@@ -382,8 +383,8 @@ class _MembersListScreenState extends State<MembersListScreen> {
   }
 
   Widget _buildAppBarTitle() {
-    final rawName = (_gymInfo?.name ?? 'THE ELITE FITNESS GYM').toUpperCase();
-    final name = rawName.isEmpty ? 'THE ELITE FITNESS GYM' : rawName;
+    final rawName = (_gymInfo?.name ?? tr('dashboard_default_gym_name')).toUpperCase();
+    final name = rawName.isEmpty ? tr('dashboard_default_gym_name') : rawName;
 
     if (name.contains('FITNESS')) {
       final parts = name.split('FITNESS');
@@ -410,9 +411,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
             ),
           ),
           const SizedBox(height: 2),
-          const Text(
-            'Stronger People. Healthier Lives.',
-            style: TextStyle(
+          Text(
+            tr('members_gym_tagline'),
+            style: const TextStyle(
               fontSize: 11,
               color: AppTheme.textMuted,
               fontWeight: FontWeight.w500,
@@ -436,9 +437,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
           ),
         ),
         const SizedBox(height: 2),
-        const Text(
-          'Stronger People. Healthier Lives.',
-          style: TextStyle(
+        Text(
+          tr('members_gym_tagline'),
+          style: const TextStyle(
             fontSize: 11,
             color: AppTheme.textMuted,
             fontWeight: FontWeight.w500,
@@ -510,17 +511,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
     );
   }
 
-  Widget _buildStatusPill(String statusText, Color statusColor) {
-    IconData icon;
-    if (statusText == 'Active') {
-      icon = Icons.check_circle_rounded;
-    } else if (statusText.contains('Due')) {
-      icon = Icons.access_time_rounded;
-    } else if (statusText == 'No Plan') {
-      icon = Icons.help_outline_rounded;
-    } else {
-      icon = Icons.error_outline_rounded;
-    }
+  Widget _buildStatusPill(String statusText, Color statusColor, IconData icon) {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -561,7 +552,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: AppTheme.neonLime),
-          tooltip: 'Open Menu',
+          tooltip: tr('dashboard_open_menu'),
           onPressed: widget.onOpenDrawer,
         ),
         title: _buildAppBarTitle(),
@@ -571,7 +562,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications_none_rounded, color: AppTheme.textWhite, size: 24),
-                tooltip: 'Notifications',
+                tooltip: tr('members_notifications_tooltip'),
                 onPressed: widget.onNavigateToNotifications,
               ),
               if (_unreadNotifCount > 0)
@@ -602,23 +593,23 @@ class _MembersListScreenState extends State<MembersListScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Members',
-                          style: TextStyle(
+                          tr('members_headline'),
+                          style: const TextStyle(
                             color: AppTheme.textWhite,
                             fontWeight: FontWeight.w900,
                             fontSize: 26,
                             letterSpacing: -0.5,
                           ),
                         ),
-                        SizedBox(height: 3),
+                        const SizedBox(height: 3),
                         Text(
-                          'Manage and view all gym members',
-                          style: TextStyle(
+                          tr('members_headline_subtitle'),
+                          style: const TextStyle(
                             color: AppTheme.textMuted,
                             fontSize: 12.5,
                           ),
@@ -674,9 +665,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                   height: 1.1,
                                 ),
                               ),
-                              const Text(
-                                'Total Members',
-                                style: TextStyle(
+                              Text(
+                                tr('dashboard_total_members'),
+                                style: const TextStyle(
                                   color: AppTheme.textMuted,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w500,
@@ -715,7 +706,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                         controller: _searchController,
                         style: const TextStyle(color: AppTheme.textWhite, fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: 'Search by name, phone, or ID...',
+                          hintText: tr('members_search_hint'),
                           hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
                           prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textMuted, size: 22),
                           suffixIcon: _searchController.text.isNotEmpty
@@ -744,7 +735,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.tune_rounded, color: AppTheme.textWhite, size: 20),
-                      tooltip: 'Filter / Sort',
+                      tooltip: tr('members_filter_sort_tooltip'),
                       onPressed: _showFilterSortSheet,
                     ),
                   ),
@@ -759,7 +750,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
               child: Row(
                 children: [
                   _buildFilterChip(
-                    label: 'All',
+                    label: tr('members_filter_all'),
                     icon: Icons.groups_rounded,
                     isSelected: _selectedTab == 'All',
                     onTap: () {
@@ -768,7 +759,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                     },
                   ),
                   _buildFilterChip(
-                    label: 'Active',
+                    label: tr('common_active'),
                     dotColor: const Color(0xFF00E676),
                     isSelected: _selectedTab == 'Active',
                     onTap: () {
@@ -777,7 +768,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                     },
                   ),
                   _buildFilterChip(
-                    label: 'Due Soon',
+                    label: tr('members_filter_due_soon'),
                     dotColor: const Color(0xFFFFB300),
                     isSelected: _selectedTab == 'Due Soon',
                     onTap: () {
@@ -786,7 +777,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                     },
                   ),
                   _buildFilterChip(
-                    label: 'Overdue',
+                    label: tr('members_filter_overdue'),
                     dotColor: const Color(0xFFFF3B30),
                     isSelected: _selectedTab == 'Overdue',
                     onTap: () {
@@ -795,7 +786,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                     },
                   ),
                   _buildFilterChip(
-                    label: 'Expired',
+                    label: tr('members_filter_expired'),
                     dotColor: const Color(0xFF8E8E93),
                     isSelected: _selectedTab == 'Expired',
                     onTap: () {
@@ -818,14 +809,14 @@ class _MembersListScreenState extends State<MembersListScreen> {
                             children: [
                               const Icon(Icons.people_outline_rounded, size: 48, color: AppTheme.textMuted),
                               const SizedBox(height: 12),
-                              const Text(
-                                'No members found',
-                                style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 16),
+                              Text(
+                                tr('members_none_found'),
+                                style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               const SizedBox(height: 4),
-                              const Text(
-                                'Add your first member to start managing your gym.',
-                                style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                              Text(
+                                tr('members_none_found_sub'),
+                                style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                               ),
                               const SizedBox(height: 16),
                               ElevatedButton.icon(
@@ -837,7 +828,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                   _loadMembers();
                                 },
                                 icon: const Icon(Icons.add),
-                                label: const Text('Add Member'),
+                                label: Text(tr('dashboard_add_member')),
                               ),
                             ],
                           ),
@@ -852,10 +843,12 @@ class _MembersListScreenState extends State<MembersListScreen> {
 
                             Color statusColor;
                             String statusText;
+                            IconData statusIcon;
                             switch (health) {
                               case _MemberHealth.active:
                                 statusColor = const Color(0xFF00E676);
-                                statusText = 'Active';
+                                statusText = tr('members_status_active');
+                                statusIcon = Icons.check_circle_rounded;
                                 break;
                               case _MemberHealth.dueSoon:
                                 statusColor = const Color(0xFFFFB300);
@@ -863,29 +856,34 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                 final today = DateTime(now.year, now.month, now.day);
                                 final end = DateTime(ms!.endDate.year, ms.endDate.month, ms.endDate.day);
                                 final diff = end.difference(today).inDays;
-                                statusText = 'Due in $diff d';
+                                statusText = tr('members_status_due_in_days', {'days': '$diff'});
+                                statusIcon = Icons.access_time_rounded;
                                 break;
                               case _MemberHealth.dueToday:
                                 statusColor = const Color(0xFFFFB300);
-                                statusText = 'Fee Due Today';
+                                statusText = tr('members_status_due_today');
+                                statusIcon = Icons.access_time_rounded;
                                 break;
                               case _MemberHealth.overdue:
                                 statusColor = const Color(0xFFFF3B30);
-                                statusText = 'Overdue';
+                                statusText = tr('members_status_overdue');
+                                statusIcon = Icons.error_outline_rounded;
                                 break;
                               case _MemberHealth.expired:
                                 statusColor = const Color(0xFF8E8E93);
-                                statusText = 'Expired';
+                                statusText = tr('members_status_expired');
+                                statusIcon = Icons.error_outline_rounded;
                                 break;
                               case _MemberHealth.noPlan:
                                 statusColor = Colors.white60;
-                                statusText = 'No Plan';
+                                statusText = tr('members_status_no_plan');
+                                statusIcon = Icons.help_outline_rounded;
                                 break;
                             }
 
                             // Dates & Days Left calculation
                             final joinDateStr = dateFormat.format(ms?.startDate ?? member.createdAt);
-                            final expiryDateStr = ms != null ? dateFormat.format(ms.endDate) : 'N/A';
+                            final expiryDateStr = ms != null ? dateFormat.format(ms.endDate) : tr('common_not_available');
 
                             String daysLeftText = '';
                             Color daysLeftColor = const Color(0xFFD4FF00);
@@ -897,18 +895,18 @@ class _MembersListScreenState extends State<MembersListScreen> {
                               final diff = end.difference(today).inDays;
 
                               if (diff > 0) {
-                                daysLeftText = '($diff days left)';
+                                daysLeftText = tr('members_days_left', {'days': '$diff'});
                                 daysLeftColor = diff <= 7 ? const Color(0xFFFFB300) : const Color(0xFFD4FF00);
                               } else if (diff == 0) {
-                                daysLeftText = '(Due today)';
+                                daysLeftText = tr('members_due_today_paren');
                                 daysLeftColor = const Color(0xFFFFB300);
                               } else {
-                                daysLeftText = '(${diff.abs()} days overdue)';
+                                daysLeftText = tr('members_days_overdue', {'days': '${diff.abs()}'});
                                 daysLeftColor = const Color(0xFFFF3B30);
                               }
                             }
 
-                            final planName = ms?.planName ?? 'No Plan';
+                            final planName = ms?.planName ?? tr('members_no_plan');
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 14),
@@ -990,7 +988,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                                   ),
                                                 ),
                                                 const SizedBox(height: 8),
-                                                _buildStatusPill(statusText, statusColor),
+                                                _buildStatusPill(statusText, statusColor, statusIcon),
                                               ],
                                             ),
                                           ),
@@ -1013,44 +1011,44 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                                 ),
                                                 onSelected: (action) => _handleMemberAction(action, member),
                                                 itemBuilder: (context) => [
-                                                  const PopupMenuItem(
+                                                  PopupMenuItem(
                                                     value: 'view',
                                                     child: Row(
                                                       children: [
-                                                        Icon(Icons.person_outline_rounded, size: 18, color: Colors.white70),
-                                                        SizedBox(width: 10),
-                                                        Text('View Profile', style: TextStyle(color: Colors.white, fontSize: 13)),
+                                                        const Icon(Icons.person_outline_rounded, size: 18, color: Colors.white70),
+                                                        const SizedBox(width: 10),
+                                                        Text(tr('members_menu_view_profile'), style: const TextStyle(color: Colors.white, fontSize: 13)),
                                                       ],
                                                     ),
                                                   ),
-                                                  const PopupMenuItem(
+                                                  PopupMenuItem(
                                                     value: 'edit',
                                                     child: Row(
                                                       children: [
-                                                        Icon(Icons.edit_outlined, size: 18, color: Colors.white70),
-                                                        SizedBox(width: 10),
-                                                        Text('Edit Member', style: TextStyle(color: Colors.white, fontSize: 13)),
+                                                        const Icon(Icons.edit_outlined, size: 18, color: Colors.white70),
+                                                        const SizedBox(width: 10),
+                                                        Text(tr('members_menu_edit_member'), style: const TextStyle(color: Colors.white, fontSize: 13)),
                                                       ],
                                                     ),
                                                   ),
                                                   if (member.phone.isNotEmpty) ...[
-                                                    const PopupMenuItem(
+                                                    PopupMenuItem(
                                                       value: 'call',
                                                       child: Row(
                                                         children: [
-                                                          Icon(Icons.phone_outlined, size: 18, color: Colors.white70),
-                                                          SizedBox(width: 10),
-                                                          Text('Call Member', style: TextStyle(color: Colors.white, fontSize: 13)),
+                                                          const Icon(Icons.phone_outlined, size: 18, color: Colors.white70),
+                                                          const SizedBox(width: 10),
+                                                          Text(tr('members_menu_call_member'), style: const TextStyle(color: Colors.white, fontSize: 13)),
                                                         ],
                                                       ),
                                                     ),
-                                                    const PopupMenuItem(
+                                                    PopupMenuItem(
                                                       value: 'whatsapp',
                                                       child: Row(
                                                         children: [
-                                                          Icon(Icons.chat_outlined, size: 18, color: Colors.white70),
-                                                          SizedBox(width: 10),
-                                                          Text('WhatsApp', style: TextStyle(color: Colors.white, fontSize: 13)),
+                                                          const Icon(Icons.chat_outlined, size: 18, color: Colors.white70),
+                                                          const SizedBox(width: 10),
+                                                          Text(tr('members_menu_whatsapp'), style: const TextStyle(color: Colors.white, fontSize: 13)),
                                                         ],
                                                       ),
                                                     ),
@@ -1095,18 +1093,18 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                const Row(
+                                                Row(
                                                   children: [
-                                                    Icon(
+                                                    const Icon(
                                                       Icons.fitness_center_rounded,
                                                       size: 14,
                                                       color: Color(0xFF00E676),
                                                     ),
-                                                    SizedBox(width: 4),
+                                                    const SizedBox(width: 4),
                                                     Flexible(
                                                       child: Text(
-                                                        'Membership',
-                                                        style: TextStyle(
+                                                        tr('members_label_membership'),
+                                                        style: const TextStyle(
                                                           color: AppTheme.textMuted,
                                                           fontSize: 11,
                                                           fontWeight: FontWeight.w500,
@@ -1145,18 +1143,18 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                const Row(
+                                                Row(
                                                   children: [
-                                                    Icon(
+                                                    const Icon(
                                                       Icons.calendar_today_outlined,
                                                       size: 13,
                                                       color: AppTheme.textMuted,
                                                     ),
-                                                    SizedBox(width: 4),
+                                                    const SizedBox(width: 4),
                                                     Flexible(
                                                       child: Text(
-                                                        'Join Date',
-                                                        style: TextStyle(
+                                                        tr('members_label_join_date'),
+                                                        style: const TextStyle(
                                                           color: AppTheme.textMuted,
                                                           fontSize: 11,
                                                           fontWeight: FontWeight.w500,
@@ -1195,18 +1193,18 @@ class _MembersListScreenState extends State<MembersListScreen> {
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                const Row(
+                                                Row(
                                                   children: [
-                                                    Icon(
+                                                    const Icon(
                                                       Icons.calendar_month_outlined,
                                                       size: 13,
                                                       color: AppTheme.textMuted,
                                                     ),
-                                                    SizedBox(width: 4),
+                                                    const SizedBox(width: 4),
                                                     Flexible(
                                                       child: Text(
-                                                        'Expiry Date',
-                                                        style: TextStyle(
+                                                        tr('members_label_expiry_date'),
+                                                        style: const TextStyle(
                                                           color: AppTheme.textMuted,
                                                           fontSize: 11,
                                                           fontWeight: FontWeight.w500,
@@ -1268,9 +1266,9 @@ class _MembersListScreenState extends State<MembersListScreen> {
         backgroundColor: AppTheme.neonLime,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.add, color: AppTheme.darkBackground, size: 22),
-        label: const Text(
-          'Add Member',
-          style: TextStyle(
+        label: Text(
+          tr('dashboard_add_member'),
+          style: const TextStyle(
             color: AppTheme.darkBackground,
             fontWeight: FontWeight.w900,
             fontSize: 14,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/localization/app_translations.dart';
 import '../../core/receipt/qr_service.dart';
 import '../../core/utils/form_validators.dart';
 import '../../core/services/app_state_service.dart';
@@ -160,7 +161,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         receiptNumber: _generatedReceiptNo,
         memberName: widget.member.name,
         memberPhone: widget.member.phone,
-        planName: widget.membership?.planName ?? 'Monthly Membership',
+        planName: widget.membership?.planName ?? tr('add_payment_monthly_membership'),
         trainerName: _trainerName ?? _trainer?.name,
         personalTrainingFee: effectivePtFee,
         amount: amount,
@@ -239,7 +240,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ADD PAYMENT & RECEIPT'),
+        title: Text(tr('add_payment_title')),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -296,7 +297,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Settling Bill #${widget.bill!.billNumber}',
+                            tr('add_payment_settling_bill', {'number': widget.bill!.billNumber}),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w800, fontSize: 12.5),
@@ -325,7 +326,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                             Icon(Icons.fitness_center_rounded, color: AppTheme.neonLime, size: 18),
                             const SizedBox(width: 8),
                             Text(
-                              'PERSONAL TRAINING INCLUDED',
+                              tr('add_payment_pt_included'),
                               style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 0.5),
                             ),
                           ],
@@ -334,9 +335,9 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Assigned Trainer:', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                            Text(tr('add_payment_assigned_trainer'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                             Text(
-                              _trainerName ?? _trainer?.name ?? 'Personal Trainer',
+                              _trainerName ?? _trainer?.name ?? tr('add_payment_personal_trainer_fallback'),
                               style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                           ],
@@ -345,7 +346,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Base Plan Fee:', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                            Text(tr('add_payment_base_plan_fee'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                             Text('₹${_baseFee.toStringAsFixed(0)}', style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w600, fontSize: 13)),
                           ],
                         ),
@@ -353,7 +354,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Personal Training Fee:', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                            Text(tr('add_payment_pt_fee'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                             Text('₹${_ptFee.toStringAsFixed(0)}', style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 13)),
                           ],
                         ),
@@ -361,7 +362,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Total Plan + PT Due:', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13)),
+                            Text(tr('add_payment_total_plan_pt_due'), style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13)),
                             Text(
                               '₹${(_baseFee + _ptFee).toStringAsFixed(0)}',
                               style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 15),
@@ -378,7 +379,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('RECEIPT NO:', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
+                    Text(tr('add_payment_receipt_no'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
                     Text(
                       _generatedReceiptNo,
                       style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 14),
@@ -388,15 +389,15 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                 const SizedBox(height: 16),
 
                 CustomTextField(
-                  label: 'Payment Amount (₹) *',
+                  label: tr('add_payment_amount_label'),
                   hint: '1500',
                   controller: _amountController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  validator: (v) => FormValidators.validateAmount(v, fieldName: 'Payment Amount'),
+                  validator: (v) => FormValidators.validateAmount(v, fieldName: tr('add_payment_amount_field')),
                 ),
                 const SizedBox(height: 16),
 
-                const Text('PAYMENT METHOD', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
+                Text(tr('add_payment_method'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 8,
@@ -404,7 +405,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                     final selected = _paymentMethod == m;
                     return FilterChip(
                       selected: selected,
-                      label: Text(m),
+                      label: Text(tr('payment_method_${m.toLowerCase().replaceAll(' ', '_')}')),
                       selectedColor: AppTheme.neonLime,
                       backgroundColor: AppTheme.darkSurface,
                       labelStyle: TextStyle(color: selected ? AppTheme.darkBackground : AppTheme.textWhite, fontWeight: FontWeight.bold),
@@ -420,7 +421,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('NEW START DATE', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
+                          Text(tr('add_payment_new_start_date'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
                           const SizedBox(height: 6),
                           InkWell(
                             onTap: () async {
@@ -446,7 +447,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('NEW END DATE', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
+                          Text(tr('add_payment_new_end_date'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
                           const SizedBox(height: 6),
                           InkWell(
                             onTap: () async {
@@ -472,14 +473,14 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                 const SizedBox(height: 16),
 
                 CustomTextField(
-                  label: 'Payment Notes (Optional)',
-                  hint: 'e.g. Paid via Google Pay',
+                  label: tr('add_payment_notes_label'),
+                  hint: tr('add_payment_notes_hint'),
                   controller: _notesController,
                 ),
                 const SizedBox(height: 32),
 
                 NeonButton(
-                  text: 'Save Payment & Print Receipt →',
+                  text: tr('add_payment_save_button'),
                   width: double.infinity,
                   isLoading: _isLoading,
                   onPressed: _processPayment,

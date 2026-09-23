@@ -134,9 +134,10 @@ class AppDatabase {
     final now = DateTime.now().toIso8601String();
     final defaultPackageId = uuid.v4();
 
+    // cardio + crossfit package
     await db.insert('membership_packages', {
       'id': defaultPackageId,
-      'name': 'Standard Gym Access',
+      'name': 'Cardio + Crossfit',
       'description': 'Full access to gym equipment, free weights, and cardio zone',
       'isActive': 1,
       'createdAt': now,
@@ -148,7 +149,7 @@ class AppDatabase {
       'packageId': defaultPackageId,
       'name': 'Monthly Plan',
       'durationDays': 30,
-      'defaultFee': 1500.0,
+      'defaultFee': 2000.0,
       'description': 'Full access to gym equipment and cardio zone for 1 Month',
       'isActive': 1,
       'createdAt': now,
@@ -158,10 +159,10 @@ class AppDatabase {
     await db.insert('membership_plans', {
       'id': uuid.v4(),
       'packageId': defaultPackageId,
-      'name': 'Quarterly Pro Plan',
+      'name': 'Quarterly Plan',
       'durationDays': 90,
-      'defaultFee': 3999.0,
-      'description': 'Pro All Access: HIIT, Aerobics & Crossfit for 3 Months',
+      'defaultFee': 4500.0,
+      'description': 'Premium All Access: HIIT, Aerobics & Crossfit for 3 Months',
       'isActive': 1,
       'createdAt': now,
       'updatedAt': now,
@@ -170,10 +171,10 @@ class AppDatabase {
     await db.insert('membership_plans', {
       'id': uuid.v4(),
       'packageId': defaultPackageId,
-      'name': 'Half-Yearly VIP Plan',
+      'name': 'Half-Yearly Plan',
       'durationDays': 180,
-      'defaultFee': 7499.0,
-      'description': '6 Months Unlimited Gym Access + Free Trainer Assessment',
+      'defaultFee': 7500.0,
+      'description': '6 Months Unlimited Gym Access',
       'isActive': 1,
       'createdAt': now,
       'updatedAt': now,
@@ -182,10 +183,128 @@ class AppDatabase {
     await db.insert('membership_plans', {
       'id': uuid.v4(),
       'packageId': defaultPackageId,
-      'name': 'Yearly Elite Plan',
+      'name': 'Annual/Yearly Elite Plan',
       'durationDays': 365,
-      'defaultFee': 12999.0,
-      'description': '1 Year All Access + Nutrition Coaching + Personal Session',
+      'defaultFee': 12000.0,
+      'description': '1 Year All Access',
+      'isActive': 1,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    // strength training package
+    final defaultStrengthTrainingPackageId = uuid.v4();
+    await db.insert('membership_packages', {
+      'id': defaultStrengthTrainingPackageId,
+      'name': 'Strength Training',
+      'description': 'Full access to gym equipment, free weights, and cardio zone',
+      'isActive': 1,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+    
+    await db.insert('membership_plans', {
+      'id': uuid.v4(),
+      'packageId': defaultStrengthTrainingPackageId,
+      'name': 'Monthly Plan',
+      'durationDays': 30,
+      'defaultFee': 1800.0,
+      'description': 'Full access to gym equipment and cardio zone for 1 Month',
+      'isActive': 1,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    await db.insert('membership_plans', {
+      'id': uuid.v4(),
+      'packageId': defaultStrengthTrainingPackageId,
+      'name': 'Quarterly Plan',
+      'durationDays': 90,
+      'defaultFee': 4200.0,
+      'description': 'Premium All Access: HIIT, Aerobics & Crossfit for 3 Months',
+      'isActive': 1,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    await db.insert('membership_plans', {
+      'id': uuid.v4(),
+      'packageId': defaultStrengthTrainingPackageId,
+      'name': 'Half-Yearly Plan',
+      'durationDays': 180,
+      'defaultFee': 7000.0,
+      'description': '6 Months Unlimited Gym Access',
+      'isActive': 1,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    await db.insert('membership_plans', {
+      'id': uuid.v4(),
+      'packageId': defaultStrengthTrainingPackageId,
+      'name': 'Annual/Yearly Elite Plan',
+      'durationDays': 365,
+      'defaultFee': 11000.0,
+      'description': '1 Year All Access',
+      'isActive': 1,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    // strength training package
+    final defaultTotalFitnessPackageId = uuid.v4();
+    await db.insert('membership_packages', {
+      'id': defaultTotalFitnessPackageId,
+      'name': 'Total Fitness',
+      'description': 'Full access to gym equipment, free weights, and cardio zone',
+      'isActive': 1,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+    
+    await db.insert('membership_plans', {
+      'id': uuid.v4(),
+      'packageId': defaultTotalFitnessPackageId,
+      'name': 'Monthly Plan',
+      'durationDays': 30,
+      'defaultFee': 2500.0,
+      'description': 'Full access to gym equipment and cardio zone for 1 Month',
+      'isActive': 1,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    await db.insert('membership_plans', {
+      'id': uuid.v4(),
+      'packageId': defaultTotalFitnessPackageId,
+      'name': 'Quarterly Plan',
+      'durationDays': 90,
+      'defaultFee': 6000.0,
+      'description': 'Premium All Access: HIIT, Aerobics & Crossfit for 3 Months',
+      'isActive': 1,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    await db.insert('membership_plans', {
+      'id': uuid.v4(),
+      'packageId': defaultTotalFitnessPackageId,
+      'name': 'Half-Yearly Plan',
+      'durationDays': 180,
+      'defaultFee': 10000.0,
+      'description': '6 Months Unlimited Gym Access',
+      'isActive': 1,
+      'createdAt': now,
+      'updatedAt': now,
+    });
+
+    await db.insert('membership_plans', {
+      'id': uuid.v4(),
+      'packageId': defaultTotalFitnessPackageId,
+      'name': 'Annual/Yearly Elite Plan',
+      'durationDays': 365,
+      'defaultFee': 15000.0,
+      'description': '1 Year All Access',
       'isActive': 1,
       'createdAt': now,
       'updatedAt': now,

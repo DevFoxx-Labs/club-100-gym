@@ -487,7 +487,7 @@ class _AnnouncementsScreenState extends State<AnnouncementsScreen> {
   Future<void> _deleteAnnouncement(AnnouncementModel item) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => const ConfirmationDialog(
+      builder: (ctx) => ConfirmationDialog(
         title: 'Delete Announcement?',
         message: 'This announcement will be permanently removed.',
         confirmLabel: 'Delete',

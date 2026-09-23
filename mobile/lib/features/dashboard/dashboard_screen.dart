@@ -13,6 +13,7 @@ import '../trainers/trainers_list_screen.dart';
 import '../events/events_calendar_screen.dart';
 import '../receipts/receipt_preview_screen.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/localization/app_translations.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(String filter) onNavigateToMembers;
@@ -68,9 +69,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   String get _greeting {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return tr('drawer_greeting_morning');
+    if (hour < 17) return tr('drawer_greeting_afternoon');
+    return tr('drawer_greeting_evening');
   }
 
   Future<void> _loadDashboardData({bool showSpinner = true}) async {
@@ -143,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Format gym name with dual-tone styling
     final gymName = (_gymInfo?.name != null && _gymInfo!.name.isNotEmpty)
         ? _gymInfo!.name.toUpperCase().trim()
-        : 'THE ELITE FITNESS GYM';
+        : tr('dashboard_default_gym_name');
     final words = gymName.split(' ');
     String firstPart = gymName;
     String lastPart = '';
@@ -154,7 +155,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final adminFirstName = (_admin?.name != null && _admin!.name.isNotEmpty)
         ? _admin!.name.split(' ').first
-        : 'Admin';
+        : tr('drawer_default_admin');
 
     return Scaffold(
       backgroundColor: const Color(0xFF0C0F14),
@@ -164,7 +165,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: AppTheme.neonLime, size: 28),
-          tooltip: 'Open Menu',
+          tooltip: tr('dashboard_open_menu'),
           onPressed: widget.onOpenDrawer,
         ),
         title: Column(
@@ -196,9 +197,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(height: 1),
-            const Text(
-              'Admin Operations Dashboard',
-              style: TextStyle(
+            Text(
+              tr('dashboard_subtitle'),
+              style: const TextStyle(
                 fontSize: 11,
                 color: AppTheme.textMuted,
                 fontWeight: FontWeight.w500,
@@ -288,26 +289,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                           ),
                                         ),
                                         const SizedBox(width: 6),
-                                        RichText(
-                                          text: TextSpan(
-                                            children: [
-                                              TextSpan(
-                                                text: 'Good ',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: AppTheme.neonLime,
-                                                ),
-                                              ),
-                                              TextSpan(
-                                                text: '${_greeting.replaceFirst('Good ', '')},',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: AppTheme.textMuted,
-                                                ),
-                                              ),
-                                            ],
+                                        Text(
+                                          '$_greeting,',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppTheme.neonLime,
                                           ),
                                         ),
                                       ],
@@ -323,9 +310,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 2),
-                                    const Text(
-                                      "Here's what's happening today.",
-                                      style: TextStyle(
+                                    Text(
+                                      tr('dashboard_whats_happening'),
+                                      style: const TextStyle(
                                         fontSize: 12,
                                         color: AppTheme.textMuted,
                                       ),
@@ -347,10 +334,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       letterSpacing: 0.6,
                                     ),
                                     children: [
-                                      TextSpan(text: "STRONGER\n", style: TextStyle(color: AppTheme.neonLime)),
-                                      const TextSpan(text: "PEOPLE BUILD\n", style: TextStyle(color: Colors.white)),
-                                      const TextSpan(text: "STRONGER\n", style: TextStyle(color: Colors.white)),
-                                      TextSpan(text: "COMMUNITIES", style: TextStyle(color: AppTheme.neonLime)),
+                                      TextSpan(text: "${tr('dashboard_slogan_line1')}\n", style: TextStyle(color: AppTheme.neonLime)),
+                                      TextSpan(text: "${tr('dashboard_slogan_line2')}\n", style: const TextStyle(color: Colors.white)),
+                                      TextSpan(text: "${tr('dashboard_slogan_line3')}\n", style: const TextStyle(color: Colors.white)),
+                                      TextSpan(text: tr('dashboard_slogan_line4'), style: TextStyle(color: AppTheme.neonLime)),
                                     ],
                                   ),
                                 ),
@@ -365,7 +352,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Expanded(
                                 child: _QuickActionCard(
                                   icon: Icons.person_add_alt_1_rounded,
-                                  label: 'Add Member',
+                                  label: tr('dashboard_add_member'),
                                   badgeColor: const Color(0xFF132B1A),
                                   iconColor: AppTheme.neonLime,
                                   onTap: () async {
@@ -381,7 +368,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Expanded(
                                 child: _QuickActionCard(
                                   icon: Icons.credit_card_rounded,
-                                  label: 'Record Fee',
+                                  label: tr('dashboard_record_fee'),
                                   badgeColor: const Color(0xFF102138),
                                   iconColor: const Color(0xFF389BF2),
                                   onTap: () => widget.onNavigateToMembers('All'),
@@ -391,7 +378,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Expanded(
                                 child: _QuickActionCard(
                                   icon: Icons.event_note_rounded,
-                                  label: 'Events',
+                                  label: tr('dashboard_events'),
                                   badgeColor: const Color(0xFF261536),
                                   iconColor: const Color(0xFFA855F7),
                                   onTap: () => Navigator.push(
@@ -404,7 +391,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Expanded(
                                 child: _QuickActionCard(
                                   icon: Icons.people_alt_rounded,
-                                  label: 'Trainers',
+                                  label: tr('dashboard_trainers'),
                                   badgeColor: const Color(0xFF332014),
                                   iconColor: const Color(0xFFF97316),
                                   onTap: () => Navigator.push(
@@ -432,9 +419,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Text(
-                                    'MEMBERSHIP METRICS',
-                                    style: TextStyle(
+                                  Text(
+                                    tr('dashboard_membership_metrics'),
+                                    style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w900,
                                       color: AppTheme.textMuted,
@@ -451,7 +438,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   child: Row(
                                     children: [
                                       Text(
-                                        'View All',
+                                        tr('common_view_all'),
                                         style: TextStyle(
                                           color: AppTheme.neonLime,
                                           fontSize: 12,
@@ -478,49 +465,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             childAspectRatio: 1.15,
                             children: [
                               SummaryCard(
-                                title: 'Total Members',
+                                title: tr('dashboard_total_members'),
                                 count: _totalMembers,
-                                subtitle: 'All registered members',
+                                subtitle: tr('dashboard_all_registered_members'),
                                 icon: Icons.people_alt_rounded,
                                 accentColor: AppTheme.neonLime,
                                 onTap: () => widget.onNavigateToMembers('All'),
                               ),
                               SummaryCard(
-                                title: 'Active Members',
+                                title: tr('dashboard_active_members'),
                                 count: _activeMembers,
-                                subtitle: 'Currently active',
+                                subtitle: tr('dashboard_currently_active'),
                                 icon: Icons.check_circle_rounded,
                                 accentColor: const Color(0xFF10B981),
                                 onTap: () => widget.onNavigateToMembers('Active'),
                               ),
                               SummaryCard(
-                                title: 'Fees Due Soon',
+                                title: tr('dashboard_fees_due_soon'),
                                 count: _feesDueSoon,
-                                subtitle: 'In next 7 days',
+                                subtitle: tr('dashboard_in_next_7_days'),
                                 icon: Icons.access_time_filled_rounded,
                                 accentColor: const Color(0xFFF59E0B),
                                 onTap: () => widget.onNavigateToMembers('Due Soon'),
                               ),
                               SummaryCard(
-                                title: 'Fees Due Today',
+                                title: tr('dashboard_fees_due_today'),
                                 count: _feesDueToday,
-                                subtitle: 'Due today',
+                                subtitle: tr('dashboard_due_today'),
                                 icon: Icons.notifications_active_rounded,
                                 accentColor: const Color(0xFFEAB308),
                                 onTap: () => widget.onNavigateToMembers('Due Soon'),
                               ),
                               SummaryCard(
-                                title: 'Overdue Fees',
+                                title: tr('dashboard_overdue_fees'),
                                 count: _overdueFees,
-                                subtitle: 'Pending payments',
+                                subtitle: tr('dashboard_pending_payments'),
                                 icon: Icons.warning_rounded,
                                 accentColor: const Color(0xFFEF4444),
                                 onTap: () => widget.onNavigateToMembers('Overdue'),
                               ),
                               SummaryCard(
-                                title: 'Expiring Soon',
+                                title: tr('dashboard_expiring_soon'),
                                 count: _expiringSoon,
-                                subtitle: 'In next 30 days',
+                                subtitle: tr('dashboard_in_next_30_days'),
                                 icon: Icons.access_time_rounded,
                                 accentColor: const Color(0xFFA855F7),
                                 onTap: () => widget.onNavigateToMembers('Due Soon'),
@@ -544,9 +531,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  const Text(
-                                    'RECENT ACTIVITY',
-                                    style: TextStyle(
+                                  Text(
+                                    tr('dashboard_recent_activity'),
+                                    style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w900,
                                       color: AppTheme.textMuted,
@@ -563,7 +550,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   child: Row(
                                     children: [
                                       Text(
-                                        'View All',
+                                        tr('common_view_all'),
                                         style: TextStyle(
                                           color: AppTheme.neonLime,
                                           fontSize: 12,
@@ -607,9 +594,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 14),
-                                  const Text(
-                                    'No recent activity',
-                                    style: TextStyle(
+                                  Text(
+                                    tr('dashboard_no_recent_activity'),
+                                    style: const TextStyle(
                                       color: AppTheme.textWhite,
                                       fontSize: 14.5,
                                       fontWeight: FontWeight.w700,
@@ -617,7 +604,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Activity will appear here as you manage members, payments, and events.',
+                                    tr('dashboard_activity_will_appear'),
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: AppTheme.textMuted.withValues(alpha: 0.8),
@@ -635,7 +622,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               itemCount: _recentPayments.length,
                               itemBuilder: (context, index) {
                                 final pay = _recentPayments[index];
-                                final memberName = _memberNames[pay.memberId] ?? 'Member';
+                                final memberName = _memberNames[pay.memberId] ?? tr('dashboard_member_fallback');
 
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 8),
@@ -659,7 +646,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14),
                                     ),
                                     subtitle: Text(
-                                      'Receipt #${pay.receiptNumber} • ${pay.paymentMethod} • ${dateFormat.format(pay.paymentDate)}',
+                                      tr('dashboard_receipt_line', {
+                                        'number': pay.receiptNumber,
+                                        'method': pay.paymentMethod,
+                                        'date': dateFormat.format(pay.paymentDate),
+                                      }),
                                       style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
                                     ),
                                     trailing: Row(

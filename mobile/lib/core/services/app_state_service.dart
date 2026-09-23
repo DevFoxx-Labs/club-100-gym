@@ -12,6 +12,7 @@ enum AppStateEventType {
   notificationsChanged,
   expensesChanged,
   themeChanged,
+  languageChanged,
   all,
 }
 
@@ -86,6 +87,12 @@ class AppStateService extends ChangeNotifier {
 
   void notifyThemeChanged() {
     _lastEventType = AppStateEventType.themeChanged;
+    _lastUpdatedAt = DateTime.now();
+    notifyListeners();
+  }
+
+  void notifyLanguageChanged() {
+    _lastEventType = AppStateEventType.languageChanged;
     _lastUpdatedAt = DateTime.now();
     notifyListeners();
   }

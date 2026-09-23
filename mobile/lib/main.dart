@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'core/theme/app_theme.dart';
 import 'core/security/security_service.dart';
 import 'core/services/app_state_service.dart';
+import 'core/localization/locale_service.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/notifications/reminder_scheduler.dart';
 import 'data/repositories/settings_repository.dart';
@@ -51,6 +52,13 @@ void main() async {
     debugPrint('Failed to load saved accent color: $e');
   }
 
+  // Load the admin's saved display language, if any, before first paint
+  try {
+    await LocaleService.instance.load();
+  } catch (e) {
+    debugPrint('Failed to load saved language: $e');
+  }
+
   runApp(Club100GymApp(isSetupComplete: isComplete));
 }
 
@@ -79,7 +87,8 @@ class _Club100GymAppState extends State<Club100GymApp> {
   void _onAppStateChanged() {
     // Rebuilding the root widget cascades a fresh build down the whole tree,
     // so every screen picks up the newly selected AppTheme.neonLime immediately.
-    if (AppStateService.instance.lastEventType == AppStateEventType.themeChanged && mounted) {
+    final eventType = AppStateService.instance.lastEventType;
+    if ((eventType == AppStateEventType.themeChanged || eventType == AppStateEventType.languageChanged) && mounted) {
       setState(() {});
     }
   }

@@ -3,8 +3,9 @@ import '../../core/theme/app_theme.dart';
 
 class StatusBadge extends StatelessWidget {
   final String status;
+  final String? label;
 
-  const StatusBadge({super.key, required this.status});
+  const StatusBadge({super.key, required this.status, this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +46,7 @@ class StatusBadge extends StatelessWidget {
           Icon(icon, size: 12, color: fg),
           const SizedBox(width: 4),
           Text(
-            status,
+            label ?? status,
             style: TextStyle(
               color: fg,
               fontSize: 11,

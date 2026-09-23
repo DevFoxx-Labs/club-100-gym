@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/localization/app_translations.dart';
 import '../../core/services/app_state_service.dart';
 import '../../core/utils/form_validators.dart';
 import '../../data/models/bill_model.dart';
@@ -77,7 +78,7 @@ class _GenerateBillScreenState extends State<GenerateBillScreen> {
       memberName: widget.member.name,
       memberPhone: widget.member.phone,
       membershipId: widget.membership?.id,
-      planName: widget.membership?.planName ?? 'Membership Fee',
+      planName: widget.membership?.planName ?? tr('generate_bill_membership_fee_fallback'),
       amount: amount,
       billDate: now,
       dueDate: _dueDate,
@@ -107,7 +108,7 @@ class _GenerateBillScreenState extends State<GenerateBillScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GENERATE BILL'),
+        title: Text(tr('generate_bill_title')),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -151,7 +152,7 @@ class _GenerateBillScreenState extends State<GenerateBillScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('BILL NO:', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
+                    Text(tr('generate_bill_number_label'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800)),
                     Text(
                       _generatedBillNo,
                       style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 14),

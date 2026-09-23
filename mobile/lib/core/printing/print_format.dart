@@ -1,4 +1,5 @@
 import 'package:pdf/pdf.dart';
+import '../localization/app_translations.dart';
 
 /// Supported paper formats for printing/sharing bills and receipts.
 /// Thermal formats use a fixed roll width with unbounded (continuous) height.
@@ -8,17 +9,17 @@ extension PrintFormatX on PrintFormat {
   bool get isThermal => this == PrintFormat.thermal58 || this == PrintFormat.thermal80;
 
   String get label => switch (this) {
-        PrintFormat.thermal58 => '58mm Thermal',
-        PrintFormat.thermal80 => '80mm Thermal',
-        PrintFormat.a5 => 'A5',
-        PrintFormat.a4 => 'A4',
+        PrintFormat.thermal58 => tr('print_format_thermal58_label'),
+        PrintFormat.thermal80 => tr('print_format_thermal80_label'),
+        PrintFormat.a5 => tr('print_format_a5_label'),
+        PrintFormat.a4 => tr('print_format_a4_label'),
       };
 
   String get description => switch (this) {
-        PrintFormat.thermal58 => 'Narrow receipt printer roll',
-        PrintFormat.thermal80 => 'Standard receipt printer roll',
-        PrintFormat.a5 => 'Half-page, compact document',
-        PrintFormat.a4 => 'Full-page, standard document',
+        PrintFormat.thermal58 => tr('print_format_thermal58_desc'),
+        PrintFormat.thermal80 => tr('print_format_thermal80_desc'),
+        PrintFormat.a5 => tr('print_format_a5_desc'),
+        PrintFormat.a4 => tr('print_format_a4_desc'),
       };
 
   PdfPageFormat get pdfPageFormat => switch (this) {

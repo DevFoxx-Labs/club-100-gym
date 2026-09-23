@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/localization/app_translations.dart';
 import '../../data/models/payment_model.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../core/services/app_state_service.dart';
@@ -87,11 +88,11 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PAYMENTS & BILLS'),
+        title: Text(tr('payments_appbar_title')),
         actions: [
           IconButton(
             icon: Icon(Icons.qr_code_scanner_rounded, color: AppTheme.neonLime),
-            tooltip: 'Verify Payment Receipt',
+            tooltip: tr('payments_verify_receipt_tooltip'),
             onPressed: () {
               Navigator.push(
                 context,
@@ -105,9 +106,9 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
           indicatorColor: AppTheme.neonLime,
           labelColor: AppTheme.neonLime,
           unselectedLabelColor: AppTheme.textMuted,
-          tabs: const [
-            Tab(text: 'PAYMENTS'),
-            Tab(text: 'BILLS & DUES'),
+          tabs: [
+            Tab(text: tr('payments_tab_payments')),
+            Tab(text: tr('member_profile_bills_dues')),
           ],
         ),
       ),
@@ -122,7 +123,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
               backgroundColor: AppTheme.neonLime,
               foregroundColor: AppTheme.darkBackground,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('ADD PAYMENT', style: TextStyle(fontWeight: FontWeight.w800)),
+              label: Text(tr('payments_add_payment_fab'), style: const TextStyle(fontWeight: FontWeight.w800)),
             )
           : FloatingActionButton.extended(
               onPressed: () {
@@ -134,7 +135,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
               backgroundColor: AppTheme.neonLime,
               foregroundColor: AppTheme.darkBackground,
               icon: const Icon(Icons.receipt_long_rounded),
-              label: const Text('GENERATE BILL', style: TextStyle(fontWeight: FontWeight.w800)),
+              label: Text(tr('payments_generate_bill_fab'), style: const TextStyle(fontWeight: FontWeight.w800)),
             ),
       body: SafeArea(
         child: TabBarView(
@@ -157,7 +158,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
                 controller: _searchController,
                 style: const TextStyle(color: AppTheme.textWhite, fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'Search by member name, receipt no, method...',
+                  hintText: tr('payments_search_hint'),
                   prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textMuted),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
@@ -172,8 +173,8 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
               child: _isLoading
                   ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
                   : _filteredPayments.isEmpty
-                      ? const Center(
-                          child: Text('No payment history found', style: TextStyle(color: AppTheme.textMuted)),
+                      ? Center(
+                          child: Text(tr('payments_none_found'), style: const TextStyle(color: AppTheme.textMuted)),
                         )
                       : ListView.builder(
                           padding: EdgeInsets.fromLTRB(20, 10, 20, safeBottom + 108),
@@ -182,7 +183,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
                             final pay = _filteredPayments[index];
                             final memberName = (pay.memberName != null && pay.memberName!.trim().isNotEmpty)
                                 ? pay.memberName!.trim()
-                                : 'Gym Member';
+                                : tr('payments_gym_member_fallback');
                             final initialLetter = memberName.isNotEmpty ? memberName[0].toUpperCase() : 'M';
 
                             return Card(
@@ -242,7 +243,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
                                               Icon(Icons.receipt_rounded, color: AppTheme.neonLime, size: 12),
                                               const SizedBox(width: 4),
                                               Text(
-                                                'Receipt #${pay.receiptNumber}',
+                                                tr('payments_receipt_number', {'number': pay.receiptNumber}),
                                                 style: TextStyle(
                                                   color: AppTheme.neonLime,
                                                   fontWeight: FontWeight.w800,
@@ -272,7 +273,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '${pay.paymentMethod} • ${dateFormat.format(pay.paymentDate)}',
+                                      '${tr('payment_method_${pay.paymentMethod.toLowerCase().replaceAll(' ', '_')}')} • ${dateFormat.format(pay.paymentDate)}',
                                       style: const TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
                                     ),
                                   ],

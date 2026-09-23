@@ -15,6 +15,7 @@ import '../../features/settings/notification_settings_screen.dart';
 import '../../features/settings/packages_and_plans_screen.dart';
 import '../../features/trainers/trainers_list_screen.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/localization/app_translations.dart';
 import 'gym_logo_view.dart';
 
 class AppDrawer extends StatefulWidget {
@@ -66,9 +67,9 @@ class _AppDrawerState extends State<AppDrawer> {
 
   String get _greeting {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    if (hour < 12) return tr('drawer_greeting_morning');
+    if (hour < 17) return tr('drawer_greeting_afternoon');
+    return tr('drawer_greeting_evening');
   }
 
   @override
@@ -106,7 +107,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$_greeting, ${_adminInfo?.name ?? 'Admin'}',
+                  '$_greeting, ${_adminInfo?.name ?? tr('drawer_default_admin')}',
                   style: const TextStyle(color: Color(0xFFD4FF00), fontSize: 13, fontWeight: FontWeight.w600),
                 ),
                 if (_gymInfo?.website != null && _gymInfo!.website!.trim().isNotEmpty) ...[
@@ -131,7 +132,7 @@ class _AppDrawerState extends State<AppDrawer> {
             _buildDrawerTile(
               icon: Icons.dashboard_outlined,
               selectedIcon: Icons.dashboard,
-              title: 'Dashboard',
+              title: tr('drawer_dashboard'),
               isSelected: widget.currentIndex == 0,
               onTap: () {
                 Navigator.pop(context);
@@ -141,7 +142,7 @@ class _AppDrawerState extends State<AppDrawer> {
             _buildDrawerTile(
               icon: Icons.people_outline,
               selectedIcon: Icons.people,
-              title: 'Gym Members',
+              title: tr('drawer_gym_members'),
               isSelected: widget.currentIndex == 1,
               onTap: () {
                 Navigator.pop(context);
@@ -151,7 +152,7 @@ class _AppDrawerState extends State<AppDrawer> {
             _buildDrawerTile(
               icon: Icons.payments_outlined,
               selectedIcon: Icons.payments,
-              title: 'Payments & Receipts',
+              title: tr('drawer_payments_receipts'),
               isSelected: widget.currentIndex == 2,
               onTap: () {
                 Navigator.pop(context);
@@ -161,7 +162,7 @@ class _AppDrawerState extends State<AppDrawer> {
             _buildDrawerTile(
               icon: Icons.campaign_outlined,
               selectedIcon: Icons.campaign,
-              title: 'Announcements',
+              title: tr('drawer_announcements'),
               isSelected: widget.currentIndex == 3,
               onTap: () {
                 Navigator.pop(context);
@@ -171,7 +172,7 @@ class _AppDrawerState extends State<AppDrawer> {
             _buildDrawerTile(
               icon: Icons.settings_outlined,
               selectedIcon: Icons.settings,
-              title: 'Settings',
+              title: tr('drawer_settings'),
               isSelected: widget.currentIndex == 4,
               onTap: () {
                 Navigator.pop(context);
@@ -184,7 +185,7 @@ class _AppDrawerState extends State<AppDrawer> {
             // Modules & Feature Shortcuts
             _buildDrawerTile(
               icon: Icons.notifications_outlined,
-              title: 'Notifications & Alerts',
+              title: tr('drawer_notifications_alerts'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen()));
@@ -192,7 +193,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             _buildDrawerTile(
               icon: Icons.event_available_outlined,
-              title: 'Events & Schedule',
+              title: tr('drawer_events_schedule'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const EventsCalendarScreen()));
@@ -200,7 +201,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             _buildDrawerTile(
               icon: Icons.receipt_long_outlined,
-              title: 'Expense Tracker',
+              title: tr('drawer_expense_tracker'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ExpensesScreen()));
@@ -208,7 +209,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             _buildDrawerTile(
               icon: Icons.insert_chart_outlined_rounded,
-              title: 'Reports & Analytics',
+              title: tr('drawer_reports_analytics'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportsScreen()));
@@ -216,7 +217,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             _buildDrawerTile(
               icon: Icons.sports_gymnastics_outlined,
-              title: 'Trainers & Staff',
+              title: tr('drawer_trainers_staff'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const TrainersListScreen()));
@@ -224,7 +225,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             _buildDrawerTile(
               icon: Icons.inventory_2_outlined,
-              title: 'Packages & Plans',
+              title: tr('drawer_packages_plans'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const PackagesAndPlansScreen()));
@@ -232,7 +233,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             _buildDrawerTile(
               icon: Icons.qr_code_scanner,
-              title: 'Scan & Verify Receipt',
+              title: tr('drawer_scan_verify_receipt'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScannerScreen()));
@@ -240,7 +241,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             _buildDrawerTile(
               icon: Icons.archive_outlined,
-              title: 'Archived Members',
+              title: tr('drawer_archived_members'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ArchivedMembersScreen()));
@@ -248,7 +249,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             _buildDrawerTile(
               icon: Icons.notifications_active_outlined,
-              title: 'Reminder Settings',
+              title: tr('drawer_reminder_settings'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()));
@@ -256,7 +257,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             _buildDrawerTile(
               icon: Icons.storefront_outlined,
-              title: 'Gym Info & Logo',
+              title: tr('drawer_gym_info_logo'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const EditGymScreen()));
@@ -264,7 +265,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ),
             _buildDrawerTile(
               icon: Icons.backup_outlined,
-              title: 'Backup & Restore',
+              title: tr('drawer_backup_restore'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const BackupScreen()));
@@ -276,9 +277,9 @@ class _AppDrawerState extends State<AppDrawer> {
             // Lock App
             ListTile(
               leading: const Icon(Icons.lock_outline, color: Color(0xFFFF5252)),
-              title: const Text(
-                'Lock App',
-                style: TextStyle(color: Color(0xFFFF5252), fontWeight: FontWeight.bold),
+              title: Text(
+                tr('drawer_lock_app'),
+                style: const TextStyle(color: Color(0xFFFF5252), fontWeight: FontWeight.bold),
               ),
               onTap: () {
                 Navigator.pop(context);

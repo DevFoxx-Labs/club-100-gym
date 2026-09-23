@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/localization/app_translations.dart';
 import '../../core/services/app_state_service.dart';
 import '../../data/models/bill_model.dart';
 import '../../data/repositories/bill_repository.dart';
@@ -102,7 +103,7 @@ class _BillsListScreenState extends State<BillsListScreen> {
             controller: _searchController,
             style: const TextStyle(color: AppTheme.textWhite, fontSize: 14),
             decoration: InputDecoration(
-              hintText: 'Search by member name, bill no, plan...',
+              hintText: tr('bills_search_hint'),
               prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textMuted),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
@@ -124,7 +125,7 @@ class _BillsListScreenState extends State<BillsListScreen> {
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
                     selected: selected,
-                    label: Text(f),
+                    label: Text(tr('bills_filter_${f.toLowerCase()}')),
                     selectedColor: AppTheme.neonLime,
                     backgroundColor: AppTheme.darkSurface,
                     labelStyle: TextStyle(color: selected ? AppTheme.darkBackground : AppTheme.textWhite, fontWeight: FontWeight.bold),
@@ -143,8 +144,8 @@ class _BillsListScreenState extends State<BillsListScreen> {
           child: _isLoading
               ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
               : _filteredBills.isEmpty
-                  ? const Center(
-                      child: Text('No bills found', style: TextStyle(color: AppTheme.textMuted)),
+                  ? Center(
+                      child: Text(tr('bills_none_found'), style: const TextStyle(color: AppTheme.textMuted)),
                     )
                   : ListView.builder(
                       padding: EdgeInsets.fromLTRB(20, 10, 20, safeBottom + 108),
@@ -174,11 +175,11 @@ class _BillsListScreenState extends State<BillsListScreen> {
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    StatusBadge(status: bill.status),
+                                    StatusBadge(status: bill.status, label: tr('bill_status_${bill.status.toLowerCase()}')),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        'Due ${dateFormat.format(bill.dueDate)}',
+                                        tr('bills_due_row', {'date': dateFormat.format(bill.dueDate)}),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
@@ -188,7 +189,7 @@ class _BillsListScreenState extends State<BillsListScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Bill #${bill.billNumber} • ${bill.planName}',
+                                  tr('bills_number_plan_row', {'number': bill.billNumber, 'plan': bill.planName}),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
@@ -220,10 +221,10 @@ class _BillsListScreenState extends State<BillsListScreen> {
                           confirmDismiss: (direction) async {
                             return await showDialog<bool>(
                               context: context,
-                              builder: (ctx) => const ConfirmationDialog(
-                                title: 'Delete This Bill?',
-                                message: 'This cancelled bill will be permanently deleted. This action cannot be undone.',
-                                confirmText: 'Delete',
+                              builder: (ctx) => ConfirmationDialog(
+                                title: tr('bill_detail_delete_title'),
+                                message: tr('bill_detail_delete_message'),
+                                confirmText: tr('common_delete'),
                                 isDestructive: true,
                               ),
                             );

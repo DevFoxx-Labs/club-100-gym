@@ -239,7 +239,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _clearAllNotifications() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => const ConfirmationDialog(
+      builder: (ctx) => ConfirmationDialog(
         title: 'Clear Notifications?',
         message: 'Are you sure you want to dismiss and clear all notification history?',
         confirmLabel: 'Clear All',

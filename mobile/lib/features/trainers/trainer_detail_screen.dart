@@ -57,7 +57,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => const ConfirmationDialog(
+      builder: (context) => ConfirmationDialog(
         title: 'Delete Trainer?',
         message: 'This trainer will be marked as inactive and removed from active lists, but their payout history and member assignment records will be safely preserved.',
         confirmLabel: 'Delete',
@@ -539,7 +539,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
           onPressed: () async {
             final confirm = await showDialog<bool>(
               context: context,
-              builder: (ctx) => const ConfirmationDialog(
+              builder: (ctx) => ConfirmationDialog(
                 title: 'Delete Payout Record?',
                 message: 'Are you sure you want to remove this payout entry from the records?',
                 confirmLabel: 'Delete',

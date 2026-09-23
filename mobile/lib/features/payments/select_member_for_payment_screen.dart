@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/localization/app_translations.dart';
 import '../../data/models/member_model.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../shared/widgets/member_avatar.dart';
@@ -75,7 +76,7 @@ class _SelectMemberForPaymentScreenState extends State<SelectMemberForPaymentScr
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SELECT MEMBER'),
+        title: Text(tr('select_member_title')),
       ),
       body: SafeArea(
         child: Column(
@@ -87,7 +88,7 @@ class _SelectMemberForPaymentScreenState extends State<SelectMemberForPaymentScr
                 autofocus: true,
                 style: const TextStyle(color: AppTheme.textWhite, fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'Search by member name or phone...',
+                  hintText: tr('select_member_search_hint'),
                   prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textMuted),
                   suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
@@ -102,8 +103,8 @@ class _SelectMemberForPaymentScreenState extends State<SelectMemberForPaymentScr
               child: _isLoading
                   ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
                   : _filteredMembers.isEmpty
-                      ? const Center(
-                          child: Text('No members found', style: TextStyle(color: AppTheme.textMuted)),
+                      ? Center(
+                          child: Text(tr('select_member_none_found'), style: const TextStyle(color: AppTheme.textMuted)),
                         )
                       : ListView.builder(
                           padding: EdgeInsets.fromLTRB(20, 10, 20, safeBottom + 24),

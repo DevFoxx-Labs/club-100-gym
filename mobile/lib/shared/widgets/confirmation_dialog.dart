@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/localization/app_translations.dart';
 import 'neon_button.dart';
 
 class ConfirmationDialog extends StatelessWidget {
@@ -9,7 +10,7 @@ class ConfirmationDialog extends StatelessWidget {
   final VoidCallback? onConfirm;
   final bool isDestructive;
 
-  const ConfirmationDialog({
+  ConfirmationDialog({
     super.key,
     required this.title,
     required this.message,
@@ -17,7 +18,7 @@ class ConfirmationDialog extends StatelessWidget {
     String? confirmLabel,
     this.onConfirm,
     this.isDestructive = false,
-  }) : confirmText = confirmLabel ?? confirmText ?? 'Confirm';
+  }) : confirmText = confirmLabel ?? confirmText ?? tr('common_confirm');
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,7 @@ class ConfirmationDialog extends StatelessWidget {
           children: [
             Expanded(
               child: NeonButton(
-                text: 'Cancel',
+                text: tr('common_cancel'),
                 isSecondary: true,
                 onPressed: () => Navigator.pop(context, false),
               ),

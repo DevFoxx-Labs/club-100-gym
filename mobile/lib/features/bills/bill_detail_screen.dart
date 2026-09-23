@@ -4,6 +4,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/billing/bill_pdf_service.dart';
 import '../../core/billing/upi_service.dart';
+import '../../core/localization/app_translations.dart';
 import '../../core/services/app_state_service.dart';
 import '../../data/models/bill_model.dart';
 import '../../data/models/gym_info_model.dart';
@@ -69,7 +70,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
 
     if (member == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Member for this bill could not be found')),
+        SnackBar(content: Text(tr('bill_detail_member_not_found'))),
       );
       return;
     }
@@ -86,10 +87,10 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
   Future<void> _cancelBill() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => const ConfirmationDialog(
-        title: 'Cancel This Bill?',
-        message: 'This bill will be marked as cancelled and will no longer count towards outstanding dues.',
-        confirmText: 'Cancel Bill',
+      builder: (ctx) => ConfirmationDialog(
+        title: tr('bill_detail_cancel_title'),
+        message: tr('bill_detail_cancel_message'),
+        confirmText: tr('bill_detail_cancel_confirm'),
         isDestructive: true,
       ),
     );
@@ -103,10 +104,10 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
   Future<void> _deleteBill() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => const ConfirmationDialog(
-        title: 'Delete This Bill?',
-        message: 'This cancelled bill will be permanently deleted. This action cannot be undone.',
-        confirmText: 'Delete',
+      builder: (ctx) => ConfirmationDialog(
+        title: tr('bill_detail_delete_title'),
+        message: tr('bill_detail_delete_message'),
+        confirmText: tr('common_delete'),
         isDestructive: true,
       ),
     );
@@ -137,18 +138,18 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('BILL #${_bill.billNumber}'),
+        title: Text(tr('bill_detail_appbar_title', {'number': _bill.billNumber})),
         actions: [
           if (_bill.isDue)
             IconButton(
               icon: const Icon(Icons.cancel_outlined, color: AppTheme.statusOverdue),
-              tooltip: 'Cancel Bill',
+              tooltip: tr('bill_detail_cancel_confirm'),
               onPressed: _cancelBill,
             ),
           if (_bill.isCancelled)
             IconButton(
               icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.statusOverdue),
-              tooltip: 'Delete Bill',
+              tooltip: tr('bill_detail_delete_tooltip'),
               onPressed: _deleteBill,
             ),
         ],
@@ -191,24 +192,24 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              StatusBadge(status: _bill.status),
+                              StatusBadge(status: _bill.status, label: tr('bill_status_${_bill.status.toLowerCase()}')),
                             ],
                           ),
                           const Divider(color: AppTheme.darkBorder, height: 24),
-                          _RowInfo(label: 'Bill Number', value: _bill.billNumber),
+                          _RowInfo(label: tr('bill_detail_bill_number'), value: _bill.billNumber),
                           const SizedBox(height: 8),
-                          _RowInfo(label: 'Plan', value: _bill.planName),
+                          _RowInfo(label: tr('bill_detail_plan'), value: _bill.planName),
                           const SizedBox(height: 8),
-                          _RowInfo(label: 'Bill Date', value: dateFormat.format(_bill.billDate)),
+                          _RowInfo(label: tr('bill_detail_bill_date'), value: dateFormat.format(_bill.billDate)),
                           const SizedBox(height: 8),
-                          _RowInfo(label: 'Due Date', value: dateFormat.format(_bill.dueDate)),
+                          _RowInfo(label: tr('bill_detail_due_date'), value: dateFormat.format(_bill.dueDate)),
                           if (_bill.notes != null && _bill.notes!.trim().isNotEmpty) ...[
                             const SizedBox(height: 8),
-                            _RowInfo(label: 'Notes', value: _bill.notes!),
+                            _RowInfo(label: tr('bill_detail_notes'), value: _bill.notes!),
                           ],
                           const SizedBox(height: 8),
                           _RowInfo(
-                            label: _bill.isPaid ? 'Amount Paid' : 'Amount Due',
+                            label: _bill.isPaid ? tr('bill_detail_amount_paid') : tr('bill_detail_amount_due'),
                             value: '₹${_bill.amount.toStringAsFixed(0)}',
                             isHighlight: true,
                           ),
@@ -225,7 +226,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Scan with any UPI app to pay ₹${_bill.amount.toStringAsFixed(0)}',
+                                    tr('bill_detail_scan_upi', {'amount': _bill.amount.toStringAsFixed(0)}),
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
                                   ),
@@ -252,18 +253,18 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('BANK TRANSFER DETAILS', style: TextStyle(color: AppTheme.textMuted, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                                  Text(tr('bill_detail_bank_transfer_details'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
                                   const SizedBox(height: 8),
                                   if (gym.bankAccountHolder != null && gym.bankAccountHolder!.isNotEmpty) ...[
-                                    _RowInfo(label: 'A/C Holder', value: gym.bankAccountHolder!),
+                                    _RowInfo(label: tr('bill_detail_ac_holder'), value: gym.bankAccountHolder!),
                                     const SizedBox(height: 6),
                                   ],
-                                  _RowInfo(label: 'A/C Number', value: gym.bankAccountNumber ?? '-'),
+                                  _RowInfo(label: tr('bill_detail_ac_number'), value: gym.bankAccountNumber ?? '-'),
                                   const SizedBox(height: 6),
-                                  _RowInfo(label: 'IFSC', value: gym.bankIfsc ?? '-'),
+                                  _RowInfo(label: tr('bill_detail_ifsc'), value: gym.bankIfsc ?? '-'),
                                   if (gym.bankName != null && gym.bankName!.isNotEmpty) ...[
                                     const SizedBox(height: 6),
-                                    _RowInfo(label: 'Bank', value: gym.bankName!),
+                                    _RowInfo(label: tr('bill_detail_bank'), value: gym.bankName!),
                                   ],
                                 ],
                               ),
@@ -276,7 +277,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
 
                     if (_bill.isDue)
                       NeonButton(
-                        text: _isRecordingPayment ? 'Loading...' : 'Record Payment',
+                        text: _isRecordingPayment ? tr('common_loading') : tr('bill_detail_record_payment'),
                         icon: Icons.add_card_rounded,
                         width: double.infinity,
                         isLoading: _isRecordingPayment,
@@ -288,7 +289,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                       children: [
                         Expanded(
                           child: NeonButton(
-                            text: 'Print Bill',
+                            text: tr('bill_detail_print_bill'),
                             icon: Icons.print_rounded,
                             isSecondary: true,
                             onPressed: () async {
@@ -309,7 +310,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: NeonButton(
-                            text: 'Share PDF',
+                            text: tr('bill_detail_share_pdf'),
                             icon: Icons.share_rounded,
                             isSecondary: true,
                             onPressed: () async {

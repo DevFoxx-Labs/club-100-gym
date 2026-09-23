@@ -13,6 +13,7 @@ import '../../data/repositories/plan_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
 import '../../core/utils/form_validators.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/localization/app_translations.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 
@@ -139,7 +140,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedPlan == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a new membership plan'), backgroundColor: Color(0xFFFF5252)),
+        SnackBar(content: Text(tr('change_plan_select_plan_error')), backgroundColor: const Color(0xFFFF5252)),
       );
       return;
     }
@@ -212,9 +213,9 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text(
-          'CHANGE MEMBERSHIP PLAN',
-          style: TextStyle(letterSpacing: 1.2, fontWeight: FontWeight.bold, fontSize: 18),
+        title: Text(
+          tr('change_plan_title'),
+          style: const TextStyle(letterSpacing: 1.2, fontWeight: FontWeight.bold, fontSize: 18),
         ),
       ),
       body: _isInit
@@ -272,7 +273,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text('Current Active Plan', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                      Text(tr('change_plan_current_active_plan'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
                                       const SizedBox(height: 2),
                                       Text(
                                         widget.currentMembership.planName,
@@ -287,7 +288,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    const Text('Expires On', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                    Text(tr('change_plan_expires_on'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
                                     const SizedBox(height: 2),
                                     Text(
                                       dateFormat.format(widget.currentMembership.endDate),
@@ -311,14 +312,14 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFD4FF00).withValues(alpha: 0.2)),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.info_outline, color: Color(0xFFD4FF00), size: 18),
-                          SizedBox(width: 10),
+                          const Icon(Icons.info_outline, color: Color(0xFFD4FF00), size: 18),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'The current plan will be marked Superseded and the member will be transitioned to the new plan. An audit trail is permanently saved.',
-                              style: TextStyle(color: Colors.white70, fontSize: 12),
+                              tr('change_plan_instructions'),
+                              style: const TextStyle(color: Colors.white70, fontSize: 12),
                             ),
                           ),
                         ],
@@ -327,18 +328,18 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                     const SizedBox(height: 24),
 
                     // Select New Plan
-                    const Text(
-                      'SELECT NEW PLAN *',
-                      style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                    Text(
+                      tr('change_plan_select_new_plan'),
+                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<PlanModel>(
                       initialValue: _selectedPlan,
                       dropdownColor: const Color(0xFF252525),
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'Choose plan upgrade or switch',
-                        prefixIcon: Icon(Icons.card_membership, color: Color(0xFFD4FF00)),
+                      decoration: InputDecoration(
+                        hintText: tr('change_plan_choose_hint'),
+                        prefixIcon: const Icon(Icons.card_membership, color: Color(0xFFD4FF00)),
                       ),
                       items: _plans.map((p) {
                         return DropdownMenuItem(
@@ -356,7 +357,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                         Expanded(
                           child: Card(
                             child: ListTile(
-                              title: const Text('Start Date', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                              title: Text(tr('change_plan_start_date'), style: const TextStyle(color: Colors.white60, fontSize: 11)),
                               subtitle: Text(
                                 dateFormat.format(_startDate),
                                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
@@ -369,7 +370,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                         Expanded(
                           child: Card(
                             child: ListTile(
-                              title: const Text('New End Date', style: TextStyle(color: Colors.white60, fontSize: 11)),
+                              title: Text(tr('change_plan_new_end_date'), style: const TextStyle(color: Colors.white60, fontSize: 11)),
                               subtitle: Text(
                                 dateFormat.format(_endDate),
                                 style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 13),
@@ -383,21 +384,21 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                     const SizedBox(height: 16),
 
                     // Assigned Trainer & PT Fee
-                    const Text(
-                      'PERSONAL TRAINER (OPTIONAL)',
-                      style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                    Text(
+                      tr('change_plan_personal_trainer_optional'),
+                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<TrainerModel?>(
                       initialValue: _selectedTrainer,
                       dropdownColor: const Color(0xFF252525),
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'Assign Personal Trainer',
-                        prefixIcon: Icon(Icons.sports_gymnastics, color: Color(0xFFD4FF00)),
+                      decoration: InputDecoration(
+                        hintText: tr('change_plan_assign_trainer_hint'),
+                        prefixIcon: const Icon(Icons.sports_gymnastics, color: Color(0xFFD4FF00)),
                       ),
                       items: [
-                        const DropdownMenuItem(value: null, child: Text('None / Self Trained')),
+                        DropdownMenuItem(value: null, child: Text(tr('change_plan_none_self_trained'))),
                         ..._trainers.map((t) => DropdownMenuItem(value: t, child: Text(t.name))),
                       ],
                       onChanged: (t) {
@@ -412,11 +413,11 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                     if (_selectedTrainer != null) ...[
                       const SizedBox(height: 16),
                       CustomTextField(
-                        label: 'PERSONAL TRAINING FEE (₹)',
+                        label: tr('change_trainer_pt_fee_label'),
                         hint: '0',
                         controller: _ptFeeController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        validator: (v) => FormValidators.validateAmount(v, fieldName: 'Personal training fee', allowZero: true),
+                        validator: (v) => FormValidators.validateAmount(v, fieldName: tr('change_trainer_pt_fee_field_name'), allowZero: true),
                         onChanged: (_) => setState(() {}),
                       ),
                     ],
@@ -424,11 +425,11 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
 
                     // Plan Price
                     CustomTextField(
-                      label: 'PLAN PRICE (₹) *',
+                      label: tr('change_plan_price_label'),
                       hint: _selectedPlan != null ? _selectedPlan!.defaultFee.toStringAsFixed(0) : '1500',
                       controller: _planFeeController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      validator: (v) => FormValidators.validateAmount(v, fieldName: 'Plan price'),
+                      validator: (v) => FormValidators.validateAmount(v, fieldName: tr('change_plan_price_field_name')),
                       onChanged: (_) => setState(() {}),
                     ),
                     if (_selectedPlan != null) ...[
@@ -437,8 +438,8 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                         padding: const EdgeInsets.only(left: 4),
                         child: Text(
                           _currentPlanFee != _selectedPlan!.defaultFee
-                              ? 'Custom rate (Standard: ₹${_selectedPlan!.defaultFee.toStringAsFixed(0)})'
-                              : 'Standard rate: ₹${_selectedPlan!.defaultFee.toStringAsFixed(0)}',
+                              ? tr('change_plan_custom_rate', {'fee': _selectedPlan!.defaultFee.toStringAsFixed(0)})
+                              : tr('change_plan_standard_rate', {'fee': _selectedPlan!.defaultFee.toStringAsFixed(0)}),
                           style: TextStyle(
                             fontSize: 11,
                             color: _currentPlanFee != _selectedPlan!.defaultFee
@@ -471,9 +472,9 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'TOTAL MEMBERSHIP FEE',
-                                style: TextStyle(
+                              Text(
+                                tr('change_plan_total_membership_fee'),
+                                style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white70,
@@ -487,9 +488,9 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                                     color: const Color(0xFFD4FF00).withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: const Text(
-                                    'CUSTOM RATE',
-                                    style: TextStyle(
+                                  child: Text(
+                                    tr('change_plan_custom_rate_badge'),
+                                    style: const TextStyle(
                                       color: Color(0xFFD4FF00),
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
@@ -502,7 +503,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Plan Fee:', style: TextStyle(color: Colors.white60, fontSize: 13)),
+                              Text(tr('change_plan_plan_fee'), style: const TextStyle(color: Colors.white60, fontSize: 13)),
                               Text('₹${_currentPlanFee.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                             ],
                           ),
@@ -511,7 +512,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('Personal Training (${_selectedTrainer!.name}):', style: const TextStyle(color: Colors.white60, fontSize: 13)),
+                                Text(tr('change_plan_personal_training_row', {'name': _selectedTrainer!.name}), style: const TextStyle(color: Colors.white60, fontSize: 13)),
                                 Text('₹${_currentPtFee.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                               ],
                             ),
@@ -520,7 +521,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Total to Collect:', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                              Text(tr('change_plan_total_to_collect'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
                               Text(
                                 '₹${_totalFee.toStringAsFixed(0)}',
                                 style: const TextStyle(color: Color(0xFFD4FF00), fontSize: 16, fontWeight: FontWeight.bold),
@@ -534,8 +535,8 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
 
                     // Reason
                     CustomTextField(
-                      label: 'REASON FOR PLAN CHANGE (OPTIONAL)',
-                      hint: 'e.g. Member requested upgrade to Annual VIP with PT',
+                      label: tr('change_plan_reason_label'),
+                      hint: tr('change_plan_reason_hint'),
                       controller: _reasonController,
                       maxLines: 2,
                     ),
@@ -543,7 +544,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
 
                     // Submit Button
                     NeonButton(
-                      text: 'Confirm & Apply Plan Change',
+                      text: tr('change_plan_confirm_button'),
                       icon: Icons.swap_horiz,
                       isLoading: _isLoading,
                       onPressed: _submitChangePlan,

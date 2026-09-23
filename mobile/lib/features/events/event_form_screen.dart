@@ -199,7 +199,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
   Future<void> _deleteEvent() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => const ConfirmationDialog(
+      builder: (ctx) => ConfirmationDialog(
         title: 'Delete Event?',
         message: 'Are you sure you want to remove this scheduled event?',
         confirmLabel: 'Delete',

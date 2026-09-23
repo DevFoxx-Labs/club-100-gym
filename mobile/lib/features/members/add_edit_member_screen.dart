@@ -6,6 +6,7 @@ import '../../core/utils/member_photo_picker.dart';
 import '../../core/utils/contact_sync_service.dart';
 import '../../core/utils/form_validators.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/localization/app_translations.dart';
 import '../../data/models/bill_model.dart';
 import '../../data/models/member_model.dart';
 import '../../data/models/membership_model.dart';
@@ -151,7 +152,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
   Future<void> _saveMember() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedPlan == null && widget.member == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a membership plan')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('member_form_select_plan_error'))));
       return;
     }
 
@@ -242,7 +243,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? 'EDIT MEMBER' : 'ADD NEW MEMBER'),
+        title: Text(isEdit ? tr('member_form_edit_title') : tr('member_form_add_title')),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -263,9 +264,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                         onPhotoChanged: (path) => setState(() => _photoPath = path),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Tap camera icon to set photo',
-                        style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                      Text(
+                        tr('member_form_tap_photo'),
+                        style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
                       ),
                     ],
                   ),
@@ -273,24 +274,24 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                 const SizedBox(height: 20),
 
                 CustomTextField(
-                  label: 'Full Name *',
-                  hint: 'e.g. Rahul Sharma',
+                  label: tr('member_form_full_name'),
+                  hint: tr('member_form_full_name_hint'),
                   controller: _nameController,
-                  validator: (v) => FormValidators.validateName(v, fieldName: 'Full name'),
+                  validator: (v) => FormValidators.validateName(v, fieldName: tr('member_form_full_name_field')),
                 ),
                 const SizedBox(height: 16),
 
                 CustomTextField(
-                  label: 'Mobile Phone Number *',
+                  label: tr('member_form_phone'),
                   hint: 'e.g. 9876543210',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  validator: (v) => FormValidators.validatePhone(v, fieldName: 'Phone number'),
+                  validator: (v) => FormValidators.validatePhone(v, fieldName: tr('member_form_phone_field')),
                 ),
                 const SizedBox(height: 16),
 
                 CustomTextField(
-                  label: 'Email Address (Optional)',
+                  label: tr('member_form_email'),
                   hint: 'e.g. rahul@example.com',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -298,9 +299,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                const Text(
-                  'GENDER',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
+                Text(
+                  tr('member_form_gender'),
+                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 6),
                 Row(
@@ -310,7 +311,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                       padding: const EdgeInsets.only(right: 12),
                       child: FilterChip(
                         selected: selected,
-                        label: Text(g),
+                        label: Text(tr('member_form_gender_$g')),
                         selectedColor: AppTheme.neonLime,
                         backgroundColor: AppTheme.darkSurface,
                         labelStyle: TextStyle(
@@ -325,9 +326,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                 const SizedBox(height: 20),
 
                 if (!isEdit) ...[
-                  const Text(
-                    'MEMBERSHIP PACKAGE *',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
+                  Text(
+                    tr('member_form_package'),
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 6),
                   Container(
@@ -341,7 +342,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                       child: DropdownButton<PackageModel>(
                         value: _selectedPackage,
                         isExpanded: true,
-                        hint: const Text('No packages available', style: TextStyle(color: AppTheme.textMuted)),
+                        hint: Text(tr('member_form_no_packages'), style: const TextStyle(color: AppTheme.textMuted)),
                         dropdownColor: AppTheme.darkSurface,
                         style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w700),
                         items: _packages
@@ -356,9 +357,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  const Text(
-                    'MEMBERSHIP PLAN *',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
+                  Text(
+                    tr('member_form_plan'),
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 6),
                   Container(
@@ -372,7 +373,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                       child: DropdownButton<PlanModel>(
                         value: _selectedPlan,
                         isExpanded: true,
-                        hint: const Text('No plans in this package', style: TextStyle(color: AppTheme.textMuted)),
+                        hint: Text(tr('member_form_no_plans'), style: const TextStyle(color: AppTheme.textMuted)),
                         dropdownColor: AppTheme.darkSurface,
                         style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w700),
                         items: _plans
@@ -401,9 +402,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'START DATE',
-                              style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
+                            Text(
+                              tr('member_form_start_date'),
+                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
                             ),
                             const SizedBox(height: 6),
                             InkWell(
@@ -438,19 +439,19 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             CustomTextField(
-                              label: 'PLAN PRICE (₹) *',
+                              label: tr('change_plan_price_label'),
                               controller: _planFeeController,
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
                               hint: _selectedPlan?.defaultFee.toStringAsFixed(0) ?? '1500',
-                              validator: (v) => FormValidators.validateAmount(v, fieldName: 'Plan price'),
+                              validator: (v) => FormValidators.validateAmount(v, fieldName: tr('change_plan_price_field_name')),
                               onChanged: (_) => setState(() {}),
                             ),
                             if (_selectedPlan != null) ...[
                               const SizedBox(height: 4),
                               Text(
                                 _currentPlanFee != _selectedPlan!.defaultFee
-                                    ? 'Custom rate (Standard: ₹${_selectedPlan!.defaultFee.toStringAsFixed(0)})'
-                                    : 'Standard rate: ₹${_selectedPlan!.defaultFee.toStringAsFixed(0)}',
+                                    ? tr('change_plan_custom_rate', {'fee': _selectedPlan!.defaultFee.toStringAsFixed(0)})
+                                    : tr('change_plan_standard_rate', {'fee': _selectedPlan!.defaultFee.toStringAsFixed(0)}),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
@@ -468,9 +469,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                   const SizedBox(height: 20),
 
                   // Personal Trainer Assignment (Optional)
-                  const Text(
-                    'ASSIGN PERSONAL TRAINER (OPTIONAL)',
-                    style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
+                  Text(
+                    tr('member_form_assign_trainer'),
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 6),
                   Container(
@@ -487,9 +488,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                         dropdownColor: AppTheme.darkSurface,
                         style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w700),
                         items: [
-                          const DropdownMenuItem<TrainerModel?>(
+                          DropdownMenuItem<TrainerModel?>(
                             value: null,
-                            child: Text('No Trainer Assigned (General Membership)', style: TextStyle(color: AppTheme.textMuted)),
+                            child: Text(tr('member_form_no_trainer'), style: const TextStyle(color: AppTheme.textMuted)),
                           ),
                           ..._trainers.map((t) => DropdownMenuItem<TrainerModel?>(
                                 value: t,
@@ -511,11 +512,11 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
 
                   if (_selectedTrainer != null) ...[
                     CustomTextField(
-                      label: 'Personal Training Fee (₹)',
+                      label: tr('change_trainer_pt_fee_label'),
                       controller: _ptFeeController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       hint: '0',
-                      validator: (v) => FormValidators.validateAmount(v, fieldName: 'Personal training fee', allowZero: true),
+                      validator: (v) => FormValidators.validateAmount(v, fieldName: tr('change_trainer_pt_fee_field_name'), allowZero: true),
                       onChanged: (_) {
                         setState(() {});
                       },
@@ -537,9 +538,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'TOTAL MEMBERSHIP FEE',
-                              style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                            Text(
+                              tr('change_plan_total_membership_fee'),
+                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
                             ),
                             if (_selectedPlan != null && (_currentPlanFee != _selectedPlan!.defaultFee))
                               Container(
@@ -550,7 +551,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                                   border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.4)),
                                 ),
                                 child: Text(
-                                  'Custom Rate',
+                                  tr('change_plan_custom_rate_badge'),
                                   style: TextStyle(color: AppTheme.neonLime, fontSize: 10, fontWeight: FontWeight.bold),
                                 ),
                               ),
@@ -561,7 +562,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Plan: ${_selectedPlan?.name ?? 'Membership'}',
+                              tr('member_form_plan_row', {'name': _selectedPlan?.name ?? tr('member_form_membership_fallback')}),
                               style: const TextStyle(color: AppTheme.textWhite, fontSize: 13),
                             ),
                             Text(
@@ -576,7 +577,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Personal Training (${_selectedTrainer!.name})',
+                                tr('member_form_personal_training_row', {'name': _selectedTrainer!.name}),
                                 style: const TextStyle(color: AppTheme.textWhite, fontSize: 13),
                               ),
                               Text(
@@ -590,9 +591,9 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Total to Collect:',
-                              style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 14),
+                            Text(
+                              tr('change_plan_total_to_collect'),
+                              style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 14),
                             ),
                             Text(
                               '₹${_totalFee.toStringAsFixed(0)}',
@@ -607,8 +608,8 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                 ],
 
                 CustomTextField(
-                  label: 'Notes & Medical History (Optional)',
-                  hint: 'Any fitness notes or goals...',
+                  label: tr('member_form_notes_label'),
+                  hint: tr('member_form_notes_hint'),
                   controller: _notesController,
                   maxLines: 2,
                 ),
@@ -626,14 +627,14 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                     onChanged: (v) => setState(() => _syncToContacts = v ?? false),
                     activeColor: AppTheme.neonLime,
                     checkColor: AppTheme.darkBackground,
-                    title: const Text('Save member to phone contacts', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13)),
-                    subtitle: const Text('Syncs contact directly with device phonebook', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+                    title: Text(tr('member_form_save_contact_title'), style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13)),
+                    subtitle: Text(tr('member_form_save_contact_subtitle'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 11)),
                   ),
                 ),
                 const SizedBox(height: 32),
 
                 NeonButton(
-                  text: isEdit ? 'Update Member Profile' : 'Save & Register Member',
+                  text: isEdit ? tr('member_form_update_button') : tr('member_form_save_button'),
                   width: double.infinity,
                   isLoading: _isLoading,
                   onPressed: _saveMember,

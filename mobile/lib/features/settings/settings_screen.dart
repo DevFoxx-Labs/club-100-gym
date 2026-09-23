@@ -6,6 +6,9 @@ import '../../core/security/security_service.dart';
 import '../../core/services/app_state_service.dart';
 import '../../core/sync/data_mode.dart';
 import '../../core/sync/data_mode_service.dart';
+import '../../core/localization/app_language.dart';
+import '../../core/localization/locale_service.dart';
+import '../../core/localization/app_translations.dart';
 import '../../data/models/admin_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
@@ -22,6 +25,7 @@ import '../events/events_calendar_screen.dart';
 import 'backup_screen.dart';
 import 'change_mpin_screen.dart';
 import 'accent_color_screen.dart';
+import 'language_settings_screen.dart';
 import '../notifications/notifications_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -88,9 +92,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (context) => ConfirmationDialog(
-        title: 'RESET ALL APPLICATION DATA?',
-        message: 'This action cannot be undone. All members, payments, receipts, trainers, events, and settings will be permanently wiped from this device.',
-        confirmText: 'Wipe Everything',
+        title: tr('settings_reset_title'),
+        message: tr('settings_reset_message'),
+        confirmText: tr('settings_reset_confirm'),
         isDestructive: true,
         onConfirm: () async {
           final nav = Navigator.of(context);
@@ -110,7 +114,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('APPLICATION SETTINGS'),
+        title: Text(tr('settings_appbar_title')),
       ),
       body: SafeArea(
         child: _isLoading
@@ -119,11 +123,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: EdgeInsets.fromLTRB(20, 20, 20, 36 + MediaQuery.paddingOf(context).bottom),
                 children: [
                   // Gym Operations Section
-                  const _SectionHeader(title: 'GYM OPERATIONS & CATALOG'),
+                  _SectionHeader(title: tr('settings_section_gym_ops')),
                   _SettingsTile(
                     icon: Icons.store_rounded,
-                    title: 'Edit Gym Information & Logo',
-                    subtitle: 'Name, website, phone, address, gym logo',
+                    title: tr('settings_edit_gym_info'),
+                    subtitle: tr('settings_edit_gym_info_sub'),
                     onTap: () async {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => const EditGymScreen()));
                       _loadSettings();
@@ -131,111 +135,111 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   _SettingsTile(
                     icon: Icons.card_membership_rounded,
-                    title: 'Packages & Membership Plans',
-                    subtitle: 'Organize packages and customizable plans',
+                    title: tr('settings_packages_plans'),
+                    subtitle: tr('settings_packages_plans_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PackagesAndPlansScreen())),
                   ),
                   _SettingsTile(
                     icon: Icons.sports_gymnastics_rounded,
-                    title: 'Trainers & Payouts',
-                    subtitle: 'Manage trainers, clients, and payout records',
+                    title: tr('settings_trainers_payouts'),
+                    subtitle: tr('settings_trainers_payouts_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const TrainersListScreen())),
                   ),
                   _SettingsTile(
                     icon: Icons.event_note_rounded,
-                    title: 'Events & Calendar',
-                    subtitle: 'Gym events, challenges, and workshops',
+                    title: tr('settings_events_calendar'),
+                    subtitle: tr('settings_events_calendar_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EventsCalendarScreen())),
                   ),
                   _SettingsTile(
                     icon: Icons.qr_code_2_rounded,
-                    title: 'Payment Settings (UPI & Bank)',
-                    subtitle: 'Set UPI ID / bank details shown on bills',
+                    title: tr('settings_payment_settings'),
+                    subtitle: tr('settings_payment_settings_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PaymentSettingsScreen())),
                   ),
                   const SizedBox(height: 18),
 
                   // Printing Section
-                  const _SectionHeader(title: 'PRINTING'),
+                  _SectionHeader(title: tr('settings_section_printing')),
                   _SettingsTile(
                     icon: Icons.print_rounded,
-                    title: 'Print Format',
-                    subtitle: 'Set a default paper size so you never need to pick one on print/share',
+                    title: tr('settings_print_format'),
+                    subtitle: tr('settings_print_format_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PrintFormatSettingsScreen())),
                   ),
                   const SizedBox(height: 18),
 
                   // Appearance Section
-                  const _SectionHeader(title: 'APPEARANCE'),
+                  _SectionHeader(title: tr('settings_section_appearance')),
                   _SettingsTile(
                     icon: Icons.palette_rounded,
-                    title: 'Highlight Color',
-                    subtitle: 'Pick your favorite color to replace the app accent',
+                    title: tr('settings_highlight_color'),
+                    subtitle: tr('settings_highlight_color_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AccentColorScreen())),
                   ),
                   const SizedBox(height: 18),
 
                   // Member Management Section
-                  const _SectionHeader(title: 'MEMBER MANAGEMENT'),
+                  _SectionHeader(title: tr('settings_section_member_mgmt')),
                   _SettingsTile(
                     icon: Icons.archive_rounded,
-                    title: 'Archived Members',
-                    subtitle: 'View and restore archived member profiles',
+                    title: tr('settings_archived_members'),
+                    subtitle: tr('settings_archived_members_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ArchivedMembersScreen())),
                   ),
                   const SizedBox(height: 18),
 
                   // Notifications & Alerts Section
-                  const _SectionHeader(title: 'NOTIFICATIONS & REMINDERS'),
+                  _SectionHeader(title: tr('settings_section_notifications')),
                   _SettingsTile(
                     icon: Icons.alarm_on_rounded,
-                    title: 'Reminder Intervals & Notification Settings',
-                    subtitle: 'Configure 7-day, 3-day, and 1-day alert timings',
+                    title: tr('settings_reminder_intervals'),
+                    subtitle: tr('settings_reminder_intervals_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationSettingsScreen())),
                   ),
                   _SettingsTile(
                     icon: Icons.notifications_active_rounded,
-                    title: 'View Active Alerts',
-                    subtitle: 'Scheduled fee due and membership expiry alerts',
+                    title: tr('settings_view_active_alerts'),
+                    subtitle: tr('settings_view_active_alerts_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen())),
                   ),
                   const SizedBox(height: 18),
 
                   // Security Section
-                  const _SectionHeader(title: 'SECURITY & AUTHENTICATION'),
+                  _SectionHeader(title: tr('settings_section_security')),
                   _SettingsTile(
                     icon: Icons.lock_rounded,
-                    title: 'Change Security MPIN',
-                    subtitle: 'Update your 4 to 6 digit login MPIN',
+                    title: tr('settings_change_mpin'),
+                    subtitle: tr('settings_change_mpin_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangeMpinScreen())),
                   ),
                   SwitchListTile(
                     value: _admin?.isBiometricEnabled ?? false,
                     onChanged: _toggleBiometric,
                     activeThumbColor: AppTheme.neonLime,
-                    title: const Text('Fingerprint / Biometric Login', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14)),
-                    subtitle: const Text('Unlock app using device biometrics', style: TextStyle(color: AppTheme.textMuted, fontSize: 12)),
+                    title: Text(tr('settings_biometric_login'), style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14)),
+                    subtitle: Text(tr('settings_biometric_login_sub'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                   ),
                   const SizedBox(height: 18),
 
                   // Backup Section
-                  const _SectionHeader(title: 'DATA BACKUP & RECOVERY'),
+                  _SectionHeader(title: tr('settings_section_backup')),
                   _SettingsTile(
                     icon: Icons.backup_rounded,
-                    title: 'Export / Restore Backup',
-                    subtitle: 'Encrypted .gymbackup file export & import',
+                    title: tr('settings_export_restore_backup'),
+                    subtitle: tr('settings_export_restore_backup_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const BackupScreen())),
                   ),
                   const SizedBox(height: 18),
 
                   // Data & Sync Section
-                  const _SectionHeader(title: 'DATA STORAGE & SYNC'),
+                  _SectionHeader(title: tr('settings_section_data_sync')),
                   _SettingsTile(
                     icon: _dataMode == DataMode.online ? Icons.cloud_rounded : Icons.smartphone_rounded,
-                    title: 'Data Storage Mode',
+                    title: tr('settings_data_storage_mode'),
                     subtitle: _dataMode == DataMode.online
-                        ? 'Online — using your MongoDB cluster'
-                        : 'Offline — using local device storage (default)',
+                        ? tr('settings_data_storage_mode_online')
+                        : tr('settings_data_storage_mode_offline'),
                     onTap: () async {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => const DataConnectionScreen()));
                       _loadSettings();
@@ -243,12 +247,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 18),
 
+                  // Language Section
+                  _SectionHeader(title: tr('settings_section_language')),
+                  _SettingsTile(
+                    icon: Icons.translate_rounded,
+                    title: tr('settings_language_title'),
+                    subtitle: LocaleService.instance.current == AppLanguage.hi
+                        ? 'हिन्दी (Hindi)'
+                        : 'English',
+                    onTap: () async {
+                      await Navigator.push(context, MaterialPageRoute(builder: (context) => const LanguageSettingsScreen()));
+                      _loadSettings();
+                    },
+                  ),
+                  const SizedBox(height: 18),
+
                   // Danger Zone
-                  const _SectionHeader(title: 'DANGER ZONE'),
+                  _SectionHeader(title: tr('settings_section_danger_zone')),
                   _SettingsTile(
                     icon: Icons.delete_forever_rounded,
-                    title: 'Reset Application Data',
-                    subtitle: 'Wipe all gym members, payments, and settings',
+                    title: tr('settings_reset_app_data'),
+                    subtitle: tr('settings_reset_app_data_sub'),
                     iconColor: AppTheme.statusOverdue,
                     onTap: _resetData,
                   ),
@@ -258,11 +277,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Center(
                     child: Column(
                       children: [
-                        const Text('ELITE FITNESS GYM • VERSION 2.0.0', style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold)),
+                        Text(tr('settings_footer_version'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 4),
                         GestureDetector(
                           onTap: () => launchUrl(Uri.parse('https://devfoxxlabs.com'), mode: LaunchMode.externalApplication),
-                          child: Text('Designed and developed by DevFoxx Labs', style: TextStyle(color: AppTheme.neonLime, fontSize: 10, fontWeight: FontWeight.w600)),
+                          child: Text(tr('settings_footer_credit'), style: TextStyle(color: AppTheme.neonLime, fontSize: 10, fontWeight: FontWeight.w600)),
                         ),
                       ],
                     ),

@@ -23,6 +23,7 @@ import '../../shared/widgets/status_badge.dart';
 import '../../shared/widgets/neon_button.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/localization/app_translations.dart';
 import '../bills/bill_detail_screen.dart';
 import '../payments/add_payment_screen.dart';
 import '../receipts/receipt_preview_screen.dart';
@@ -131,6 +132,19 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     return 'Active';
   }
 
+  String _statusLabel() {
+    if (_membership == null) return tr('member_profile_no_active_plan');
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final endDate = DateTime(_membership!.endDate.year, _membership!.endDate.month, _membership!.endDate.day);
+    final diffDays = endDate.difference(today).inDays;
+
+    if (diffDays < 0) return tr('member_profile_overdue_by_days', {'days': '${diffDays.abs()}'});
+    if (diffDays == 0) return tr('member_profile_fee_due_today');
+    if (diffDays <= 7) return tr('member_profile_due_in_days', {'days': '$diffDays'});
+    return tr('common_active');
+  }
+
   Future<void> _onPhotoChanged(String? newPath) async {
     if (_member == null) return;
     final updated = _member!.copyWith(photoPath: newPath);
@@ -147,7 +161,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            success ? 'Saved ${_member!.name} to device contacts' : 'Could not save contact. Check permissions.',
+            success ? tr('member_profile_saved_to_contacts', {'name': _member!.name}) : tr('member_profile_save_contact_failed'),
           ),
           backgroundColor: success ? AppTheme.neonLime : AppTheme.statusOverdue,
           behavior: SnackBarBehavior.floating,
@@ -161,11 +175,11 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => ConfirmationDialog(
-        title: _member!.isArchived ? 'Unarchive Member?' : 'Archive Member?',
+        title: _member!.isArchived ? tr('member_profile_unarchive_title') : tr('member_profile_archive_title'),
         message: _member!.isArchived
-            ? 'This member will be restored to active member lists.'
-            : 'Archived members are hidden from active lists but historical payment records remain preserved.',
-        confirmText: _member!.isArchived ? 'Unarchive' : 'Archive',
+            ? tr('member_profile_unarchive_message')
+            : tr('member_profile_archive_message'),
+        confirmText: _member!.isArchived ? tr('member_profile_unarchive_confirm') : tr('member_profile_archive_confirm'),
         onConfirm: () {},
       ),
     );
@@ -185,13 +199,13 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: AppTheme.darkSurface,
-          title: const Text('Cannot Delete Member', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold)),
-          content: const Text(
-            'This member has payment or receipt records attached. To preserve financial audit integrity, please Archive the member instead.',
-            style: TextStyle(color: AppTheme.textMuted),
+          title: Text(tr('member_profile_cannot_delete_title'), style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold)),
+          content: Text(
+            tr('member_profile_cannot_delete_message'),
+            style: const TextStyle(color: AppTheme.textMuted),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: AppTheme.textMuted))),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: Text(tr('common_cancel'), style: const TextStyle(color: AppTheme.textMuted))),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.neonLime, foregroundColor: AppTheme.darkBackground),
               onPressed: () async {
@@ -201,7 +215,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                   _loadMemberData();
                 }
               },
-              child: const Text('Archive Member'),
+              child: Text(tr('member_profile_archive_confirm_2')),
             ),
           ],
         ),
@@ -211,10 +225,10 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => const ConfirmationDialog(
-        title: 'Delete Member Record?',
-        message: 'This will permanently delete this member profile and all associated membership records.',
-        confirmText: 'Delete',
+      builder: (ctx) => ConfirmationDialog(
+        title: tr('member_profile_delete_title'),
+        message: tr('member_profile_delete_message'),
+        confirmText: tr('common_delete'),
         isDestructive: true,
       ),
     );
@@ -242,7 +256,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
 
     final templates = <Map<String, String>>[
       {
-        'title': 'Fee Due Reminder',
+        'title': tr('member_profile_template_fee_due'),
         'message': dueDays < 0
             ? SmsTemplates.feeOverdue(memberName: _member!.name, gymName: _gymName, daysOverdue: dueDays.abs(), amount: fee)
             : dueDays == 0
@@ -250,16 +264,16 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                 : SmsTemplates.feeDueSoon(memberName: _member!.name, gymName: _gymName, daysLeft: dueDays, amount: fee),
       },
       {
-        'title': 'Membership Expiry',
+        'title': tr('member_profile_template_membership_expiry'),
         'message': SmsTemplates.membershipExpiry(
           memberName: _member!.name,
           gymName: _gymName,
-          expiryDate: _membership != null ? DateFormat('dd MMM yyyy').format(_membership!.endDate) : 'soon',
+          expiryDate: _membership != null ? DateFormat('dd MMM yyyy').format(_membership!.endDate) : tr('member_profile_soon'),
         ),
       },
       if (latestPayment != null)
         {
-          'title': 'Latest Payment Receipt',
+          'title': tr('member_profile_template_receipt'),
           'message': SmsTemplates.paymentReceipt(
             memberName: _member!.name,
             gymName: _gymName,
@@ -269,7 +283,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
           ),
         },
       {
-        'title': 'Welcome to Gym',
+        'title': tr('member_profile_template_welcome'),
         'message': SmsTemplates.welcomeMessage(memberName: _member!.name, gymName: _gymName),
       },
     ];
@@ -297,7 +311,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        'SEND NOTIFICATION MESSAGE',
+                        tr('member_profile_send_message_title'),
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: AppTheme.neonLime, letterSpacing: 1),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -342,7 +356,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                               ),
                               icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-                              label: const Text('WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                              label: Text(tr('members_menu_whatsapp'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                               onPressed: () {
                                 Navigator.pop(context);
                                 SmsLauncher.sendWhatsApp(phoneNumber: _member!.phone, message: t['message']!);
@@ -357,7 +371,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                               ),
                               icon: const Icon(Icons.sms_outlined, size: 16),
-                              label: const Text('Native SMS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                              label: Text(tr('member_profile_native_sms'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                               onPressed: () {
                                 Navigator.pop(context);
                                 SmsLauncher.sendSms(phoneNumber: _member!.phone, message: t['message']!);
@@ -386,14 +400,14 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     }
 
     if (_member == null) {
-      return const Scaffold(body: Center(child: Text('Member not found', style: TextStyle(color: AppTheme.textWhite))));
+      return Scaffold(body: Center(child: Text(tr('member_profile_not_found'), style: const TextStyle(color: AppTheme.textWhite))));
     }
 
     final statusText = _calculateStatus();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MEMBER PROFILE'),
+        title: Text(tr('member_profile_title')),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_rounded, color: AppTheme.textWhite),
@@ -423,7 +437,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                   children: [
                     Icon(Icons.contact_phone_rounded, color: AppTheme.neonLime, size: 18),
                     const SizedBox(width: 10),
-                    const Text('Save to Phone Contacts', style: TextStyle(color: AppTheme.textWhite)),
+                    Text(tr('member_profile_save_to_contacts'), style: const TextStyle(color: AppTheme.textWhite)),
                   ],
                 ),
               ),
@@ -433,17 +447,17 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                   children: [
                     Icon(_member!.isArchived ? Icons.unarchive_rounded : Icons.archive_rounded, color: AppTheme.neonLime, size: 18),
                     const SizedBox(width: 10),
-                    Text(_member!.isArchived ? 'Unarchive Member' : 'Archive Member', style: const TextStyle(color: AppTheme.textWhite)),
+                    Text(_member!.isArchived ? tr('member_profile_unarchive_menu') : tr('member_profile_archive_menu'), style: const TextStyle(color: AppTheme.textWhite)),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
                 child: Row(
                   children: [
-                    Icon(Icons.delete_outline_rounded, color: AppTheme.statusOverdue, size: 18),
-                    SizedBox(width: 10),
-                    Text('Delete Member', style: TextStyle(color: AppTheme.statusOverdue)),
+                    const Icon(Icons.delete_outline_rounded, color: AppTheme.statusOverdue, size: 18),
+                    const SizedBox(width: 10),
+                    Text(tr('member_profile_delete_menu'), style: const TextStyle(color: AppTheme.statusOverdue)),
                   ],
                 ),
               ),
@@ -494,7 +508,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                             ),
                           ],
                           const SizedBox(height: 6),
-                          StatusBadge(status: statusText),
+                          StatusBadge(status: statusText, label: _statusLabel()),
                         ],
                       ),
                     ),
@@ -508,7 +522,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                 children: [
                   Expanded(
                     child: NeonButton(
-                      text: 'Add Payment',
+                      text: tr('member_profile_add_payment'),
                       icon: Icons.add_card_rounded,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       fontSize: 12.5,
@@ -529,7 +543,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: NeonButton(
-                      text: 'Message / SMS',
+                      text: tr('member_profile_message_sms'),
                       icon: Icons.chat_bubble_outline_rounded,
                       isSecondary: true,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -545,9 +559,9 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'MEMBERSHIP DETAILS',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
+                  Text(
+                    tr('member_profile_membership_details'),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
                   ),
                   if (_membership != null)
                     Row(
@@ -558,7 +572,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                             foregroundColor: AppTheme.neonLime,
                           ),
                           icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-                          label: const Text('Change Plan', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          label: Text(tr('member_profile_change_plan'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                           onPressed: () async {
                             final changed = await Navigator.push<bool>(
                               context,
@@ -578,7 +592,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                             foregroundColor: Colors.cyanAccent,
                           ),
                           icon: const Icon(Icons.sports_gymnastics_rounded, size: 16),
-                          label: const Text('Trainer', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          label: Text(tr('member_profile_trainer'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                           onPressed: () async {
                             final changed = await Navigator.push<bool>(
                               context,
@@ -608,11 +622,11 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                   ),
                   child: Column(
                     children: [
-                      _DetailRow(label: 'Plan Name', value: _membership!.planName),
+                      _DetailRow(label: tr('member_profile_plan_name'), value: _membership!.planName),
                       if (_membership!.personalTrainingFee > 0) ...[
                         const Divider(color: AppTheme.darkBorder, height: 18),
                         _DetailRow(
-                          label: 'Base Plan Fee',
+                          label: tr('member_profile_base_plan_fee'),
                           value: '₹${((_membership!.feeAmount >= _membership!.personalTrainingFee) ? (_membership!.feeAmount - _membership!.personalTrainingFee) : _membership!.feeAmount).toStringAsFixed(0)}',
                           trailingBadge: (_plan != null &&
                                   ((_membership!.feeAmount >= _membership!.personalTrainingFee)
@@ -627,7 +641,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                                     border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.4)),
                                   ),
                                   child: Text(
-                                    'Custom',
+                                    tr('member_profile_custom_badge'),
                                     style: TextStyle(
                                       color: AppTheme.neonLime,
                                       fontSize: 10,
@@ -638,13 +652,13 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                               : null,
                         ),
                         const Divider(color: AppTheme.darkBorder, height: 18),
-                        _DetailRow(label: 'Personal Training Fee', value: '₹${_membership!.personalTrainingFee.toStringAsFixed(0)}'),
+                        _DetailRow(label: tr('member_profile_personal_training_fee'), value: '₹${_membership!.personalTrainingFee.toStringAsFixed(0)}'),
                         const Divider(color: AppTheme.darkBorder, height: 18),
-                        _DetailRow(label: 'Total Membership Fee', value: '₹${_membership!.feeAmount.toStringAsFixed(0)}', isHighlight: true),
+                        _DetailRow(label: tr('member_profile_total_membership_fee'), value: '₹${_membership!.feeAmount.toStringAsFixed(0)}', isHighlight: true),
                       ] else ...[
                         const Divider(color: AppTheme.darkBorder, height: 18),
                         _DetailRow(
-                          label: 'Membership Fee',
+                          label: tr('member_profile_membership_fee'),
                           value: '₹${_membership!.feeAmount.toStringAsFixed(0)}',
                           trailingBadge: (_plan != null && _membership!.feeAmount != _plan!.defaultFee)
                               ? Container(
@@ -655,7 +669,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                                     border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.4)),
                                   ),
                                   child: Text(
-                                    'Custom',
+                                    tr('member_profile_custom_badge'),
                                     style: TextStyle(
                                       color: AppTheme.neonLime,
                                       fontSize: 10,
@@ -668,12 +682,12 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                       ],
                       if (_trainer != null) ...[
                         const Divider(color: AppTheme.darkBorder, height: 18),
-                        _DetailRow(label: 'Assigned Trainer', value: '${_trainer!.name} (${_trainer!.speciality})'),
+                        _DetailRow(label: tr('member_profile_assigned_trainer'), value: '${_trainer!.name} (${_trainer!.speciality})'),
                       ],
                       const Divider(color: AppTheme.darkBorder, height: 18),
-                      _DetailRow(label: 'Start Date', value: dateFormat.format(_membership!.startDate)),
+                      _DetailRow(label: tr('change_plan_start_date'), value: dateFormat.format(_membership!.startDate)),
                       const Divider(color: AppTheme.darkBorder, height: 18),
-                      _DetailRow(label: 'End Date', value: dateFormat.format(_membership!.endDate)),
+                      _DetailRow(label: tr('member_profile_end_date'), value: dateFormat.format(_membership!.endDate)),
                     ],
                   ),
                 )
@@ -685,8 +699,8 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppTheme.darkBorder),
                   ),
-                  child: const Center(
-                    child: Text('No active membership found', style: TextStyle(color: AppTheme.textMuted)),
+                  child: Center(
+                    child: Text(tr('member_profile_no_active_membership'), style: const TextStyle(color: AppTheme.textMuted)),
                   ),
                 ),
 
@@ -694,9 +708,9 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
 
               // Plan Change History (if any)
               if (_planChangeLogs.isNotEmpty) ...[
-                const Text(
-                  'PLAN CHANGE HISTORY',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
+                Text(
+                  tr('member_profile_plan_change_history'),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -731,7 +745,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'Fee: ₹${log.newFee.toStringAsFixed(0)} · Reason: ${log.reason}',
+                            tr('member_profile_fee_reason_row', {'fee': log.newFee.toStringAsFixed(0), 'reason': log.reason ?? ''}),
                             style: const TextStyle(color: AppTheme.textWhite, fontSize: 11),
                           ),
                         ],
@@ -744,9 +758,9 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
 
               // Trainer Change History (if any)
               if (_trainerChangeLogs.isNotEmpty) ...[
-                const Text(
-                  'TRAINER ASSIGNMENT HISTORY',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
+                Text(
+                  tr('member_profile_trainer_assignment_history'),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
                 ),
                 const SizedBox(height: 8),
                 Container(
@@ -770,7 +784,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '${log.previousTrainerName ?? "None"} ➔ ${log.newTrainerName ?? "None"}',
+                                '${log.previousTrainerName ?? tr('member_profile_none')} ➔ ${log.newTrainerName ?? tr('member_profile_none')}',
                                 style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 13),
                               ),
                               Text(
@@ -781,7 +795,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                           ),
                           const SizedBox(height: 3),
                           Text(
-                            'PT Fee: ₹${log.newPersonalTrainingFee.toStringAsFixed(0)} · Reason: ${log.reason}',
+                            tr('member_profile_pt_fee_reason_row', {'fee': log.newPersonalTrainingFee.toStringAsFixed(0), 'reason': log.reason ?? ''}),
                             style: const TextStyle(color: AppTheme.textWhite, fontSize: 11),
                           ),
                         ],
@@ -793,9 +807,9 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
               ],
 
               // Bills & Dues Section
-              const Text(
-                'BILLS & DUES',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
+              Text(
+                tr('member_profile_bills_dues'),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
               ),
               const SizedBox(height: 8),
 
@@ -808,8 +822,8 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: AppTheme.darkBorder),
                   ),
-                  child: const Center(
-                    child: Text('No bills raised yet', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                  child: Center(
+                    child: Text(tr('member_profile_no_bills'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                   ),
                 )
               else
@@ -841,18 +855,18 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.neonLime),
                                     ),
                                     const SizedBox(width: 8),
-                                    StatusBadge(status: bill.status),
+                                    StatusBadge(status: bill.status, label: tr('bill_status_${bill.status.toLowerCase()}')),
                                   ],
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Due ${dateFormat.format(bill.dueDate)} • ${bill.planName}',
+                                  tr('member_profile_due_plan_row', {'date': dateFormat.format(bill.dueDate), 'plan': bill.planName}),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
                                 ),
                                 Text(
-                                  'Bill: ${bill.billNumber}',
+                                  tr('member_profile_bill_number_row', {'number': bill.billNumber}),
                                   style: const TextStyle(fontSize: 11, color: AppTheme.textWhite, fontWeight: FontWeight.bold),
                                 ),
                               ],
@@ -876,9 +890,9 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
               const SizedBox(height: 20),
 
               // Payment History Section
-              const Text(
-                'PAYMENT HISTORY',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
+              Text(
+                tr('member_profile_payment_history'),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
               ),
               const SizedBox(height: 8),
 
@@ -891,8 +905,8 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: AppTheme.darkBorder),
                   ),
-                  child: const Center(
-                    child: Text('No payments recorded yet', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                  child: Center(
+                    child: Text(tr('member_profile_no_payments'), style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
                   ),
                 )
               else
@@ -926,7 +940,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                                 style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
                               ),
                               Text(
-                                'Receipt: ${pay.receiptNumber}',
+                                tr('member_profile_receipt_row', {'number': pay.receiptNumber}),
                                 style: const TextStyle(fontSize: 11, color: AppTheme.textWhite, fontWeight: FontWeight.bold),
                               ),
                             ],

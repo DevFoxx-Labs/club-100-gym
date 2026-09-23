@@ -9,6 +9,7 @@ import '../../data/repositories/trainer_repository.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../../core/utils/form_validators.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/localization/app_translations.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 
@@ -142,9 +143,9 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text(
-          'REASSIGN PERSONAL TRAINER',
-          style: TextStyle(letterSpacing: 1.2, fontWeight: FontWeight.bold, fontSize: 18),
+        title: Text(
+          tr('change_trainer_title'),
+          style: const TextStyle(letterSpacing: 1.2, fontWeight: FontWeight.bold, fontSize: 18),
         ),
       ),
       body: _isInit
@@ -202,10 +203,10 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text('Current Assigned Trainer', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                      Text(tr('change_trainer_current_assigned'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
                                       const SizedBox(height: 2),
                                       Text(
-                                        _currentTrainer != null ? _currentTrainer!.name : 'None (Self-Trained)',
+                                        _currentTrainer != null ? _currentTrainer!.name : tr('change_trainer_none_self_trained'),
                                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -217,7 +218,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    const Text('Current PT Fee', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                                    Text(tr('change_trainer_current_pt_fee'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
                                     const SizedBox(height: 2),
                                     Text(
                                       '₹${widget.currentMembership.personalTrainingFee.toStringAsFixed(0)}',
@@ -241,14 +242,14 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFD4FF00).withValues(alpha: 0.2)),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.info_outline, color: Color(0xFFD4FF00), size: 18),
-                          SizedBox(width: 10),
+                          const Icon(Icons.info_outline, color: Color(0xFFD4FF00), size: 18),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'The member keeps their current plan and dates. Only personal trainer and PT fee change. An audit log is permanently recorded.',
-                              style: TextStyle(color: Colors.white70, fontSize: 12),
+                              tr('change_trainer_instructions'),
+                              style: const TextStyle(color: Colors.white70, fontSize: 12),
                             ),
                           ),
                         ],
@@ -257,22 +258,22 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                     const SizedBox(height: 24),
 
                     // Select New Trainer
-                    const Text(
-                      'SELECT NEW TRAINER *',
-                      style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                    Text(
+                      tr('change_trainer_select_new'),
+                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<TrainerModel?>(
                       initialValue: _selectedTrainer,
                       dropdownColor: const Color(0xFF252525),
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: 'Choose trainer or remove assignment',
-                        prefixIcon: Icon(Icons.sports_gymnastics, color: Color(0xFFD4FF00)),
+                      decoration: InputDecoration(
+                        hintText: tr('change_trainer_choose_hint'),
+                        prefixIcon: const Icon(Icons.sports_gymnastics, color: Color(0xFFD4FF00)),
                       ),
                       items: [
-                        const DropdownMenuItem(value: null, child: Text('None / Remove Trainer Assignment')),
-                        ..._trainers.map((t) => DropdownMenuItem(value: t, child: Text('${t.name} (${t.specialization ?? "General"})'))),
+                        DropdownMenuItem(value: null, child: Text(tr('change_trainer_none_remove'))),
+                        ..._trainers.map((t) => DropdownMenuItem(value: t, child: Text('${t.name} (${t.specialization ?? tr('change_trainer_general')})'))),
                       ],
                       onChanged: (t) {
                         setState(() {
@@ -284,11 +285,11 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                     if (_selectedTrainer != null) ...[
                       const SizedBox(height: 16),
                       CustomTextField(
-                        label: 'PERSONAL TRAINING FEE (₹)',
+                        label: tr('change_trainer_pt_fee_label'),
                         hint: '0',
                         controller: _ptFeeController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        validator: (v) => FormValidators.validateAmount(v, fieldName: 'Personal training fee', allowZero: true),
+                        validator: (v) => FormValidators.validateAmount(v, fieldName: tr('change_trainer_pt_fee_field_name'), allowZero: true),
                       ),
                       const SizedBox(height: 14),
                       Container(
@@ -303,7 +304,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Base Plan Fee:', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                Text(tr('change_trainer_base_plan_fee'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
                                 Text('₹${_basePlanFee.toStringAsFixed(0)}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                               ],
                             ),
@@ -311,7 +312,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Personal Training Fee:', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                                Text(tr('change_trainer_pt_fee_row'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
                                 Text(
                                   '₹${(double.tryParse(_ptFeeController.text.trim()) ?? 0.0).toStringAsFixed(0)}',
                                   style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 13),
@@ -322,7 +323,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Updated Total Fee:', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                                Text(tr('change_trainer_updated_total_fee'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                                 Text(
                                   '₹${(_basePlanFee + (double.tryParse(_ptFeeController.text.trim()) ?? 0.0)).toStringAsFixed(0)}',
                                   style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.w900, fontSize: 15),
@@ -335,14 +336,14 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                     ],
                     const SizedBox(height: 16),
                     CustomTextField(
-                      label: 'REASON FOR REASSIGNMENT (OPTIONAL)',
-                      hint: 'e.g. Schedule mismatch, member requested strength specialist',
+                      label: tr('change_trainer_reason_label'),
+                      hint: tr('change_trainer_reason_hint'),
                       controller: _reasonController,
                       maxLines: 2,
                     ),
                     const SizedBox(height: 32),
                     NeonButton(
-                      text: 'Confirm Trainer Reassignment',
+                      text: tr('change_trainer_confirm_button'),
                       icon: Icons.check,
                       isLoading: _isLoading,
                       onPressed: _submitChangeTrainer,
