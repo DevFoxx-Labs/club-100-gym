@@ -25,6 +25,7 @@ import '../events/events_calendar_screen.dart';
 import 'backup_screen.dart';
 import 'change_mpin_screen.dart';
 import 'accent_color_screen.dart';
+import 'list_display_style_screen.dart';
 import 'language_settings_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../help/help_center_screen.dart';
@@ -177,6 +178,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: tr('settings_highlight_color'),
                     subtitle: tr('settings_highlight_color_sub'),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AccentColorScreen())),
+                  ),
+                  _SettingsTile(
+                    icon: Icons.view_list_rounded,
+                    title: tr('settings_list_display_style'),
+                    subtitle: tr('settings_list_display_style_sub'),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ListDisplayStyleScreen())),
                   ),
                   const SizedBox(height: 18),
 

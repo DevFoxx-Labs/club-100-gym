@@ -101,6 +101,33 @@ class SettingsRepository {
     await db.insert('admins', admin.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  static const _listDisplayStyleKey = 'listDisplayStyle';
+
+  /// Returns 'card' (full card, the original design) or 'tile' (compact row,
+  /// matching the Dashboard's Recent Activity tiles). Defaults to 'card'.
+  Future<String> getListDisplayStyle() async {
+    Map<String, dynamic>? map;
+    if (await DataModeService.instance.isOnline) {
+      map = await MongoCollectionStore.findById('app_settings', _listDisplayStyleKey);
+    } else {
+      final db = await AppDatabase.instance.database;
+      final maps = await db.query('app_settings', where: 'key = ?', whereArgs: [_listDisplayStyleKey], limit: 1);
+      map = maps.isNotEmpty ? maps.first : null;
+    }
+    final value = map?['value'] as String?;
+    return value == 'tile' ? 'tile' : 'card';
+  }
+
+  Future<void> saveListDisplayStyle(String style) async {
+    final data = {'key': _listDisplayStyleKey, 'value': style};
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.upsert('app_settings', 'key', data);
+      return;
+    }
+    final db = await AppDatabase.instance.database;
+    await db.insert('app_settings', data, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
   Future<Map<String, bool>> getNotificationSettings() async {
     Map<String, dynamic>? map;
     if (await DataModeService.instance.isOnline) {

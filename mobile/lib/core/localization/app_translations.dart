@@ -164,6 +164,8 @@ class AppTranslations {
     'settings_section_appearance': {'en': 'APPEARANCE', 'hi': 'दिखावट'},
     'settings_highlight_color': {'en': 'Highlight Color', 'hi': 'हाइलाइट रंग'},
     'settings_highlight_color_sub': {'en': 'Pick your favorite color to replace the app accent', 'hi': 'ऐप एक्सेंट बदलने के लिए अपना पसंदीदा रंग चुनें'},
+    'settings_list_display_style': {'en': 'List Display Style', 'hi': 'लिस्ट दिखाने का तरीका'},
+    'settings_list_display_style_sub': {'en': 'Choose how Members and Trainers lists are shown', 'hi': 'चुनें कि सदस्य और ट्रेनर लिस्ट कैसे दिखेंगी'},
     'settings_section_member_mgmt': {'en': 'MEMBER MANAGEMENT', 'hi': 'सदस्य प्रबंधन'},
     'settings_archived_members': {'en': 'Archived Members', 'hi': 'आर्काइव्ड सदस्य'},
     'settings_archived_members_sub': {'en': 'View and restore archived member profiles', 'hi': 'आर्काइव्ड सदस्य प्रोफाइल देखें और पुनर्स्थापित करें'},
@@ -687,5 +689,24 @@ class AppTranslations {
       'en': 'You can Cancel a Pending or Overdue bill, which removes it from outstanding dues while keeping it visible for history. Only a Cancelled bill can then be permanently deleted. Paid, Pending, and Overdue bills can never be deleted directly — this protects your financial history from accidental loss.',
       'hi': 'आप किसी Pending या Overdue बिल को Cancel कर सकते हैं, जो उसे बकाया राशि से हटा देता है जबकि इतिहास के लिए दिखाई देता रहता है। उसके बाद केवल एक Cancelled बिल को ही स्थायी रूप से हटाया जा सकता है। Paid, Pending, और Overdue बिल्स को सीधे कभी नहीं हटाया जा सकता — यह आपके वित्तीय इतिहास को गलती से नष्ट होने से बचाता है।',
     },
+
+    // ===== LIST DISPLAY STYLE =====
+    'list_style_appbar_title': {'en': 'LIST DISPLAY STYLE', 'hi': 'लिस्ट दिखाने का तरीका'},
+    'list_style_description': {
+      'en': 'Choose how member and trainer lists are shown across the app.',
+      'hi': 'चुनें कि पूरे ऐप में सदस्य और ट्रेनर की लिस्ट कैसे दिखाई जाए।',
+    },
+    'list_style_option_card_title': {'en': 'Full Card', 'hi': 'फुल कार्ड'},
+    'list_style_option_card_desc': {
+      'en': 'Detailed cards with membership, dates, and quick actions',
+      'hi': 'सदस्यता, तारीखें और त्वरित कार्रवाइयों के साथ विस्तृत कार्ड',
+    },
+    'list_style_option_tile_title': {'en': 'Compact Tile', 'hi': 'कॉम्पैक्ट टाइल'},
+    'list_style_option_tile_desc': {
+      'en': 'Simple rows, just like Recent Activity on the Dashboard',
+      'hi': 'सरल पंक्तियाँ, डैशबोर्ड की Recent Activity जैसी',
+    },
+    'list_style_apply': {'en': 'Apply', 'hi': 'लागू करें'},
+    'list_style_updated': {'en': 'List display style updated', 'hi': 'लिस्ट दिखाने का तरीका अपडेट हो गया'},
   };
 }

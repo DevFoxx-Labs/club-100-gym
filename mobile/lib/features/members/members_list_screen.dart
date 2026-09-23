@@ -58,6 +58,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
   bool _isLoading = true;
   int _unreadNotifCount = 0;
   GymInfoModel? _gymInfo;
+  String _listDisplayStyle = 'card';
 
   String _selectedTab = 'All'; // All, Active, Due Soon, Overdue, Expired
   _MemberSortOption _sortOption = _MemberSortOption.nameAsc;
@@ -130,6 +131,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
 
     final unread = await _notificationRepo.getUnreadCount();
     final gymInfo = await _settingsRepo.getGymInfo();
+    final displayStyle = await _settingsRepo.getListDisplayStyle();
 
     if (mounted) {
       setState(() {
@@ -137,6 +139,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
         _memberships = memberships;
         _unreadNotifCount = unread;
         _gymInfo = gymInfo;
+        _listDisplayStyle = displayStyle;
         _isLoading = false;
       });
 
@@ -538,6 +541,58 @@ class _MembersListScreenState extends State<MembersListScreen> {
     );
   }
 
+  /// Compact row matching the Dashboard's Recent Activity tile design.
+  Widget _buildMemberTile({
+    required MemberModel member,
+    required Color statusColor,
+    required String statusText,
+    required String planName,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161922).withValues(alpha: 0.90),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF222838)),
+      ),
+      child: ListTile(
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MemberProfileScreen(memberId: member.id)),
+          );
+          _loadMembers(showSpinner: false);
+        },
+        leading: MemberAvatar(name: member.name, photoPath: member.photoPath, radius: 20, fontSize: 14),
+        title: Text(
+          member.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          '${member.phone} • $planName',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              statusText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: statusColor, fontWeight: FontWeight.w800, fontSize: 12),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy');
@@ -907,6 +962,15 @@ class _MembersListScreenState extends State<MembersListScreen> {
                             }
 
                             final planName = ms?.planName ?? tr('members_no_plan');
+
+                            if (_listDisplayStyle == 'tile') {
+                              return _buildMemberTile(
+                                member: member,
+                                statusColor: statusColor,
+                                statusText: statusText,
+                                planName: planName,
+                              );
+                            }
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 14),

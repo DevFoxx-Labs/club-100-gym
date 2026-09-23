@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/repositories/trainer_repository.dart';
+import '../../data/repositories/settings_repository.dart';
 import '../../core/services/app_state_service.dart';
 import '../../shared/widgets/member_avatar.dart';
 import 'trainer_detail_screen.dart';
@@ -17,12 +18,14 @@ class TrainersListScreen extends StatefulWidget {
 
 class _TrainersListScreenState extends State<TrainersListScreen> {
   final TrainerRepository _repository = TrainerRepository();
+  final _settingsRepo = SettingsRepository();
   final _searchController = TextEditingController();
 
   List<TrainerModel> _trainers = [];
   List<TrainerModel> _filteredTrainers = [];
   bool _isLoading = true;
   String _selectedTab = 'All'; // All, Trainers, Staff, Active, Inactive
+  String _listDisplayStyle = 'card';
 
   @override
   void initState() {
@@ -50,9 +53,11 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
       setState(() => _isLoading = true);
     }
     final trainers = await _repository.getAllTrainers(includeInactive: true);
+    final displayStyle = await _settingsRepo.getListDisplayStyle();
     if (mounted) {
       setState(() {
         _trainers = trainers;
+        _listDisplayStyle = displayStyle;
         _isLoading = false;
       });
       _applyFilters();
@@ -377,7 +382,9 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
                             itemCount: _filteredTrainers.length,
                             itemBuilder: (context, index) {
                               final trainer = _filteredTrainers[index];
-                              return _buildTrainerCard(trainer, dateFormat);
+                              return _listDisplayStyle == 'tile'
+                                  ? _buildTrainerTile(trainer)
+                                  : _buildTrainerCard(trainer, dateFormat);
                             },
                           ),
                         ),
@@ -450,6 +457,54 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
                 label: const Text('Add First Trainer', style: TextStyle(fontWeight: FontWeight.w800)),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Compact row matching the Dashboard's Recent Activity tile design.
+  Widget _buildTrainerTile(TrainerModel trainer) {
+    final statusColor = trainer.isActive ? AppTheme.statusActive : AppTheme.statusOverdue;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161922).withValues(alpha: 0.90),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF222838)),
+      ),
+      child: ListTile(
+        onTap: () async {
+          final res = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => TrainerDetailScreen(trainerId: trainer.id)),
+          );
+          if (res == true) _loadTrainers();
+        },
+        leading: MemberAvatar(name: trainer.name, photoPath: trainer.photoPath, radius: 20, fontSize: 14),
+        title: Text(
+          trainer.name,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          '${trainer.role} • ${trainer.phone}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              trainer.isActive ? 'Active' : 'Inactive',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: statusColor, fontWeight: FontWeight.w800, fontSize: 12),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right_rounded, color: AppTheme.textMuted, size: 18),
           ],
         ),
       ),
