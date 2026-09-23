@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 import '../../data/models/receipt_model.dart';
 import '../../data/models/gym_info_model.dart';
 import '../printing/pdf_filename.dart';
+import '../printing/pdf_logo_loader.dart';
 import '../printing/pdf_theme_service.dart';
 import '../printing/print_format.dart';
 import '../printing/thermal_layout.dart';
@@ -17,6 +18,7 @@ class ReceiptPdfService {
     PrintFormat format = PrintFormat.a5,
   }) async {
     final theme = await PdfThemeService.getTheme();
+    final logo = await PdfLogoLoader.load(gymInfo.logoPath);
     final pdf = pw.Document(theme: theme);
     final dateFormat = DateFormat('dd MMM yyyy');
     final hasPt = receipt.personalTrainingFee > 0;
@@ -25,11 +27,11 @@ class ReceiptPdfService {
     pdf.addPage(
       pw.Page(
         pageFormat: format.pdfPageFormat,
-        margin: format.isThermal ? pw.EdgeInsets.zero : const pw.EdgeInsets.all(24),
+        margin: format.isThermal ? null : const pw.EdgeInsets.all(24),
         build: (pw.Context context) {
           return format.isThermal
-              ? _buildThermalReceipt(receipt: receipt, gymInfo: gymInfo, dateFormat: dateFormat, hasPt: hasPt, baseFee: baseFee, format: format)
-              : _buildStandardReceipt(receipt: receipt, gymInfo: gymInfo, dateFormat: dateFormat, hasPt: hasPt, baseFee: baseFee);
+              ? _buildThermalReceipt(receipt: receipt, gymInfo: gymInfo, dateFormat: dateFormat, hasPt: hasPt, baseFee: baseFee, format: format, logo: logo)
+              : _buildStandardReceipt(receipt: receipt, gymInfo: gymInfo, dateFormat: dateFormat, hasPt: hasPt, baseFee: baseFee, logo: logo);
         },
       ),
     );
@@ -43,9 +45,10 @@ class ReceiptPdfService {
     required DateFormat dateFormat,
     required bool hasPt,
     required double baseFee,
+    pw.ImageProvider? logo,
   }) {
     return pw.Container(
-      padding: const pw.EdgeInsets.all(16),
+      padding: const pw.EdgeInsets.all(18),
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: PdfColors.grey400, width: 1),
         borderRadius: pw.BorderRadius.circular(12),
@@ -56,33 +59,52 @@ class ReceiptPdfService {
           // Header
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(
-                    gymInfo.name.toUpperCase(),
-                    style: pw.TextStyle(
-                      fontSize: 16,
-                      fontWeight: pw.FontWeight.bold,
-                      color: PdfColors.black,
+              pw.Expanded(
+                child: pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    if (logo != null) ...[
+                      pw.ClipRRect(
+                        horizontalRadius: 8,
+                        verticalRadius: 8,
+                        child: pw.Image(logo, width: 38, height: 38, fit: pw.BoxFit.cover),
+                      ),
+                      pw.SizedBox(width: 10),
+                    ],
+                    pw.Expanded(
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            gymInfo.name.toUpperCase(),
+                            style: pw.TextStyle(
+                              fontSize: 16,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.black,
+                            ),
+                          ),
+                          pw.Text(
+                            gymInfo.address,
+                            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                          ),
+                          pw.Text(
+                            'Phone: ${gymInfo.phone}',
+                            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                          ),
+                          if (gymInfo.website != null && gymInfo.website!.trim().isNotEmpty)
+                            pw.Text(
+                              'Website: ${gymInfo.website!.trim()}',
+                              style: const pw.TextStyle(fontSize: 9, color: PdfColors.blueGrey800),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  pw.Text(
-                    gymInfo.address,
-                    style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
-                  ),
-                  pw.Text(
-                    'Phone: ${gymInfo.phone}',
-                    style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
-                  ),
-                  if (gymInfo.website != null && gymInfo.website!.trim().isNotEmpty)
-                    pw.Text(
-                      'Website: ${gymInfo.website!.trim()}',
-                      style: const pw.TextStyle(fontSize: 9, color: PdfColors.blueGrey800),
-                    ),
-                ],
+                  ],
+                ),
               ),
+              pw.SizedBox(width: 8),
               pw.Container(
                 padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: pw.BoxDecoration(
@@ -259,45 +281,57 @@ class ReceiptPdfService {
     required bool hasPt,
     required double baseFee,
     required PrintFormat format,
+    pw.ImageProvider? logo,
   }) {
-    final qrSize = format == PrintFormat.thermal58 ? 100.0 : 120.0;
+    final qrSize = format == PrintFormat.thermal58 ? 90.0 : 110.0;
+    final logoSize = format == PrintFormat.thermal58 ? 42.0 : 50.0;
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
-        ThermalLayout.center(gymInfo.name.toUpperCase(), fontSize: 12, fontWeight: pw.FontWeight.bold),
+        if (logo != null) ...[
+          pw.Center(
+            child: pw.ClipRRect(
+              horizontalRadius: 6,
+              verticalRadius: 6,
+              child: pw.Image(logo, width: logoSize, height: logoSize, fit: pw.BoxFit.cover),
+            ),
+          ),
+          pw.SizedBox(height: 5),
+        ],
+        ThermalLayout.center(gymInfo.name.toUpperCase(), fontSize: 11, fontWeight: pw.FontWeight.bold),
         pw.SizedBox(height: 3),
-        ThermalLayout.center(gymInfo.address, fontSize: 8),
-        ThermalLayout.center('Phone: ${gymInfo.phone}', fontSize: 8),
+        ThermalLayout.center(gymInfo.address, fontSize: 7.5),
+        ThermalLayout.center('Phone: ${gymInfo.phone}', fontSize: 7.5),
         pw.SizedBox(height: 6),
-        ThermalLayout.center('*** OFFICIAL RECEIPT ***', fontSize: 9, fontWeight: pw.FontWeight.bold),
+        ThermalLayout.center('*** OFFICIAL RECEIPT ***', fontSize: 8.5, fontWeight: pw.FontWeight.bold),
         ThermalLayout.dashedDivider(),
 
-        ThermalLayout.row('Receipt No', receipt.receiptNumber, bold: true),
-        ThermalLayout.row('Date', dateFormat.format(receipt.paymentDate)),
+        ThermalLayout.row('Receipt No', receipt.receiptNumber, fontSize: 8, bold: true),
+        ThermalLayout.row('Date', dateFormat.format(receipt.paymentDate), fontSize: 8),
         ThermalLayout.dashedDivider(),
 
-        ThermalLayout.row('Member', receipt.memberName, bold: true),
-        ThermalLayout.row('Phone', receipt.memberPhone),
+        ThermalLayout.row('Member', receipt.memberName, fontSize: 8, bold: true),
+        ThermalLayout.row('Phone', receipt.memberPhone, fontSize: 8),
         ThermalLayout.dashedDivider(),
 
-        ThermalLayout.row(hasPt ? '${receipt.planName} (Base)' : receipt.planName, '₹${baseFee.toStringAsFixed(0)}'),
-        ThermalLayout.row('Validity', '${dateFormat.format(receipt.startDate)} - ${dateFormat.format(receipt.endDate)}', fontSize: 7.5),
-        ThermalLayout.row('Payment Mode', receipt.paymentMethod),
+        ThermalLayout.row(hasPt ? '${receipt.planName} (Base)' : receipt.planName, '₹${baseFee.toStringAsFixed(0)}', fontSize: 8),
+        ThermalLayout.row('Validity', '${dateFormat.format(receipt.startDate)} - ${dateFormat.format(receipt.endDate)}', fontSize: 7),
+        ThermalLayout.row('Payment Mode', receipt.paymentMethod, fontSize: 8),
         if (hasPt) ...[
-          ThermalLayout.row('PT: ${receipt.trainerName ?? "Assigned Trainer"}', '₹${receipt.personalTrainingFee.toStringAsFixed(0)}'),
+          ThermalLayout.row('PT: ${receipt.trainerName ?? "Assigned Trainer"}', '₹${receipt.personalTrainingFee.toStringAsFixed(0)}', fontSize: 8),
         ],
         ThermalLayout.dashedDivider(),
-        ThermalLayout.row('TOTAL PAID', '₹${receipt.amount.toStringAsFixed(0)}', fontSize: 11, bold: true),
+        ThermalLayout.row('TOTAL PAID', '₹${receipt.amount.toStringAsFixed(0)}', fontSize: 10, bold: true),
         ThermalLayout.dashedDivider(),
 
         pw.SizedBox(height: 4),
-        ThermalLayout.center('STATUS: PAID', fontSize: 9, fontWeight: pw.FontWeight.bold),
+        ThermalLayout.center('STATUS: PAID', fontSize: 8.5, fontWeight: pw.FontWeight.bold),
         pw.SizedBox(height: 8),
         pw.Center(
           child: pw.BarcodeWidget(barcode: pw.Barcode.qrCode(), data: receipt.qrPayload, width: qrSize, height: qrSize),
         ),
         pw.SizedBox(height: 6),
-        ThermalLayout.center('Scan to verify offline', fontSize: 7.5),
+        ThermalLayout.center('Scan to verify offline', fontSize: 7),
         ThermalLayout.dashedDivider(),
 
         pw.SizedBox(height: 4),

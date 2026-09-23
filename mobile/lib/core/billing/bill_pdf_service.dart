@@ -6,6 +6,7 @@ import 'package:printing/printing.dart';
 import '../../data/models/bill_model.dart';
 import '../../data/models/gym_info_model.dart';
 import '../printing/pdf_filename.dart';
+import '../printing/pdf_logo_loader.dart';
 import '../printing/pdf_theme_service.dart';
 import '../printing/print_format.dart';
 import '../printing/thermal_layout.dart';
@@ -18,6 +19,7 @@ class BillPdfService {
     PrintFormat format = PrintFormat.a5,
   }) async {
     final theme = await PdfThemeService.getTheme();
+    final logo = await PdfLogoLoader.load(gymInfo.logoPath);
     final pdf = pw.Document(theme: theme);
     final dateFormat = DateFormat('dd MMM yyyy');
     final showUpi = gymInfo.showUpiQrOnBill && gymInfo.hasUpiConfigured;
@@ -39,11 +41,11 @@ class BillPdfService {
     pdf.addPage(
       pw.Page(
         pageFormat: format.pdfPageFormat,
-        margin: format.isThermal ? pw.EdgeInsets.zero : const pw.EdgeInsets.all(24),
+        margin: format.isThermal ? null : const pw.EdgeInsets.all(24),
         build: (pw.Context context) {
           return format.isThermal
-              ? _buildThermalBill(bill: bill, gymInfo: gymInfo, dateFormat: dateFormat, showUpi: showUpi, showBank: showBank, upiUri: upiUri, format: format)
-              : _buildStandardBill(bill: bill, gymInfo: gymInfo, dateFormat: dateFormat, showUpi: showUpi, showBank: showBank, upiUri: upiUri);
+              ? _buildThermalBill(bill: bill, gymInfo: gymInfo, dateFormat: dateFormat, showUpi: showUpi, showBank: showBank, upiUri: upiUri, format: format, logo: logo)
+              : _buildStandardBill(bill: bill, gymInfo: gymInfo, dateFormat: dateFormat, showUpi: showUpi, showBank: showBank, upiUri: upiUri, logo: logo);
         },
       ),
     );
@@ -58,9 +60,10 @@ class BillPdfService {
     required bool showUpi,
     required bool showBank,
     required String? upiUri,
+    pw.ImageProvider? logo,
   }) {
     return pw.Container(
-      padding: const pw.EdgeInsets.all(16),
+      padding: const pw.EdgeInsets.all(18),
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: PdfColors.grey400, width: 1),
         borderRadius: pw.BorderRadius.circular(12),
@@ -70,18 +73,37 @@ class BillPdfService {
         children: [
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
-              pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(
-                    gymInfo.name.toUpperCase(),
-                    style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-                  ),
-                  pw.Text(gymInfo.address, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
-                  pw.Text('Phone: ${gymInfo.phone}', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
-                ],
+              pw.Expanded(
+                child: pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    if (logo != null) ...[
+                      pw.ClipRRect(
+                        horizontalRadius: 8,
+                        verticalRadius: 8,
+                        child: pw.Image(logo, width: 38, height: 38, fit: pw.BoxFit.cover),
+                      ),
+                      pw.SizedBox(width: 10),
+                    ],
+                    pw.Expanded(
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            gymInfo.name.toUpperCase(),
+                            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+                          ),
+                          pw.Text(gymInfo.address, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+                          pw.Text('Phone: ${gymInfo.phone}', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              pw.SizedBox(width: 8),
               pw.Container(
                 padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: pw.BoxDecoration(
@@ -222,65 +244,77 @@ class BillPdfService {
     required bool showBank,
     required String? upiUri,
     required PrintFormat format,
+    pw.ImageProvider? logo,
   }) {
-    final qrSize = format == PrintFormat.thermal58 ? 110.0 : 140.0;
+    final qrSize = format == PrintFormat.thermal58 ? 100.0 : 130.0;
+    final logoSize = format == PrintFormat.thermal58 ? 42.0 : 50.0;
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
-        ThermalLayout.center(gymInfo.name.toUpperCase(), fontSize: 12, fontWeight: pw.FontWeight.bold),
+        if (logo != null) ...[
+          pw.Center(
+            child: pw.ClipRRect(
+              horizontalRadius: 6,
+              verticalRadius: 6,
+              child: pw.Image(logo, width: logoSize, height: logoSize, fit: pw.BoxFit.cover),
+            ),
+          ),
+          pw.SizedBox(height: 5),
+        ],
+        ThermalLayout.center(gymInfo.name.toUpperCase(), fontSize: 11, fontWeight: pw.FontWeight.bold),
         pw.SizedBox(height: 3),
-        ThermalLayout.center(gymInfo.address, fontSize: 8),
-        ThermalLayout.center('Phone: ${gymInfo.phone}', fontSize: 8),
+        ThermalLayout.center(gymInfo.address, fontSize: 7.5),
+        ThermalLayout.center('Phone: ${gymInfo.phone}', fontSize: 7.5),
         pw.SizedBox(height: 6),
         ThermalLayout.center(
           bill.isPaid ? '*** PAID ***' : (bill.status == 'Overdue' ? '*** OVERDUE ***' : '*** PAYMENT DUE ***'),
-          fontSize: 9,
+          fontSize: 8.5,
           fontWeight: pw.FontWeight.bold,
         ),
         ThermalLayout.dashedDivider(),
 
-        ThermalLayout.row('Bill No', bill.billNumber, bold: true),
-        ThermalLayout.row('Bill Date', dateFormat.format(bill.billDate)),
-        ThermalLayout.row('Due Date', dateFormat.format(bill.dueDate)),
+        ThermalLayout.row('Bill No', bill.billNumber, fontSize: 8, bold: true),
+        ThermalLayout.row('Bill Date', dateFormat.format(bill.billDate), fontSize: 8),
+        ThermalLayout.row('Due Date', dateFormat.format(bill.dueDate), fontSize: 8),
         ThermalLayout.dashedDivider(),
 
-        ThermalLayout.row('Member', bill.memberName, bold: true),
-        ThermalLayout.row('Phone', bill.memberPhone),
+        ThermalLayout.row('Member', bill.memberName, fontSize: 8, bold: true),
+        ThermalLayout.row('Phone', bill.memberPhone, fontSize: 8),
         ThermalLayout.dashedDivider(),
 
-        ThermalLayout.row(bill.planName, '₹${bill.amount.toStringAsFixed(0)}'),
+        ThermalLayout.row(bill.planName, '₹${bill.amount.toStringAsFixed(0)}', fontSize: 8),
         ThermalLayout.dashedDivider(),
-        ThermalLayout.row('TOTAL DUE', '₹${bill.amount.toStringAsFixed(0)}', fontSize: 11, bold: true),
+        ThermalLayout.row('TOTAL DUE', '₹${bill.amount.toStringAsFixed(0)}', fontSize: 10, bold: true),
         ThermalLayout.dashedDivider(),
 
         if (showUpi && upiUri != null) ...[
           pw.SizedBox(height: 4),
-          ThermalLayout.center('SCAN TO PAY VIA UPI', fontSize: 9, fontWeight: pw.FontWeight.bold),
+          ThermalLayout.center('SCAN TO PAY VIA UPI', fontSize: 8.5, fontWeight: pw.FontWeight.bold),
           pw.SizedBox(height: 6),
           pw.Center(
             child: pw.BarcodeWidget(barcode: pw.Barcode.qrCode(), data: upiUri, width: qrSize, height: qrSize),
           ),
           pw.SizedBox(height: 6),
-          ThermalLayout.center('UPI ID: ${gymInfo.upiId}', fontSize: 8),
-          ThermalLayout.center('Amount ₹${bill.amount.toStringAsFixed(0)} auto-fills in your UPI app', fontSize: 7.5),
+          ThermalLayout.center('UPI ID: ${gymInfo.upiId}', fontSize: 7.5),
+          ThermalLayout.center('Amount ₹${bill.amount.toStringAsFixed(0)} auto-fills in your UPI app', fontSize: 7),
           ThermalLayout.dashedDivider(),
         ],
 
         if (showBank) ...[
-          ThermalLayout.center('BANK TRANSFER DETAILS', fontSize: 8.5, fontWeight: pw.FontWeight.bold),
+          ThermalLayout.center('BANK TRANSFER DETAILS', fontSize: 8, fontWeight: pw.FontWeight.bold),
           pw.SizedBox(height: 3),
           if (gymInfo.bankAccountHolder != null && gymInfo.bankAccountHolder!.isNotEmpty)
-            ThermalLayout.row('A/C Holder', gymInfo.bankAccountHolder!, fontSize: 8),
-          ThermalLayout.row('A/C Number', gymInfo.bankAccountNumber ?? '-', fontSize: 8),
-          ThermalLayout.row('IFSC', gymInfo.bankIfsc ?? '-', fontSize: 8),
+            ThermalLayout.row('A/C Holder', gymInfo.bankAccountHolder!, fontSize: 7.5),
+          ThermalLayout.row('A/C Number', gymInfo.bankAccountNumber ?? '-', fontSize: 7.5),
+          ThermalLayout.row('IFSC', gymInfo.bankIfsc ?? '-', fontSize: 7.5),
           if (gymInfo.bankName != null && gymInfo.bankName!.isNotEmpty)
-            ThermalLayout.row('Bank', gymInfo.bankName!, fontSize: 8),
+            ThermalLayout.row('Bank', gymInfo.bankName!, fontSize: 7.5),
           ThermalLayout.dashedDivider(),
         ],
 
         pw.SizedBox(height: 4),
-        ThermalLayout.center('Thank you for choosing', fontSize: 8, fontWeight: pw.FontWeight.bold),
-        ThermalLayout.center(gymInfo.name, fontSize: 8, fontWeight: pw.FontWeight.bold),
+        ThermalLayout.center('Thank you for choosing', fontSize: 7.5, fontWeight: pw.FontWeight.bold),
+        ThermalLayout.center(gymInfo.name, fontSize: 7.5, fontWeight: pw.FontWeight.bold),
         pw.SizedBox(height: 6),
       ],
     );
