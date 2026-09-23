@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
@@ -12,12 +13,17 @@ import '../../core/services/app_state_service.dart';
 class AnnouncementRepository {
   Future<Database> get _db async => await AppDatabase.instance.database;
 
+  static const _storage = FlutterSecureStorage();
+  static const _seededLocalKey = 'announcements_seeded_local';
+  static const _seededOnlineKey = 'announcements_seeded_online';
+
   Future<List<AnnouncementModel>> getAll() async {
     List<AnnouncementModel> list;
     if (await DataModeService.instance.isOnline) {
-      final hasSeed = await MongoCollectionStore.findById('announcements', 'seed-zumba-1');
-      if (hasSeed == null) {
+      final alreadySeeded = await _storage.read(key: _seededOnlineKey) == 'true';
+      if (!alreadySeeded) {
         await _seedDefaultAnnouncementsMongo();
+        await _storage.write(key: _seededOnlineKey, value: 'true');
       }
       final docs = await MongoCollectionStore.all('announcements');
       list = docs.map((m) => AnnouncementModel.fromMap(m)).toList();
@@ -28,12 +34,10 @@ class AnnouncementRepository {
       });
     } else {
       final db = await _db;
-      final hasSeed = Sqflite.firstIntValue(
-        await db.rawQuery("SELECT COUNT(*) FROM announcements WHERE id = 'seed-zumba-1'"),
-      ) ?? 0;
-
-      if (hasSeed == 0) {
+      final alreadySeeded = await _storage.read(key: _seededLocalKey) == 'true';
+      if (!alreadySeeded) {
         await _seedDefaultAnnouncements(db);
+        await _storage.write(key: _seededLocalKey, value: 'true');
       }
 
       final maps = await db.query(

@@ -111,6 +111,17 @@ class AppTheme {
           side: const BorderSide(color: darkBorder),
         ),
       ),
+      // Material 3's dark-theme default SnackBar text color (onInverseSurface) is
+      // near-black, meant for a light inverseSurface — but call sites across the app
+      // often override backgroundColor to a dark shade without also setting text
+      // color, which made the message unreadable. Force light text/icons here so
+      // every SnackBar stays legible regardless of its background override.
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: darkCard,
+        contentTextStyle: const TextStyle(color: textWhite, fontSize: 13.5),
+        actionTextColor: neonLime,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 }
