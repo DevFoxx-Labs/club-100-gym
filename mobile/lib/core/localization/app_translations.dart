@@ -185,6 +185,9 @@ class AppTranslations {
     'settings_data_storage_mode_online': {'en': 'Online — using your MongoDB cluster', 'hi': 'ऑनलाइन — आपके MongoDB क्लस्टर का उपयोग'},
     'settings_data_storage_mode_offline': {'en': 'Offline — using local device storage (default)', 'hi': 'ऑफलाइन — स्थानीय डिवाइस स्टोरेज का उपयोग (डिफ़ॉल्ट)'},
     'settings_section_language': {'en': 'LANGUAGE', 'hi': 'भाषा'},
+    'settings_section_help': {'en': 'HELP & SUPPORT', 'hi': 'सहायता और समर्थन'},
+    'settings_help_center': {'en': 'Help Center', 'hi': 'सहायता केंद्र'},
+    'settings_help_center_sub': {'en': 'Learn how every feature works, step by step', 'hi': 'जानें हर फीचर कैसे काम करता है, चरण दर चरण'},
     'settings_section_danger_zone': {'en': 'DANGER ZONE', 'hi': 'खतरे का क्षेत्र'},
     'settings_reset_app_data': {'en': 'Reset Application Data', 'hi': 'एप्लिकेशन डेटा रीसेट करें'},
     'settings_reset_app_data_sub': {'en': 'Wipe all gym members, payments, and settings', 'hi': 'सभी जिम सदस्य, भुगतान और सेटिंग्स मिटाएं'},
@@ -392,6 +395,15 @@ class AppTranslations {
     'bill_detail_record_payment': {'en': 'Record Payment', 'hi': 'भुगतान दर्ज करें'},
     'bill_detail_print_bill': {'en': 'Print Bill', 'hi': 'बिल प्रिंट करें'},
     'bill_detail_share_pdf': {'en': 'Share PDF', 'hi': 'PDF साझा करें'},
+    'bill_detail_resume_from_today': {'en': 'Resume From Today', 'hi': 'आज से फिर शुरू करें'},
+    'bill_detail_resume_sheet_title': {'en': 'Resume Billing?', 'hi': 'बिलिंग फिर से शुरू करें?'},
+    'bill_detail_resume_sheet_message': {
+      'en': 'This cancels the old, lapsed bill (₹{amount} due {date}) and raises a fresh bill so the member\'s billing cycle restarts from their actual return date — useful after a member has been away for a while.',
+      'hi': 'इससे पुराना, समय-सीमा पार कर चुका बिल (₹{amount}, देय {date}) रद्द हो जाएगा और एक नया बिल बनेगा ताकि सदस्य का बिलिंग साइकिल उसकी असली वापसी की तारीख से फिर शुरू हो — यह तब उपयोगी है जब सदस्य कुछ समय के लिए जिम नहीं आया हो।',
+    },
+    'bill_detail_resume_date_label': {'en': 'RESUME DATE', 'hi': 'पुनः आरंभ तिथि'},
+    'bill_detail_resume_confirm': {'en': 'Resume From This Date', 'hi': 'इस तिथि से शुरू करें'},
+    'bill_detail_resume_success': {'en': 'Billing resumed — new bill {number} created', 'hi': 'बिलिंग फिर से शुरू — नया बिल {number} बनाया गया'},
 
     // ===== BILLS LIST =====
     'bills_search_hint': {'en': 'Search by member name, bill no, plan...', 'hi': 'सदस्य नाम, बिल नंबर, प्लान से खोजें...'},
@@ -445,5 +457,235 @@ class AppTranslations {
     'select_member_title': {'en': 'SELECT MEMBER', 'hi': 'सदस्य चुनें'},
     'select_member_search_hint': {'en': 'Search by member name or phone...', 'hi': 'सदस्य नाम या फ़ोन से खोजें...'},
     'select_member_none_found': {'en': 'No members found', 'hi': 'कोई सदस्य नहीं मिला'},
+
+    // ===== HELP CENTER =====
+    'help_cat_getting_started_title': {'en': 'Getting Started', 'hi': 'शुरुआत करें'},
+    'help_cat_getting_started_desc': {'en': 'First-time setup, login & security basics', 'hi': 'पहली बार सेटअप, लॉगिन और सुरक्षा की बुनियादी बातें'},
+    'help_topic_setup_wizard_title': {'en': 'The first-time setup wizard', 'hi': 'पहली बार सेटअप विज़ार्ड'},
+    'help_topic_setup_wizard_body': {
+      'en': 'When you install the app for the first time it walks you through a 4-step wizard: Gym Setup (name, phone, address, currency), Admin Setup (your name and mobile number), MPIN Setup (a 4–6 digit PIN you enter twice to confirm), and Biometric Setup (optional fingerprint login, only shown if your device supports it). Everything is saved to the database on the final step.\n\nThis app currently supports a single admin account per install — there is no multi-staff login system yet.',
+      'hi': 'जब आप ऐप को पहली बार इंस्टॉल करते हैं, तो यह आपको 4-चरण के विज़ार्ड से गुज़ारता है: जिम सेटअप (नाम, फ़ोन, पता, मुद्रा), एडमिन सेटअप (आपका नाम और मोबाइल नंबर), MPIN सेटअप (4–6 अंकों का PIN जिसे आप पुष्टि के लिए दो बार दर्ज करते हैं), और बायोमेट्रिक सेटअप (वैकल्पिक फिंगरप्रिंट लॉगिन, केवल तभी दिखाया जाता है जब आपका डिवाइस इसे सपोर्ट करता हो)। अंतिम चरण में सब कुछ डेटाबेस में सहेज लिया जाता है।\n\nयह ऐप फ़िलहाल प्रति इंस्टॉल केवल एक एडमिन अकाउंट को सपोर्ट करता है — अभी तक कोई मल्टी-स्टाफ लॉगिन सिस्टम नहीं है।',
+    },
+    'help_topic_login_mpin_title': {'en': 'Logging in & MPIN recovery', 'hi': 'लॉगिन करना और MPIN रिकवरी'},
+    'help_topic_login_mpin_body': {
+      'en': 'Day-to-day login uses your MPIN only (a 6-dot keypad that auto-submits once you enter enough digits). If you enabled fingerprint login during setup, the fingerprint prompt appears automatically when you open the app.\n\nImportant: there is no "Forgot MPIN" reset flow. The "Need Help?" button on the login screen only shows your own saved admin contact details — it does not reset your PIN. Make sure you remember your MPIN, or rely on biometric login as a backup.',
+      'hi': 'रोज़मर्रा का लॉगिन केवल आपके MPIN से होता है (एक 6-डॉट कीपैड जो पर्याप्त अंक दर्ज करते ही अपने आप सबमिट हो जाता है)। यदि आपने सेटअप के दौरान फिंगरप्रिंट लॉगिन सक्षम किया था, तो ऐप खोलते ही फिंगरप्रिंट प्रॉम्प्ट अपने आप दिखाई देता है।\n\nज़रूरी: कोई "MPIN भूल गए" रीसेट फ़्लो नहीं है। लॉगिन स्क्रीन पर "Need Help?" बटन केवल आपके अपने सहेजे गए एडमिन संपर्क विवरण दिखाता है — यह आपका PIN रीसेट नहीं करता। सुनिश्चित करें कि आपको अपना MPIN याद रहे, या बैकअप के रूप में बायोमेट्रिक लॉगिन पर भरोसा करें।',
+    },
+
+    'help_cat_members_title': {'en': 'Members', 'hi': 'सदस्य'},
+    'help_cat_members_desc': {'en': 'Onboarding, editing, archiving & member history', 'hi': 'सदस्य जोड़ना, संपादित करना, आर्काइव करना और सदस्य इतिहास'},
+    'help_topic_onboarding_title': {'en': 'Onboarding a new member', 'hi': 'नया सदस्य जोड़ना'},
+    'help_topic_onboarding_body': {
+      'en': 'When you add a new member you must fill in their name, phone, and pick a Package → Plan (this sets the base fee and cycle duration). You can optionally assign a trainer with a personal training (PT) fee, and choose a start date. The total fee charged is base plan fee + PT fee.\n\nSaving automatically creates the member, their first active membership, and their very first Bill in one step — that first bill is dated (due) on the membership start date, so it always represents the cycle that is just beginning, not a random date.',
+      'hi': 'जब आप कोई नया सदस्य जोड़ते हैं, तो आपको उनका नाम, फ़ोन भरना होगा और एक पैकेज → प्लान चुनना होगा (यह बेस फीस और साइकिल की अवधि तय करता है)। आप चाहें तो पर्सनल ट्रेनिंग (PT) फीस के साथ एक ट्रेनर नियुक्त कर सकते हैं, और एक प्रारंभ तिथि चुन सकते हैं। कुल ली जाने वाली फीस = बेस प्लान फीस + PT फीस होती है।\n\nसेव करने पर एक ही चरण में सदस्य, उनकी पहली सक्रिय सदस्यता, और उनका पहला बिल अपने आप बन जाता है — यह पहला बिल सदस्यता की प्रारंभ तिथि पर देय होता है, इसलिए यह हमेशा शुरू हो रहे साइकिल को दर्शाता है, किसी अनियमित तारीख को नहीं।',
+    },
+    'help_topic_edit_vs_change_title': {'en': 'Editing a member vs. Change Plan vs. Change Trainer', 'hi': 'सदस्य संपादित करना बनाम प्लान बदलना बनाम ट्रेनर बदलना'},
+    'help_topic_edit_vs_change_body': {
+      'en': 'These are three different, deliberately separate actions:\n\n• Editing a member (name/phone/email/photo/notes) only updates their personal details — it never touches their membership, fee, or plan.\n\n• Change Plan starts a brand-new membership cycle on a different plan. The old membership is marked "Superseded" (kept for history, not deleted), a new membership row is created, and a change log entry is written so you can see exactly when and why the plan changed.\n\n• Change Trainer updates the trainer and PT fee on the CURRENT membership (it does not create a new membership) and also writes a change log entry.\n\nGotcha: neither Change Plan nor Change Trainer automatically creates or edits a bill. If the fee changed and you want to collect the new amount, generate or adjust a bill yourself afterwards.',
+      'hi': 'ये तीन अलग-अलग, जानबूझकर अलग रखी गई क्रियाएं हैं:\n\n• सदस्य को संपादित करना (नाम/फ़ोन/ईमेल/फ़ोटो/नोट्स) केवल उनके व्यक्तिगत विवरण अपडेट करता है — यह कभी भी उनकी सदस्यता, फीस या प्लान को नहीं छूता।\n\n• Change Plan एक अलग प्लान पर बिल्कुल नई सदस्यता साइकिल शुरू करता है। पुरानी सदस्यता को "Superseded" चिह्नित किया जाता है (इतिहास के लिए रखा जाता है, हटाया नहीं जाता), एक नई सदस्यता पंक्ति बनाई जाती है, और एक चेंज लॉग एंट्री लिखी जाती है ताकि आप देख सकें कि प्लान कब और क्यों बदला।\n\n• Change Trainer वर्तमान सदस्यता पर ट्रेनर और PT फीस अपडेट करता है (यह नई सदस्यता नहीं बनाता) और एक चेंज लॉग एंट्री भी लिखता है।\n\nध्यान दें: न तो Change Plan और न ही Change Trainer अपने आप कोई बिल बनाता या संपादित करता है। यदि फीस बदल गई है और आप नई राशि वसूलना चाहते हैं, तो बाद में खुद बिल बनाएं या समायोजित करें।',
+    },
+    'help_topic_archive_vs_delete_title': {'en': 'Archiving vs. permanently deleting a member', 'hi': 'सदस्य को आर्काइव करना बनाम स्थायी रूप से हटाना'},
+    'help_topic_archive_vs_delete_body': {
+      'en': 'Archiving a member (from their profile\'s menu) simply hides them from the main Members list — all their history (bills, payments, receipts, change logs) is fully preserved. Archived members live under Settings → Archived Members, where you can Restore them at any time.\n\nPermanent deletion is only allowed if the member has zero payment history. If they have ever made a payment, the app blocks permanent deletion and offers to archive them instead — this protects your financial records from accidental loss. Permanent deletion cannot be undone.',
+      'hi': 'किसी सदस्य को आर्काइव करना (उनके प्रोफ़ाइल मेनू से) उन्हें केवल मुख्य सदस्य सूची से छुपा देता है — उनका पूरा इतिहास (बिल, भुगतान, रसीदें, चेंज लॉग) पूरी तरह सुरक्षित रहता है। आर्काइव किए गए सदस्य Settings → Archived Members में मिलते हैं, जहां आप उन्हें कभी भी पुनर्स्थापित कर सकते हैं।\n\nस्थायी रूप से हटाना केवल तभी संभव है जब सदस्य का कोई भुगतान इतिहास न हो। यदि उन्होंने कभी भुगतान किया है, तो ऐप स्थायी रूप से हटाने से रोकता है और इसके बजाय आर्काइव करने का विकल्प देता है — यह आपके वित्तीय रिकॉर्ड को गलती से नष्ट होने से बचाता है। स्थायी रूप से हटाना पूर्ववत नहीं किया जा सकता।',
+    },
+    'help_topic_profile_overview_title': {'en': 'What you see on a member\'s profile', 'hi': 'सदस्य की प्रोफ़ाइल पर आप क्या देखते हैं'},
+    'help_topic_profile_overview_body': {
+      'en': 'The member profile shows a status badge (computed from days remaining: Overdue, Due Today, Due in N days, Active, or No Active Plan), full membership details (plan, base fee, PT fee, trainer, start/end dates), Plan Change History, Trainer Assignment History, the complete Bills & Dues list for that member, and their full Payment History with tap-through to every receipt.',
+      'hi': 'सदस्य की प्रोफ़ाइल एक स्टेटस बैज दिखाती है (शेष दिनों से गणना की जाती है: Overdue, Due Today, N दिनों में देय, Active, या No Active Plan), पूरी सदस्यता जानकारी (प्लान, बेस फीस, PT फीस, ट्रेनर, प्रारंभ/समाप्ति तिथियां), प्लान चेंज हिस्ट्री, ट्रेनर असाइनमेंट हिस्ट्री, उस सदस्य की पूरी बिल्स एंड ड्यूज़ सूची, और हर रसीद तक पहुंच के साथ उनकी पूरी भुगतान हिस्ट्री दिखाती है।',
+    },
+
+    'help_cat_billing_title': {'en': 'Billing & Dues', 'hi': 'बिलिंग और बकाया'},
+    'help_cat_billing_desc': {'en': 'How bills, cycles, and due dates really work', 'hi': 'बिल, साइकिल और देय तिथियां वास्तव में कैसे काम करती हैं'},
+    'help_topic_due_date_meaning_title': {'en': 'What a bill\'s "due date" actually means', 'hi': 'बिल की "देय तिथि" वास्तव में क्या मतलब रखती है'},
+    'help_topic_due_date_meaning_body': {
+      'en': 'This is the most important concept to understand: a bill\'s Due Date is the START date of the billing cycle it covers, not a traditional "pay by this date" deadline. So a bill with due date 23 Sept covers the cycle 23 Sept → 23 Oct (for a monthly plan). The app uses this due date, combined with the membership, as a unique key so exactly one bill is ever raised per cycle — you will never see two bills accidentally raised for the same cycle.',
+      'hi': 'यह समझने के लिए सबसे ज़रूरी अवधारणा है: बिल की देय तिथि उस बिलिंग साइकिल की START तिथि होती है जिसे वह कवर करता है, न कि पारंपरिक "इस तारीख तक भुगतान करें" वाली अंतिम तिथि। इसलिए 23 सितंबर की देय तिथि वाला बिल 23 सितंबर → 23 अक्टूबर (मासिक प्लान के लिए) साइकिल को कवर करता है। ऐप इस देय तिथि को सदस्यता के साथ मिलाकर एक यूनिक की के रूप में उपयोग करता है, ताकि प्रति साइकिल ठीक एक ही बिल बने — आपको कभी भी एक ही साइकिल के लिए गलती से दो बिल बनते हुए नहीं दिखेंगे।',
+    },
+    'help_topic_bill_statuses_title': {'en': 'Bill statuses explained', 'hi': 'बिल की स्थितियां समझाई गईं'},
+    'help_topic_bill_statuses_body': {
+      'en': '• Pending — raised, not yet due, not yet paid.\n• Overdue — the due date has passed and it still isn\'t paid (the app checks this automatically whenever it runs).\n• Paid — a payment has been recorded against it.\n• Cancelled — manually cancelled by an admin; no longer counts toward outstanding dues, but stays visible for audit history. A Cancelled bill (and only a Cancelled bill) can be permanently deleted if you want to clean it up — every other status is protected from deletion so your financial history can never be accidentally erased.',
+      'hi': '• Pending — बनाया गया, अभी देय नहीं हुआ, अभी भुगतान नहीं हुआ।\n• Overdue — देय तिथि निकल चुकी है और अभी भी भुगतान नहीं हुआ (ऐप हर बार चलने पर इसे अपने आप जांचता है)।\n• Paid — इसके विरुद्ध एक भुगतान दर्ज किया जा चुका है।\n• Cancelled — एडमिन द्वारा मैन्युअल रूप से रद्द किया गया; अब यह बकाया राशि में नहीं गिना जाता, लेकिन ऑडिट इतिहास के लिए दिखाई देता रहता है। यदि आप इसे हटाना चाहें तो केवल एक Cancelled बिल (और केवल वही) स्थायी रूप से हटाया जा सकता है — बाकी सभी स्थितियां हटाने से सुरक्षित हैं ताकि आपका वित्तीय इतिहास कभी गलती से न मिटे।',
+    },
+    'help_topic_auto_bill_gen_title': {'en': 'When does the next bill get generated automatically?', 'hi': 'अगला बिल अपने आप कब बनता है?'},
+    'help_topic_auto_bill_gen_body': {
+      'en': 'Exactly one day before the current membership\'s end date, the app raises the next cycle\'s bill automatically. This only happens once per cycle (protected against duplicates) and it only happens while the app is open — see the Notifications & Reminders section for why that matters if the app hasn\'t been opened in a while.',
+      'hi': 'वर्तमान सदस्यता की समाप्ति तिथि से ठीक एक दिन पहले, ऐप अगले साइकिल का बिल अपने आप बना देता है। ऐसा प्रति साइकिल केवल एक बार होता है (डुप्लिकेट से सुरक्षित) और यह केवल तभी होता है जब ऐप खुला हो — यदि ऐप कुछ समय से नहीं खोला गया है तो यह क्यों मायने रखता है, इसके लिए Notifications & Reminders सेक्शन देखें।',
+    },
+    'help_topic_manual_bill_gen_title': {'en': 'Generating a bill manually', 'hi': 'मैन्युअल रूप से बिल बनाना'},
+    'help_topic_manual_bill_gen_body': {
+      'en': 'You can always raise a bill by hand from the Bills tab (+ button) or from a member\'s profile. You can pick the amount, an admin-editable due date, and add notes. This is useful for one-off charges or for the manual "resume after a gap" workflow described in its own section below.',
+      'hi': 'आप हमेशा Bills टैब (+ बटन) से या किसी सदस्य की प्रोफ़ाइल से हाथ से बिल बना सकते हैं। आप राशि, एडमिन द्वारा संपादन योग्य देय तिथि चुन सकते हैं, और नोट्स जोड़ सकते हैं। यह एकबारगी शुल्क के लिए या नीचे अपने ही सेक्शन में बताए गए मैन्युअल "गैप के बाद फिर से शुरू करना" वर्कफ़्लो के लिए उपयोगी है।',
+    },
+
+    'help_cat_payments_title': {'en': 'Payments & Receipts', 'hi': 'भुगतान और रसीदें'},
+    'help_cat_payments_desc': {'en': 'Recording payments and what appears on a receipt', 'hi': 'भुगतान दर्ज करना और रसीद पर क्या दिखाई देता है'},
+    'help_topic_recording_payment_title': {'en': 'Recording a payment', 'hi': 'भुगतान दर्ज करना'},
+    'help_topic_recording_payment_body': {
+      'en': 'Open the relevant bill (or use "Record Payment" from a member\'s profile) and confirm the amount and payment method. The app settles the bill you opened, marks it Paid, generates a receipt, and extends the membership\'s end date forward by exactly one plan-cycle length starting from that bill\'s own due date — not from "today" and not a hardcoded 30 days. This keeps the receipt\'s validity period, the membership\'s dates, and the bill\'s cycle all perfectly in sync, even if the payment is collected late.',
+      'hi': 'संबंधित बिल खोलें (या किसी सदस्य की प्रोफ़ाइल से "Record Payment" का उपयोग करें) और राशि व भुगतान विधि की पुष्टि करें। ऐप आपके द्वारा खोले गए बिल को निपटाता है, उसे Paid चिह्नित करता है, एक रसीद बनाता है, और सदस्यता की समाप्ति तिथि को उस बिल की अपनी देय तिथि से शुरू करते हुए ठीक एक प्लान-साइकिल जितना आगे बढ़ा देता है — न कि "आज" से और न ही किसी तय 30 दिनों से। इससे रसीद की वैधता अवधि, सदस्यता की तारीखें, और बिल की साइकिल — ये सभी हमेशा एक-दूसरे से मेल खाती रहती हैं, भले ही भुगतान देर से वसूला गया हो।',
+    },
+    'help_topic_receipt_contents_title': {'en': 'What\'s on a receipt', 'hi': 'रसीद पर क्या होता है'},
+    'help_topic_receipt_contents_body': {
+      'en': 'Every receipt shows the receipt number, the Bill Number it was generated from, member details, plan (and PT fee breakdown if applicable), payment method, amount, and a tamper-resistant QR signature. Your gym\'s logo is always shown — if you haven\'t uploaded a custom logo (or the saved logo file is missing), the app automatically falls back to the bundled default logo so a receipt is never sent out logo-less.',
+      'hi': 'हर रसीद पर रसीद नंबर, वह बिल नंबर जिससे यह बनी है, सदस्य का विवरण, प्लान (और यदि लागू हो तो PT फीस का ब्यौरा), भुगतान विधि, राशि, और एक छेड़छाड़-रोधी QR सिग्नेचर दिखाई देता है। आपके जिम का लोगो हमेशा दिखाया जाता है — यदि आपने कस्टम लोगो अपलोड नहीं किया है (या सहेजी गई लोगो फ़ाइल गायब है), तो ऐप अपने आप बंडल किए गए डिफ़ॉल्ट लोगो पर आ जाता है ताकि रसीद कभी भी बिना लोगो के न भेजी जाए।',
+    },
+    'help_topic_receipt_validity_title': {'en': 'Why the receipt\'s validity period matches the bill, not "today"', 'hi': 'रसीद की वैधता अवधि बिल से क्यों मेल खाती है, "आज" से नहीं'},
+    'help_topic_receipt_validity_body': {
+      'en': 'If a member is onboarded today with a bill covering 23 Sept – 23 Oct, and you collect payment for that bill (even a few days late), the receipt correctly shows 23 Sept – 23 Oct — never a shifted period like 23 Oct – 23 Nov. The receipt always reflects the actual cycle of the bill you settled, regardless of the date you happen to record the payment on.',
+      'hi': 'यदि किसी सदस्य को आज 23 सितंबर – 23 अक्टूबर की अवधि वाले बिल के साथ जोड़ा जाता है, और आप उस बिल के लिए भुगतान वसूलते हैं (भले ही कुछ दिन देर से), तो रसीद सही ढंग से 23 सितंबर – 23 अक्टूबर दिखाती है — कभी भी 23 अक्टूबर – 23 नवंबर जैसी शिफ्ट की गई अवधि नहीं। रसीद हमेशा आपके द्वारा निपटाए गए बिल के असली साइकिल को दर्शाती है, चाहे आपने भुगतान किसी भी तारीख को दर्ज किया हो।',
+    },
+
+    'help_cat_returning_member_title': {'en': 'Member Returning After a Gap', 'hi': 'गैप के बाद लौटने वाला सदस्य'},
+    'help_cat_returning_member_desc': {'en': 'Pausing, absence, and resuming billing correctly', 'hi': 'रुकावट, अनुपस्थिति, और बिलिंग को सही तरीके से फिर शुरू करना'},
+    'help_topic_bills_pile_up_title': {'en': 'Will bills keep piling up while a member is away?', 'hi': 'क्या सदस्य के दूर रहने के दौरान बिल जमा होते रहेंगे?'},
+    'help_topic_bills_pile_up_body': {
+      'en': 'No. A renewal bill is only ever auto-generated once — one day before the current cycle\'s end date — and the membership\'s end date never moves forward unless a real payment is recorded. So if a member joins, pays for a couple of months, then stops coming, you will see exactly ONE overdue bill sitting there. The app will never keep silently generating a fresh bill every month for an absent member.',
+      'hi': 'नहीं। रिन्यूअल बिल केवल एक बार अपने आप बनता है — वर्तमान साइकिल की समाप्ति तिथि से एक दिन पहले — और सदस्यता की समाप्ति तिथि तब तक आगे नहीं बढ़ती जब तक कोई असली भुगतान दर्ज न हो। इसलिए यदि कोई सदस्य जुड़ता है, कुछ महीनों का भुगतान करता है, फिर आना बंद कर देता है, तो आपको वहां ठीक एक ही Overdue बिल दिखाई देगा। ऐप किसी अनुपस्थित सदस्य के लिए चुपचाप हर महीने नया बिल बनाता नहीं रहेगा।',
+    },
+    'help_topic_resume_billing_title': {'en': 'Resuming billing from the member\'s actual return date', 'hi': 'सदस्य की असली वापसी की तारीख से बिलिंग फिर शुरू करना'},
+    'help_topic_resume_billing_body': {
+      'en': 'When the member comes back, you don\'t want their new bill dated back on the old, stale cycle — you want billing to restart from the date they actually returned. There are two ways to do this, and both are fully supported:\n\n• Manual (original) way: open the old bill and Cancel it, then use "Generate Bill" to raise a fresh bill with today\'s (or any) date as the due date.\n\n• One-click shortcut: open the overdue bill and tap "Resume From Today". This does the exact same two steps for you in one tap — it cancels the stale bill and immediately raises a fresh Pending bill, with a date picker so you can pick today or the member\'s actual return date if it wasn\'t today. The old bill is kept as Cancelled (not deleted) so the full history stays visible.',
+      'hi': 'जब सदस्य वापस आता है, तो आप नहीं चाहेंगे कि उसका नया बिल पुराने, बासी साइकिल पर तारीख डाले — आप चाहते हैं कि बिलिंग उनकी असली वापसी की तारीख से फिर शुरू हो। ऐसा करने के दो तरीके हैं, और दोनों पूरी तरह समर्थित हैं:\n\n• मैन्युअल (मूल) तरीका: पुराना बिल खोलें और उसे Cancel करें, फिर आज की (या किसी भी) तारीख को देय तिथि के रूप में लेकर एक नया बिल बनाने के लिए "Generate Bill" का उपयोग करें।\n\n• वन-क्लिक शॉर्टकट: Overdue बिल खोलें और "Resume From Today" पर टैप करें। यह एक ही टैप में आपके लिए ठीक वही दो चरण करता है — यह बासी बिल को रद्द करता है और तुरंत एक नया Pending बिल बनाता है, साथ ही एक डेट पिकर देता है ताकि आप आज की तारीख या सदस्य की असली वापसी की तारीख (अगर वह आज नहीं थी) चुन सकें। पुराना बिल Cancelled के रूप में रखा जाता है (हटाया नहीं जाता) ताकि पूरा इतिहास दिखाई देता रहे।',
+    },
+    'help_topic_resume_end_date_title': {'en': 'What happens to the membership end date when you resume', 'hi': 'फिर से शुरू करने पर सदस्यता की समाप्ति तिथि का क्या होता है'},
+    'help_topic_resume_end_date_body': {
+      'en': 'Cancelling the old bill and raising a new one (either manually or via "Resume From Today") does not by itself change the membership\'s end date. The end date only advances once a real payment is recorded against the new bill — at that point the cycle correctly restarts from the new bill\'s due date, exactly as described in Payments & Receipts above.',
+      'hi': 'पुराने बिल को रद्द करना और नया बिल बनाना (चाहे मैन्युअल रूप से या "Resume From Today" के ज़रिए) अपने आप सदस्यता की समाप्ति तिथि नहीं बदलता। समाप्ति तिथि तभी आगे बढ़ती है जब नए बिल के विरुद्ध कोई असली भुगतान दर्ज किया जाता है — उस समय साइकिल सही ढंग से नए बिल की देय तिथि से फिर शुरू होता है, ठीक वैसे ही जैसा ऊपर Payments & Receipts में बताया गया है।',
+    },
+
+    'help_cat_trainers_title': {'en': 'Trainers & Payouts', 'hi': 'ट्रेनर और भुगतान'},
+    'help_cat_trainers_desc': {'en': 'Managing trainers, PT fees, and salary payouts', 'hi': 'ट्रेनर, PT फीस और सैलरी भुगतान प्रबंधित करना'},
+    'help_topic_add_deactivate_trainers_title': {'en': 'Adding & deactivating trainers', 'hi': 'ट्रेनर जोड़ना और निष्क्रिय करना'},
+    'help_topic_add_deactivate_trainers_body': {
+      'en': 'Adding a trainer only needs a name and phone number; role, specialization, and monthly base salary are optional. "Delete Trainer" on the detail screen is actually a soft-deactivation — it never erases the trainer, so all of their payout history and past member assignments stay fully intact. Inactive trainers are simply hidden from pickers elsewhere in the app.',
+      'hi': 'ट्रेनर जोड़ने के लिए केवल नाम और फ़ोन नंबर चाहिए; भूमिका, विशेषज्ञता, और मासिक बेस सैलरी वैकल्पिक हैं। डिटेल स्क्रीन पर "Delete Trainer" वास्तव में एक सॉफ्ट-डीएक्टिवेशन है — यह ट्रेनर को कभी नहीं मिटाता, इसलिए उनका पूरा भुगतान इतिहास और पिछले सदस्य असाइनमेंट पूरी तरह सुरक्षित रहते हैं। निष्क्रिय ट्रेनर बस ऐप में अन्य जगहों की पिकर सूचियों से छुपा दिए जाते हैं।',
+    },
+    'help_topic_pt_fees_title': {'en': 'Personal training (PT) fees', 'hi': 'पर्सनल ट्रेनिंग (PT) फीस'},
+    'help_topic_pt_fees_body': {
+      'en': 'A trainer is linked to a member either at onboarding or via Change Trainer, along with a PT fee that gets added on top of the base plan fee to form the membership\'s total fee. Only members whose CURRENT membership is active will show up under a trainer\'s "Assigned Members" list.',
+      'hi': 'किसी ट्रेनर को सदस्य से या तो सदस्य जोड़ते समय या Change Trainer के ज़रिए जोड़ा जाता है, साथ में एक PT फीस भी होती है जो बेस प्लान फीस में जुड़कर सदस्यता की कुल फीस बनाती है। केवल वे सदस्य जिनकी वर्तमान सदस्यता सक्रिय है, ट्रेनर की "Assigned Members" सूची में दिखाई देंगे।',
+    },
+    'help_topic_trainer_payouts_title': {'en': 'Recording trainer payouts', 'hi': 'ट्रेनर भुगतान दर्ज करना'},
+    'help_topic_trainer_payouts_body': {
+      'en': 'Trainer payouts (salary, PT commission, or bonus) are a simple manual ledger you log from the trainer\'s detail screen — amount, type, date, notes. This is completely independent from member bills and from the Expenses ledger; nothing else in the app auto-creates or auto-deducts a payout.',
+      'hi': 'ट्रेनर भुगतान (सैलरी, PT कमीशन, या बोनस) एक साधारण मैन्युअल लेजर है जिसे आप ट्रेनर की डिटेल स्क्रीन से दर्ज करते हैं — राशि, प्रकार, तारीख, नोट्स। यह सदस्य बिल्स और Expenses लेजर से पूरी तरह स्वतंत्र है; ऐप में और कुछ भी अपने आप भुगतान नहीं बनाता या घटाता।',
+    },
+
+    'help_cat_events_title': {'en': 'Events & Classes', 'hi': 'इवेंट्स और क्लासेस'},
+    'help_cat_events_desc': {'en': 'Scheduling classes and event reminders', 'hi': 'क्लासेस शेड्यूल करना और इवेंट रिमाइंडर'},
+    'help_topic_scheduling_event_title': {'en': 'Scheduling an event', 'hi': 'कोई इवेंट शेड्यूल करना'},
+    'help_topic_scheduling_event_body': {
+      'en': 'Events (classes, sessions) are one-off — there is no recurring/repeat option, so a weekly class needs to be added each week individually. You can optionally assign an instructor and a color tag for the calendar.',
+      'hi': 'इवेंट्स (क्लासेस, सेशन) एकबारगी होते हैं — कोई रिकरिंग/रिपीट विकल्प नहीं है, इसलिए साप्ताहिक क्लास को हर हफ्ते अलग से जोड़ना होगा। आप चाहें तो एक इंस्ट्रक्टर और कैलेंडर के लिए एक कलर टैग असाइन कर सकते हैं।',
+    },
+    'help_topic_event_reminders_title': {'en': 'Event reminders', 'hi': 'इवेंट रिमाइंडर'},
+    'help_topic_event_reminders_body': {
+      'en': 'If enabled in Settings, the app schedules real device notifications 30 minutes before, 15 minutes before, and at the start of an event. These are independent of the fee/membership reminders described in the Notifications section, and unlike those, event reminders are genuinely scheduled ahead of time rather than only checked when you open the app.',
+      'hi': 'यदि Settings में सक्षम किया गया हो, तो ऐप इवेंट शुरू होने से 30 मिनट पहले, 15 मिनट पहले, और इवेंट शुरू होते समय असली डिवाइस नोटिफिकेशन शेड्यूल करता है। ये Notifications सेक्शन में बताए गए फीस/सदस्यता रिमाइंडर से स्वतंत्र हैं, और उनके विपरीत, इवेंट रिमाइंडर वाकई पहले से शेड्यूल किए जाते हैं, न कि केवल तब जांचे जाते हैं जब आप ऐप खोलते हैं।',
+    },
+
+    'help_cat_expenses_title': {'en': 'Expenses', 'hi': 'खर्च'},
+    'help_cat_expenses_desc': {'en': 'Logging gym running costs', 'hi': 'जिम के संचालन खर्च दर्ज करना'},
+    'help_topic_logging_expense_title': {'en': 'Logging an expense', 'hi': 'खर्च दर्ज करना'},
+    'help_topic_logging_expense_body': {
+      'en': 'Record any gym expense with a title, amount, category (Rent, Utilities, Salaries & Wages, Equipment, Maintenance, Marketing, Supplies, Insurance, Other), payment method, and date. Every expense you log here feeds directly into the Reports screen\'s income-vs-expense charts and the category breakdown — there\'s no separate step needed to make it show up in reports.',
+      'hi': 'किसी भी जिम खर्च को शीर्षक, राशि, श्रेणी (किराया, यूटिलिटीज़, सैलरी और वेतन, उपकरण, रखरखाव, मार्केटिंग, सप्लाई, बीमा, अन्य), भुगतान विधि, और तारीख के साथ दर्ज करें। यहां दर्ज किया गया हर खर्च सीधे Reports स्क्रीन के इनकम-बनाम-खर्च चार्ट और श्रेणी ब्यौरे में शामिल हो जाता है — इसे रिपोर्ट्स में दिखाने के लिए कोई अलग चरण करने की ज़रूरत नहीं है।',
+    },
+
+    'help_cat_announcements_title': {'en': 'Announcements', 'hi': 'घोषणाएं'},
+    'help_cat_announcements_desc': {'en': 'Broadcasting news to members', 'hi': 'सदस्यों को समाचार प्रसारित करना'},
+    'help_topic_broadcasting_title': {'en': 'How broadcasting actually works', 'hi': 'प्रसारण वास्तव में कैसे काम करता है'},
+    'help_topic_broadcasting_body': {
+      'en': 'You compose a message and pick a target audience (All Members, Active, Overdue, Expiring Soon, or a specific Plan) — but it\'s important to understand this app is a single, admin-device app: there is no per-member push delivery built into it. "Sending" fires one local notification on your own device and writes the announcement out for any connected companion/member-facing surface your gym may use; the audience selector is mainly there to help you compose the right message and see how many members it applies to, not to individually deliver it to each member\'s phone.\n\nYou can schedule an announcement for a future time, and pin or mark important ones after the fact. Scheduled announcements aren\'t pushed by a background job — they get promoted to "sent" the next time you open the Announcements screen after the scheduled time passes. Deleting an announcement is permanent — there is no undo.',
+      'hi': 'आप एक संदेश लिखते हैं और एक लक्षित ऑडियंस चुनते हैं (सभी सदस्य, सक्रिय, बकाया, जल्द समाप्त होने वाले, या कोई विशेष प्लान) — लेकिन यह समझना ज़रूरी है कि यह ऐप एक सिंगल, एडमिन-डिवाइस ऐप है: इसमें प्रति-सदस्य पुश डिलीवरी बनी हुई नहीं है। "Sending" आपके अपने डिवाइस पर एक लोकल नोटिफिकेशन चलाता है और आपके जिम द्वारा उपयोग किए जाने वाले किसी भी जुड़े हुए कंपैनियन/सदस्य-फेसिंग सरफ़ेस के लिए घोषणा लिख देता है; ऑडियंस चुनने का विकल्प मुख्य रूप से आपको सही संदेश लिखने और यह देखने में मदद करने के लिए है कि यह कितने सदस्यों पर लागू होता है, न कि इसे हर सदस्य के फ़ोन पर अलग-अलग पहुंचाने के लिए।\n\nआप किसी घोषणा को भविष्य के समय के लिए शेड्यूल कर सकते हैं, और बाद में महत्वपूर्ण घोषणाओं को पिन या चिह्नित कर सकते हैं। शेड्यूल की गई घोषणाएं किसी बैकग्राउंड जॉब से नहीं भेजी जातीं — शेड्यूल किया गया समय बीत जाने के बाद, अगली बार जब आप Announcements स्क्रीन खोलते हैं तब वे "sent" में बदल जाती हैं। किसी घोषणा को हटाना स्थायी होता है — इसे पूर्ववत नहीं किया जा सकता।',
+    },
+
+    'help_cat_notifications_title': {'en': 'Notifications & Reminders', 'hi': 'सूचनाएं और रिमाइंडर'},
+    'help_cat_notifications_desc': {'en': 'Fee/expiry alerts — and when they actually run', 'hi': 'फीस/समाप्ति अलर्ट — और ये वास्तव में कब चलते हैं'},
+    'help_topic_reminders_timing_title': {'en': 'How & when reminders are checked (important!)', 'hi': 'रिमाइंडर कैसे और कब जांचे जाते हैं (ज़रूरी!)'},
+    'help_topic_reminders_timing_body': {
+      'en': 'There is no background service running while the app is closed. Reminders (fee due soon, due today, overdue, membership expiring, membership expired) are only evaluated at three moments: when the app is launched, when it resumes from the background, and when you open (or pull-to-refresh) the Notifications screen.\n\nThis means if you don\'t open the app on a given day, you simply won\'t get a same-day alert for that day — but nothing is lost: the next time you do open the app, the scan runs against "today" and will correctly show a member as Overdue with however many days have actually passed.',
+      'hi': 'जब ऐप बंद होता है तो कोई बैकग्राउंड सर्विस नहीं चलती। रिमाइंडर (फीस जल्द देय, आज देय, बकाया, सदस्यता समाप्त होने वाली, सदस्यता समाप्त) केवल तीन क्षणों में जांचे जाते हैं: जब ऐप लॉन्च होता है, जब यह बैकग्राउंड से फिर से शुरू होता है, और जब आप Notifications स्क्रीन खोलते हैं (या पुल-टू-रिफ्रेश करते हैं)।\n\nइसका मतलब है कि यदि आप किसी दिन ऐप नहीं खोलते, तो आपको उस दिन का सेम-डे अलर्ट नहीं मिलेगा — लेकिन कुछ भी खोता नहीं है: अगली बार जब आप ऐप खोलेंगे, स्कैन "आज" के विरुद्ध चलेगा और सही ढंग से किसी सदस्य को Overdue दिखाएगा, साथ ही यह भी कि वास्तव में कितने दिन बीत चुके हैं।',
+    },
+    'help_topic_configuring_reminders_title': {'en': 'Configuring which reminders fire', 'hi': 'कौन-से रिमाइंडर चलेंगे, यह कॉन्फ़िगर करना'},
+    'help_topic_configuring_reminders_body': {
+      'en': 'Under Settings → Reminder Intervals you can independently toggle: fee reminders at 7/3/1 days before due, due-today, and overdue; membership expiry reminders at 7/3/1 days before (the "1 day before" toggle also covers "expiring today" and "already expired"); and event reminders at 30/15 minutes before and at start time. Note that the automatic renewal-bill generation described in Billing & Dues always runs regardless of these toggles — the toggles only control notification alerts, not bill creation.',
+      'hi': 'Settings → Reminder Intervals के तहत आप स्वतंत्र रूप से टॉगल कर सकते हैं: देय होने से 7/3/1 दिन पहले, आज देय, और बकाया के फीस रिमाइंडर; समाप्ति से 7/3/1 दिन पहले के सदस्यता समाप्ति रिमाइंडर ("1 दिन पहले" टॉगल "आज समाप्त हो रहा है" और "पहले ही समाप्त" को भी कवर करता है); और शुरू होने से 30/15 मिनट पहले और शुरुआत के समय के इवेंट रिमाइंडर। ध्यान दें कि Billing & Dues में बताया गया ऑटोमैटिक रिन्यूअल-बिल जनरेशन इन टॉगल्स की परवाह किए बिना हमेशा चलता है — ये टॉगल केवल नोटिफिकेशन अलर्ट को नियंत्रित करते हैं, बिल बनने को नहीं।',
+    },
+
+    'help_cat_reports_title': {'en': 'Reports', 'hi': 'रिपोर्ट्स'},
+    'help_cat_reports_desc': {'en': 'Reading the analytics screen', 'hi': 'एनालिटिक्स स्क्रीन को पढ़ना'},
+    'help_topic_reports_overview_title': {'en': 'What the Reports screen shows', 'hi': 'Reports स्क्रीन क्या दिखाती है'},
+    'help_topic_reports_overview_body': {
+      'en': 'A Monthly/Yearly toggle with a selectable time window (last 6/12 months, or last 3/5 years) controls: a summary grid (Total Income, Total Expenses, Net Profit, New Members), an Income vs Expenses bar chart, a Net Profit trend line, New Member Sign-ups and Total Active Members Growth lines, and an Expense Breakdown pie chart plus an Income Breakdown by payment method (both with their own This Month / This Year / All Time filter). There is currently no export or PDF/share option on this screen — it\'s for in-app viewing only.',
+      'hi': 'चुनने योग्य समय अवधि (पिछले 6/12 महीने, या पिछले 3/5 साल) वाला एक Monthly/Yearly टॉगल नियंत्रित करता है: एक सारांश ग्रिड (कुल आय, कुल खर्च, शुद्ध लाभ, नए सदस्य), एक इनकम बनाम एक्सपेंस बार चार्ट, एक नेट प्रॉफिट ट्रेंड लाइन, नए सदस्य साइन-अप और कुल सक्रिय सदस्य वृद्धि लाइनें, और एक एक्सपेंस ब्रेकडाउन पाई चार्ट साथ ही भुगतान विधि के अनुसार इनकम ब्रेकडाउन (दोनों की अपनी This Month / This Year / All Time फ़िल्टर है)। इस स्क्रीन पर फ़िलहाल कोई एक्सपोर्ट या PDF/शेयर विकल्प नहीं है — यह केवल ऐप के भीतर देखने के लिए है।',
+    },
+
+    'help_cat_settings_data_title': {'en': 'Settings & Data', 'hi': 'सेटिंग्स और डेटा'},
+    'help_cat_settings_data_desc': {'en': 'Gym info, backup, data mode & security', 'hi': 'जिम जानकारी, बैकअप, डेटा मोड और सुरक्षा'},
+    'help_topic_gym_info_logo_title': {'en': 'Gym info & logo', 'hi': 'जिम जानकारी और लोगो'},
+    'help_topic_gym_info_logo_body': {
+      'en': 'Edit Gym Info lets you set your gym\'s name, address, contact details, and logo. Uploading a clear logo here is what appears on every bill/receipt PDF; if you never upload one (or the saved file goes missing), PDFs automatically fall back to a default bundled logo rather than printing with no logo at all.',
+      'hi': 'Edit Gym Info से आप अपने जिम का नाम, पता, संपर्क विवरण, और लोगो सेट कर सकते हैं। यहां अपलोड किया गया स्पष्ट लोगो ही हर बिल/रसीद PDF पर दिखाई देता है; यदि आप कभी लोगो अपलोड नहीं करते (या सहेजी गई फ़ाइल गायब हो जाती है), तो PDFs बिना किसी लोगो के प्रिंट होने के बजाय अपने आप एक डिफ़ॉल्ट बंडल किए गए लोगो पर आ जाते हैं।',
+    },
+    'help_topic_packages_plans_title': {'en': 'Packages & Plans', 'hi': 'पैकेज और प्लान'},
+    'help_topic_packages_plans_body': {
+      'en': 'Plans (name, duration in days, default fee) can optionally be grouped under Packages. Deleting a plan or package never retroactively touches members already on it — it only prevents that plan from being offered to new members going forward.',
+      'hi': 'प्लान (नाम, दिनों में अवधि, डिफ़ॉल्ट फीस) को चाहें तो पैकेज के अंतर्गत समूहित किया जा सकता है। किसी प्लान या पैकेज को हटाने से उस पर पहले से मौजूद सदस्य कभी प्रभावित नहीं होते — यह केवल आगे से उस प्लान को नए सदस्यों को दिए जाने से रोकता है।',
+    },
+    'help_topic_payment_settings_title': {'en': 'Payment settings (UPI & bank details on bills)', 'hi': 'भुगतान सेटिंग्स (बिलों पर UPI और बैंक विवरण)'},
+    'help_topic_payment_settings_body': {
+      'en': 'Set your UPI ID and bank account details here, each with its own on/off toggle for whether it should be printed on bills — useful if you only want to show one payment method to members.',
+      'hi': 'यहां अपनी UPI ID और बैंक खाता विवरण सेट करें, प्रत्येक का अपना ऑन/ऑफ टॉगल है कि इसे बिलों पर प्रिंट किया जाए या नहीं — यह तब उपयोगी है जब आप सदस्यों को केवल एक ही भुगतान विधि दिखाना चाहते हैं।',
+    },
+    'help_topic_print_format_title': {'en': 'Print format', 'hi': 'प्रिंट फॉर्मेट'},
+    'help_topic_print_format_body': {
+      'en': 'By default the app asks which paper size to use every time you print or share a bill/receipt. You can lock a default here instead (Thermal 58mm, Thermal 80mm, A5, or A4) to skip that prompt every time.',
+      'hi': 'डिफ़ॉल्ट रूप से, ऐप हर बार बिल/रसीद प्रिंट या शेयर करने पर पूछता है कि किस पेपर साइज़ का उपयोग करना है। इसके बजाय आप यहां एक डिफ़ॉल्ट लॉक कर सकते हैं (Thermal 58mm, Thermal 80mm, A5, या A4) ताकि हर बार वह प्रॉम्प्ट न आए।',
+    },
+    'help_topic_backup_restore_title': {'en': 'Backup & restore — what\'s actually included', 'hi': 'बैकअप और रिस्टोर — वास्तव में इसमें क्या शामिल है'},
+    'help_topic_backup_restore_body': {
+      'en': 'Backup exports an encrypted file containing your gym info, admin profile, membership plans, members, memberships, payments, receipts, and notification settings.\n\nImportant: it does NOT currently include trainers, trainer payouts, events, expenses, bills, membership packages, or announcements. If you\'re relying on Backup for full disaster recovery, keep this gap in mind.\n\nRestoring a backup is destructive — it replaces your current data for everything it does manage with whatever is in the backup file. There is no merge option.',
+      'hi': 'Backup एक एन्क्रिप्टेड फ़ाइल एक्सपोर्ट करता है जिसमें आपकी जिम जानकारी, एडमिन प्रोफ़ाइल, सदस्यता प्लान, सदस्य, सदस्यताएं, भुगतान, रसीदें, और नोटिफिकेशन सेटिंग्स शामिल होती हैं।\n\nज़रूरी: इसमें फ़िलहाल ट्रेनर, ट्रेनर भुगतान, इवेंट्स, खर्च, बिल्स, सदस्यता पैकेज, या घोषणाएं शामिल नहीं हैं। यदि आप पूर्ण डिज़ास्टर रिकवरी के लिए Backup पर भरोसा कर रहे हैं, तो इस कमी को ध्यान में रखें।\n\nबैकअप रिस्टोर करना विनाशकारी है — यह जिन चीज़ों को प्रबंधित करता है, उन सभी के लिए आपका वर्तमान डेटा बैकअप फ़ाइल में मौजूद डेटा से बदल देता है। कोई मर्ज विकल्प नहीं है।',
+    },
+    'help_topic_online_offline_title': {'en': 'Online vs. offline data mode — no automatic syncing', 'hi': 'ऑनलाइन बनाम ऑफलाइन डेटा मोड — कोई ऑटोमैटिक सिंकिंग नहीं'},
+    'help_topic_online_offline_body': {
+      'en': 'Offline mode stores everything locally on this device (the default). Online mode connects to your own MongoDB database (you provide the connection string — nothing is hosted for you).\n\nSwitching from Offline to Online performs a one-time, one-way push of your existing local data up to MongoDB. After that, there is no automatic two-way sync between the two modes. If you switch back to Offline and keep working, then switch to Online again later, the two data sets can silently diverge — use the "Re-sync Now" button to manually push local changes up again when needed, and avoid entering data in both modes in parallel.',
+      'hi': 'Offline मोड सब कुछ इसी डिवाइस पर लोकल रूप से स्टोर करता है (डिफ़ॉल्ट)। Online मोड आपके अपने MongoDB डेटाबेस से जुड़ता है (आप कनेक्शन स्ट्रिंग देते हैं — आपके लिए कुछ भी होस्ट नहीं किया जाता)।\n\nOffline से Online पर स्विच करने पर आपके मौजूदा लोकल डेटा को एक बार, एक-दिशा में MongoDB पर पुश किया जाता है। उसके बाद, दोनों मोड के बीच कोई ऑटोमैटिक टू-वे सिंक नहीं होता। यदि आप वापस Offline पर स्विच करके काम करना जारी रखते हैं, फिर बाद में दोबारा Online पर स्विच करते हैं, तो दोनों डेटा सेट चुपचाप अलग हो सकते हैं — ज़रूरत पड़ने पर लोकल बदलावों को फिर से ऊपर पुश करने के लिए "Re-sync Now" बटन का उपयोग करें, और दोनों मोड में समानांतर रूप से डेटा दर्ज करने से बचें।',
+    },
+    'help_topic_security_title': {'en': 'Security: MPIN, biometric & archived members', 'hi': 'सुरक्षा: MPIN, बायोमेट्रिक और आर्काइव्ड सदस्य'},
+    'help_topic_security_body': {
+      'en': 'Change MPIN requires your current MPIN before letting you set a new one. Archived Members lets you restore any archived member, or permanently purge one — purging is blocked if that member has any payment history, to protect your records.',
+      'hi': 'Change MPIN नया MPIN सेट करने देने से पहले आपका वर्तमान MPIN मांगता है। Archived Members से आप किसी भी आर्काइव किए गए सदस्य को पुनर्स्थापित कर सकते हैं, या उसे स्थायी रूप से मिटा सकते हैं — यदि उस सदस्य का कोई भुगतान इतिहास है, तो आपके रिकॉर्ड की सुरक्षा के लिए मिटाना रोक दिया जाता है।',
+    },
+    'help_topic_reset_data_title': {'en': 'Resetting all app data (Danger Zone)', 'hi': 'सभी ऐप डेटा रीसेट करना (Danger Zone)'},
+    'help_topic_reset_data_body': {
+      'en': 'This wipes the entire local database and all security data, then sends you back to the very first onboarding screen. It is irreversible and does not prompt you to take a backup first — always export a Backup beforehand if there\'s any chance you\'ll want the data back.',
+      'hi': 'यह पूरे लोकल डेटाबेस और सभी सुरक्षा डेटा को मिटा देता है, फिर आपको बिल्कुल पहली ऑनबोर्डिंग स्क्रीन पर वापस भेज देता है। यह अपरिवर्तनीय है और पहले बैकअप लेने के लिए प्रॉम्प्ट नहीं करता — यदि डेटा वापस चाहिए होने की कोई भी संभावना हो, तो हमेशा पहले से एक Backup एक्सपोर्ट कर लें।',
+    },
+
+    'help_cat_troubleshooting_title': {'en': 'Troubleshooting & FAQs', 'hi': 'समस्या निवारण और सामान्य प्रश्न'},
+    'help_cat_troubleshooting_desc': {'en': 'Common questions, answered plainly', 'hi': 'सामान्य सवालों के सीधे जवाब'},
+    'help_topic_logo_missing_title': {'en': 'My gym logo isn\'t showing on a receipt or bill', 'hi': 'मेरा जिम लोगो रसीद या बिल पर नहीं दिख रहा'},
+    'help_topic_logo_missing_body': {
+      'en': 'Go to Settings → Edit Gym Info and upload a logo. Until you do (or if the saved logo file was deleted from your device), the app automatically prints a default bundled logo instead of leaving the space blank — so the receipt still looks complete, just not branded with your own logo.',
+      'hi': 'Settings → Edit Gym Info पर जाएं और एक लोगो अपलोड करें। जब तक आप ऐसा नहीं करते (या यदि सहेजी गई लोगो फ़ाइल आपके डिवाइस से हटा दी गई थी), ऐप खाली जगह छोड़ने के बजाय अपने आप एक डिफ़ॉल्ट बंडल किया हुआ लोगो प्रिंट करता है — इसलिए रसीद फिर भी पूरी दिखती है, बस आपके अपने लोगो से ब्रांडेड नहीं होती।',
+    },
+    'help_topic_dates_wrong_title': {'en': 'A bill\'s or receipt\'s dates look wrong after payment', 'hi': 'भुगतान के बाद बिल या रसीद की तारीखें गलत दिख रही हैं'},
+    'help_topic_dates_wrong_body': {
+      'en': 'The dates on a receipt always mirror the exact bill you settled (see Payments & Receipts). If something looks off, check which bill was actually paid — an old, stale bill will correctly produce an old-looking receipt period; if you want a fresh period starting today, cancel that stale bill and use "Resume From Today" or Generate Bill instead (see Member Returning After a Gap).',
+      'hi': 'रसीद पर तारीखें हमेशा उसी बिल को दर्शाती हैं जिसे आपने निपटाया है (देखें Payments & Receipts)। यदि कुछ गलत लग रहा है, तो जांचें कि वास्तव में कौन-सा बिल भुगतान किया गया था — एक पुराना, बासी बिल सही ढंग से पुरानी दिखने वाली रसीद अवधि बनाएगा; यदि आप आज से शुरू होने वाली नई अवधि चाहते हैं, तो उस बासी बिल को रद्द करें और इसके बजाय "Resume From Today" या Generate Bill का उपयोग करें (देखें Member Returning After a Gap)।',
+    },
+    'help_topic_no_alert_title': {'en': 'I didn\'t get an overdue/due-today alert this morning', 'hi': 'मुझे आज सुबह बकाया/आज-देय अलर्ट नहीं मिला'},
+    'help_topic_no_alert_body': {
+      'en': 'Reminders are only evaluated when the app is opened (launch, resume, or the Notifications screen) — there\'s no background check while the app is closed. Simply open the app; it will immediately catch up and show the correct status, including how many days overdue a member actually is.',
+      'hi': 'रिमाइंडर केवल तभी जांचे जाते हैं जब ऐप खोला जाता है (लॉन्च, रिज़्यूम, या Notifications स्क्रीन) — ऐप बंद रहने के दौरान कोई बैकग्राउंड जांच नहीं होती। बस ऐप खोलें; यह तुरंत अपडेट हो जाएगा और सही स्थिति दिखाएगा, साथ ही यह भी कि कोई सदस्य वास्तव में कितने दिन बकाया है।',
+    },
+    'help_topic_delete_bill_faq_title': {'en': 'Can I delete a bill to remove it from someone\'s dues?', 'hi': 'क्या मैं किसी के बकाया से हटाने के लिए बिल डिलीट कर सकता हूं?'},
+    'help_topic_delete_bill_faq_body': {
+      'en': 'You can Cancel a Pending or Overdue bill, which removes it from outstanding dues while keeping it visible for history. Only a Cancelled bill can then be permanently deleted. Paid, Pending, and Overdue bills can never be deleted directly — this protects your financial history from accidental loss.',
+      'hi': 'आप किसी Pending या Overdue बिल को Cancel कर सकते हैं, जो उसे बकाया राशि से हटा देता है जबकि इतिहास के लिए दिखाई देता रहता है। उसके बाद केवल एक Cancelled बिल को ही स्थायी रूप से हटाया जा सकता है। Paid, Pending, और Overdue बिल्स को सीधे कभी नहीं हटाया जा सकता — यह आपके वित्तीय इतिहास को गलती से नष्ट होने से बचाता है।',
+    },
   };
 }

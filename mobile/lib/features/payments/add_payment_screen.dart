@@ -74,10 +74,24 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
     _notesController = TextEditingController();
 
     if (widget.membership != null) {
-      _startDate = widget.membership!.endDate.isBefore(DateTime.now())
-          ? DateTime.now()
-          : widget.membership!.endDate;
-      _endDate = _startDate.add(const Duration(days: 30));
+      // Preserve the membership's actual plan length (30/90/180/365 days) so
+      // the receipt's validity span matches the plan, not a hardcoded month.
+      final cycleDuration = widget.membership!.endDate.difference(widget.membership!.startDate);
+
+      if (widget.bill != null) {
+        // Settling a specific bill: the receipt must cover exactly the cycle
+        // that bill was raised for (its dueDate is that cycle's start date),
+        // e.g. the first bill raised on onboarding is due on the membership's
+        // own start date, not on its end date.
+        _startDate = widget.bill!.dueDate;
+      } else {
+        // Ad-hoc renewal with no linked bill: extend from the current cycle's
+        // end date, or from today if the membership has already lapsed.
+        _startDate = widget.membership!.endDate.isBefore(DateTime.now())
+            ? DateTime.now()
+            : widget.membership!.endDate;
+      }
+      _endDate = _startDate.add(cycleDuration);
 
       if (widget.membership!.trainerId != null && widget.membership!.trainerId!.isNotEmpty) {
         _loadTrainer(widget.membership!.trainerId!);

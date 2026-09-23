@@ -37,6 +37,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
   DateTime? _periodEnd;
   bool _isLoading = true;
   bool _isRecordingPayment = false;
+  bool _isResuming = false;
 
   @override
   void initState() {
@@ -99,6 +100,116 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
       AppStateService.instance.notifyBillsChanged();
       _loadData();
     }
+  }
+
+  Future<void> _resumeFromToday() async {
+    final dateFormat = DateFormat('dd MMM yyyy');
+    DateTime resumeDate = DateTime.now();
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.darkSurface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            final bottomInset = MediaQuery.paddingOf(ctx).bottom;
+            return Padding(
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 16 + (bottomInset > 0 ? bottomInset : 10)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tr('bill_detail_resume_sheet_title'),
+                    style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w900, fontSize: 18),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    tr('bill_detail_resume_sheet_message', {
+                      'amount': _bill.amount.toStringAsFixed(0),
+                      'date': dateFormat.format(_bill.dueDate),
+                    }),
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 13, height: 1.4),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    tr('bill_detail_resume_date_label'),
+                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                  ),
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: ctx,
+                        initialDate: resumeDate,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2035),
+                      );
+                      if (picked != null) setSheetState(() => resumeDate = picked);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkBackground,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.darkBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today_rounded, size: 16, color: AppTheme.neonLime),
+                          const SizedBox(width: 10),
+                          Text(dateFormat.format(resumeDate), style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NeonButton(
+                          text: tr('common_cancel'),
+                          isSecondary: true,
+                          onPressed: () => Navigator.pop(ctx, false),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: NeonButton(
+                          text: tr('bill_detail_resume_confirm'),
+                          icon: Icons.restart_alt_rounded,
+                          onPressed: () => Navigator.pop(ctx, true),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isResuming = true);
+    final newBill = await _billRepo.resumeBillFromToday(_bill, resumeDate: resumeDate);
+    AppStateService.instance.notifyBillsChanged();
+    if (!mounted) return;
+    setState(() => _isResuming = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(tr('bill_detail_resume_success', {'number': newBill.billNumber}))),
+    );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => BillDetailScreen(bill: newBill)),
+    );
   }
 
   Future<void> _deleteBill() async {
@@ -284,6 +395,16 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                         onPressed: _recordPayment,
                       ),
                     if (_bill.isDue) const SizedBox(height: 12),
+                    if (_bill.status == 'Overdue')
+                      NeonButton(
+                        text: _isResuming ? tr('common_loading') : tr('bill_detail_resume_from_today'),
+                        icon: Icons.restart_alt_rounded,
+                        width: double.infinity,
+                        isSecondary: true,
+                        isLoading: _isResuming,
+                        onPressed: _resumeFromToday,
+                      ),
+                    if (_bill.status == 'Overdue') const SizedBox(height: 12),
 
                     Row(
                       children: [

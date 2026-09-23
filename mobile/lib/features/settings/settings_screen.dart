@@ -27,6 +27,7 @@ import 'change_mpin_screen.dart';
 import 'accent_color_screen.dart';
 import 'language_settings_screen.dart';
 import '../notifications/notifications_screen.dart';
+import '../help/help_center_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -259,6 +260,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => const LanguageSettingsScreen()));
                       _loadSettings();
                     },
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Help & Support Section
+                  _SectionHeader(title: tr('settings_section_help')),
+                  _SettingsTile(
+                    icon: Icons.help_rounded,
+                    title: tr('settings_help_center'),
+                    subtitle: tr('settings_help_center_sub'),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpCenterScreen())),
                   ),
                   const SizedBox(height: 18),
 
