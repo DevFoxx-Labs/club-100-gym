@@ -120,6 +120,20 @@ class MemberRepository {
     return null;
   }
 
+  Future<MembershipModel?> getMembershipById(String membershipId) async {
+    final db = await _db;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'memberships',
+      where: 'id = ?',
+      whereArgs: [membershipId],
+      limit: 1,
+    );
+    if (maps.isNotEmpty) {
+      return MembershipModel.fromMap(maps.first);
+    }
+    return null;
+  }
+
   Future<void> updateMembership(MembershipModel membership) async {
     final db = await _db;
     await db.update(

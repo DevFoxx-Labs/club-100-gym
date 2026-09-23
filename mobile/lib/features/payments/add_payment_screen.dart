@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/receipt/qr_service.dart';
 import '../../core/utils/form_validators.dart';
 import '../../core/services/app_state_service.dart';
+import '../../data/models/bill_model.dart';
 import '../../data/models/member_model.dart';
 import '../../data/models/membership_model.dart';
 import '../../data/models/payment_model.dart';
@@ -12,6 +13,7 @@ import '../../data/models/receipt_model.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/member_repository.dart';
+import '../../data/repositories/bill_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../../shared/widgets/custom_text_field.dart';
@@ -21,11 +23,13 @@ import '../receipts/receipt_preview_screen.dart';
 class AddPaymentScreen extends StatefulWidget {
   final MemberModel member;
   final MembershipModel? membership;
+  final BillModel? bill;
 
   const AddPaymentScreen({
     super.key,
     required this.member,
     this.membership,
+    this.bill,
   });
 
   @override
@@ -36,6 +40,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _paymentRepo = PaymentRepository();
   final _memberRepo = MemberRepository();
+  final _billRepo = BillRepository();
   final _trainerRepo = TrainerRepository();
   final _planRepo = PlanRepository();
 
@@ -61,7 +66,9 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
     final totalFee = widget.membership?.feeAmount ?? 1500.0;
     _baseFee = (totalFee > _ptFee) ? (totalFee - _ptFee) : 0.0;
 
-    _amountController = TextEditingController(text: totalFee.toStringAsFixed(0));
+    _amountController = TextEditingController(
+      text: widget.bill != null ? widget.bill!.amount.toStringAsFixed(0) : totalFee.toStringAsFixed(0),
+    );
     _amountController.addListener(_onAmountChanged);
     _notesController = TextEditingController();
 
@@ -201,6 +208,14 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
 
       await _paymentRepo.addPayment(payment, finalReceipt);
 
+      // Settle the linked bill (explicit, or the oldest outstanding bill for this membership)
+      final targetBill = widget.bill ??
+          (widget.membership != null ? await _billRepo.getOldestDueBillForMembership(widget.membership!.id) : null);
+      if (targetBill != null) {
+        await _billRepo.markBillPaid(billId: targetBill.id, paymentId: paymentId, receiptId: receiptId);
+        AppStateService.instance.notifyBillsChanged();
+      }
+
       // Trigger app-wide reactive state updates
       AppStateService.instance.notifyPaymentsChanged();
       AppStateService.instance.notifyMembersChanged();
@@ -265,6 +280,33 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+
+                // Bill Being Settled Banner
+                if (widget.bill != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.darkSurface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime, size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Settling Bill #${widget.bill!.billNumber}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w800, fontSize: 12.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
 
                 // Personal Training Fee Breakdown Banner
                 if (hasPersonalTrainer) ...[

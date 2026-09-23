@@ -21,7 +21,7 @@ class AppDatabase {
 
     final db = await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -79,6 +79,27 @@ class AppDatabase {
       await db.execute(DbTables.expenses);
     } catch (_) {}
 
+    // Ensure gym table has UPI/Bank payment collection columns
+    for (final stmt in [
+      'ALTER TABLE gym ADD COLUMN upiId TEXT;',
+      'ALTER TABLE gym ADD COLUMN upiPayeeName TEXT;',
+      'ALTER TABLE gym ADD COLUMN bankAccountHolder TEXT;',
+      'ALTER TABLE gym ADD COLUMN bankAccountNumber TEXT;',
+      'ALTER TABLE gym ADD COLUMN bankIfsc TEXT;',
+      'ALTER TABLE gym ADD COLUMN bankName TEXT;',
+      'ALTER TABLE gym ADD COLUMN showUpiQrOnBill INTEGER DEFAULT 1;',
+      'ALTER TABLE gym ADD COLUMN showBankDetailsOnBill INTEGER DEFAULT 1;',
+    ]) {
+      try {
+        await db.execute(stmt);
+      } catch (_) {}
+    }
+
+    // Ensure bills table exists for the Billing & Dues Tracking feature
+    try {
+      await db.execute(DbTables.bills);
+    } catch (_) {}
+
     return db;
   }
 
@@ -101,6 +122,7 @@ class AppDatabase {
     await db.execute(DbTables.appSettings);
     await db.execute(DbTables.announcements);
     await db.execute(DbTables.expenses);
+    await db.execute(DbTables.bills);
 
     // Seed default packages and plans
     const uuid = Uuid();
@@ -250,6 +272,26 @@ class AppDatabase {
         await db.execute("ALTER TABLE trainers ADD COLUMN role TEXT DEFAULT 'Trainer';");
       } catch (_) {}
     }
+
+    if (oldVersion < 8) {
+      for (final stmt in [
+        'ALTER TABLE gym ADD COLUMN upiId TEXT;',
+        'ALTER TABLE gym ADD COLUMN upiPayeeName TEXT;',
+        'ALTER TABLE gym ADD COLUMN bankAccountHolder TEXT;',
+        'ALTER TABLE gym ADD COLUMN bankAccountNumber TEXT;',
+        'ALTER TABLE gym ADD COLUMN bankIfsc TEXT;',
+        'ALTER TABLE gym ADD COLUMN bankName TEXT;',
+        'ALTER TABLE gym ADD COLUMN showUpiQrOnBill INTEGER DEFAULT 1;',
+        'ALTER TABLE gym ADD COLUMN showBankDetailsOnBill INTEGER DEFAULT 1;',
+      ]) {
+        try {
+          await db.execute(stmt);
+        } catch (_) {}
+      }
+      try {
+        await db.execute(DbTables.bills);
+      } catch (_) {}
+    }
   }
 
   Future<void> close() async {
@@ -276,6 +318,7 @@ class AppDatabase {
     await db.delete('notifications');
     await db.delete('announcements');
     await db.delete('expenses');
+    await db.delete('bills');
     await db.delete('app_settings');
   }
 }

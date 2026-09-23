@@ -5,6 +5,7 @@ import '../../core/utils/sms_launcher.dart';
 import '../../core/utils/sms_templates.dart';
 import '../../core/utils/contact_sync_service.dart';
 import '../../core/utils/member_photo_picker.dart';
+import '../../data/models/bill_model.dart';
 import '../../data/models/member_model.dart';
 import '../../data/models/membership_model.dart';
 import '../../data/models/payment_model.dart';
@@ -12,6 +13,7 @@ import '../../data/models/plan_model.dart';
 import '../../data/models/trainer_model.dart';
 import '../../data/models/membership_change_log_model.dart';
 import '../../data/models/trainer_change_log_model.dart';
+import '../../data/repositories/bill_repository.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/plan_repository.dart';
@@ -21,6 +23,7 @@ import '../../shared/widgets/status_badge.dart';
 import '../../shared/widgets/neon_button.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../../core/services/app_state_service.dart';
+import '../bills/bill_detail_screen.dart';
 import '../payments/add_payment_screen.dart';
 import '../receipts/receipt_preview_screen.dart';
 import 'add_edit_member_screen.dart';
@@ -39,6 +42,7 @@ class MemberProfileScreen extends StatefulWidget {
 class _MemberProfileScreenState extends State<MemberProfileScreen> {
   final _memberRepo = MemberRepository();
   final _paymentRepo = PaymentRepository();
+  final _billRepo = BillRepository();
   final _planRepo = PlanRepository();
   final _settingsRepo = SettingsRepository();
   final _trainerRepo = TrainerRepository();
@@ -48,6 +52,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   PlanModel? _plan;
   TrainerModel? _trainer;
   List<PaymentModel> _payments = [];
+  List<BillModel> _bills = [];
   List<MembershipChangeLogModel> _planChangeLogs = [];
   List<TrainerChangeLogModel> _trainerChangeLogs = [];
 
@@ -82,6 +87,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     final member = await _memberRepo.getMemberById(widget.memberId);
     final membership = await _memberRepo.getLatestMembership(widget.memberId);
     final payments = await _paymentRepo.getPaymentsByMember(widget.memberId);
+    final bills = await _billRepo.getBillsByMember(widget.memberId);
 
     TrainerModel? trainer;
     if (membership?.trainerId != null && membership!.trainerId!.isNotEmpty) {
@@ -104,6 +110,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
         _plan = plan;
         _trainer = trainer;
         _payments = payments;
+        _bills = bills;
         _planChangeLogs = planLogs;
         _trainerChangeLogs = trainerLogs;
         _isLoading = false;
@@ -784,6 +791,89 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                 ),
                 const SizedBox(height: 20),
               ],
+
+              // Bills & Dues Section
+              const Text(
+                'BILLS & DUES',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
+              ),
+              const SizedBox(height: 8),
+
+              if (_bills.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.darkSurface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppTheme.darkBorder),
+                  ),
+                  child: const Center(
+                    child: Text('No bills raised yet', style: TextStyle(color: AppTheme.textMuted, fontSize: 13)),
+                  ),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _bills.length,
+                  itemBuilder: (context, index) {
+                    final bill = _bills[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkSurface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.darkBorder),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      '₹${bill.amount.toStringAsFixed(0)}',
+                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.neonLime),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    StatusBadge(status: bill.status),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Due ${dateFormat.format(bill.dueDate)} • ${bill.planName}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                ),
+                                Text(
+                                  'Bill: ${bill.billNumber}',
+                                  style: const TextStyle(fontSize: 11, color: AppTheme.textWhite, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.chevron_right_rounded, color: AppTheme.neonLime),
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => BillDetailScreen(bill: bill)),
+                              );
+                              if (mounted) _loadMemberData(showSpinner: false);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              const SizedBox(height: 20),
 
               // Payment History Section
               const Text(

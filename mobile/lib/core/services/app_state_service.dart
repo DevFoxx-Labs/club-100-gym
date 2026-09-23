@@ -5,6 +5,7 @@ enum AppStateEventType {
   gymInfoChanged,
   membersChanged,
   paymentsChanged,
+  billsChanged,
   trainersChanged,
   packagesChanged,
   eventsChanged,
@@ -43,6 +44,12 @@ class AppStateService extends ChangeNotifier {
 
   void notifyPaymentsChanged() {
     _lastEventType = AppStateEventType.paymentsChanged;
+    _lastUpdatedAt = DateTime.now();
+    notifyListeners();
+  }
+
+  void notifyBillsChanged() {
+    _lastEventType = AppStateEventType.billsChanged;
     _lastUpdatedAt = DateTime.now();
     notifyListeners();
   }

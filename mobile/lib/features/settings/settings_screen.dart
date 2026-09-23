@@ -9,6 +9,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../onboarding/welcome_screen.dart';
 import 'edit_gym_screen.dart';
+import 'payment_settings_screen.dart';
 import 'packages_and_plans_screen.dart';
 import 'archived_members_screen.dart';
 import 'notification_settings_screen.dart';
@@ -138,6 +139,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Events & Calendar',
                     subtitle: 'Gym events, challenges, and workshops',
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EventsCalendarScreen())),
+                  ),
+                  _SettingsTile(
+                    icon: Icons.qr_code_2_rounded,
+                    title: 'Payment Settings (UPI & Bank)',
+                    subtitle: 'Set UPI ID / bank details shown on bills',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PaymentSettingsScreen())),
                   ),
                   const SizedBox(height: 18),
 

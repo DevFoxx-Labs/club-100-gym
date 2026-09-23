@@ -117,5 +117,29 @@ class FormValidators {
     }
     return null;
   }
+
+  /// Validates a UPI VPA (Virtual Payment Address), e.g. `gymname@okhdfcbank`.
+  static String? validateUpiId(String? value, {bool required = false}) {
+    if (value == null || value.trim().isEmpty) {
+      return required ? 'UPI ID is required' : null;
+    }
+    final trimmed = value.trim();
+    if (!RegExp(r'^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$').hasMatch(trimmed)) {
+      return 'Enter a valid UPI ID (e.g. name@bank)';
+    }
+    return null;
+  }
+
+  /// Validates an Indian bank IFSC code, e.g. `HDFC0001234`.
+  static String? validateIfsc(String? value, {bool required = false}) {
+    if (value == null || value.trim().isEmpty) {
+      return required ? 'IFSC code is required' : null;
+    }
+    final trimmed = value.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$').hasMatch(trimmed)) {
+      return 'Enter a valid IFSC code (e.g. HDFC0001234)';
+    }
+    return null;
+  }
 }
 

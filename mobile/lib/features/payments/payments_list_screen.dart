@@ -4,6 +4,9 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/payment_model.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../core/services/app_state_service.dart';
+import '../bills/bills_list_screen.dart';
+import '../bills/select_member_for_bill_screen.dart';
+import '../receipts/qr_scanner_screen.dart';
 import '../receipts/receipt_preview_screen.dart';
 import 'select_member_for_payment_screen.dart';
 
@@ -14,7 +17,8 @@ class PaymentsListScreen extends StatefulWidget {
   State<PaymentsListScreen> createState() => _PaymentsListScreenState();
 }
 
-class _PaymentsListScreenState extends State<PaymentsListScreen> {
+class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
   final _paymentRepo = PaymentRepository();
   final _searchController = TextEditingController();
 
@@ -25,6 +29,8 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() => setState(() {}));
     _loadPayments();
     _searchController.addListener(_filterPayments);
     AppStateService.instance.addListener(_onAppStateChanged);
@@ -33,6 +39,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
   @override
   void dispose() {
     AppStateService.instance.removeListener(_onAppStateChanged);
+    _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -80,22 +87,69 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PAYMENT TRANSACTIONS'),
+        title: const Text('PAYMENTS & BILLS'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.qr_code_scanner_rounded, color: AppTheme.neonLime),
+            tooltip: 'Verify Payment Receipt',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const QrScannerScreen()),
+              );
+            },
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: AppTheme.neonLime,
+          labelColor: AppTheme.neonLime,
+          unselectedLabelColor: AppTheme.textMuted,
+          tabs: const [
+            Tab(text: 'PAYMENTS'),
+            Tab(text: 'BILLS & DUES'),
+          ],
+        ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SelectMemberForPaymentScreen()),
-          );
-        },
-        backgroundColor: AppTheme.neonLime,
-        foregroundColor: AppTheme.darkBackground,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('ADD PAYMENT', style: TextStyle(fontWeight: FontWeight.w800)),
-      ),
+      floatingActionButton: _tabController.index == 0
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SelectMemberForPaymentScreen()),
+                );
+              },
+              backgroundColor: AppTheme.neonLime,
+              foregroundColor: AppTheme.darkBackground,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('ADD PAYMENT', style: TextStyle(fontWeight: FontWeight.w800)),
+            )
+          : FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SelectMemberForBillScreen()),
+                );
+              },
+              backgroundColor: AppTheme.neonLime,
+              foregroundColor: AppTheme.darkBackground,
+              icon: const Icon(Icons.receipt_long_rounded),
+              label: const Text('GENERATE BILL', style: TextStyle(fontWeight: FontWeight.w800)),
+            ),
       body: SafeArea(
-        child: Column(
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildPaymentsTab(dateFormat, safeBottom),
+            const BillsListScreen(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentsTab(DateFormat dateFormat, double safeBottom) {
+    return Column(
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -237,9 +291,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> {
                         ),
             ),
           ],
-        ),
-      ),
-    );
+        );
   }
 }
 

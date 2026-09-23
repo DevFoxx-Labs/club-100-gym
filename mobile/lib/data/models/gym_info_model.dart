@@ -9,6 +9,14 @@ class GymInfoModel {
   final String? city;
   final String? logoPath;
   final String currency;
+  final String? upiId;
+  final String? upiPayeeName;
+  final String? bankAccountHolder;
+  final String? bankAccountNumber;
+  final String? bankIfsc;
+  final String? bankName;
+  final bool showUpiQrOnBill;
+  final bool showBankDetailsOnBill;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -23,9 +31,25 @@ class GymInfoModel {
     this.city,
     this.logoPath,
     required this.currency,
+    this.upiId,
+    this.upiPayeeName,
+    this.bankAccountHolder,
+    this.bankAccountNumber,
+    this.bankIfsc,
+    this.bankName,
+    this.showUpiQrOnBill = true,
+    this.showBankDetailsOnBill = true,
     required this.createdAt,
     required this.updatedAt,
   });
+
+  /// True once the admin has configured a usable UPI VPA to receive payments.
+  bool get hasUpiConfigured => upiId != null && upiId!.trim().isNotEmpty;
+
+  /// True once at least the account number and IFSC are configured for bank transfers.
+  bool get hasBankDetailsConfigured =>
+      (bankAccountNumber != null && bankAccountNumber!.trim().isNotEmpty) &&
+      (bankIfsc != null && bankIfsc!.trim().isNotEmpty);
 
   Map<String, dynamic> toMap() {
     return {
@@ -39,6 +63,14 @@ class GymInfoModel {
       'city': city,
       'logoPath': logoPath,
       'currency': currency,
+      'upiId': upiId,
+      'upiPayeeName': upiPayeeName,
+      'bankAccountHolder': bankAccountHolder,
+      'bankAccountNumber': bankAccountNumber,
+      'bankIfsc': bankIfsc,
+      'bankName': bankName,
+      'showUpiQrOnBill': showUpiQrOnBill ? 1 : 0,
+      'showBankDetailsOnBill': showBankDetailsOnBill ? 1 : 0,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -56,6 +88,14 @@ class GymInfoModel {
       city: map['city'] ?? '',
       logoPath: map['logoPath'],
       currency: map['currency'] ?? 'INR (₹)',
+      upiId: map['upiId'],
+      upiPayeeName: map['upiPayeeName'],
+      bankAccountHolder: map['bankAccountHolder'],
+      bankAccountNumber: map['bankAccountNumber'],
+      bankIfsc: map['bankIfsc'],
+      bankName: map['bankName'],
+      showUpiQrOnBill: (map['showUpiQrOnBill'] ?? 1) == 1,
+      showBankDetailsOnBill: (map['showBankDetailsOnBill'] ?? 1) == 1,
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
       updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : DateTime.now(),
     );
@@ -72,6 +112,14 @@ class GymInfoModel {
     String? city,
     String? logoPath,
     String? currency,
+    String? upiId,
+    String? upiPayeeName,
+    String? bankAccountHolder,
+    String? bankAccountNumber,
+    String? bankIfsc,
+    String? bankName,
+    bool? showUpiQrOnBill,
+    bool? showBankDetailsOnBill,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -86,6 +134,14 @@ class GymInfoModel {
       city: city ?? this.city,
       logoPath: logoPath ?? this.logoPath,
       currency: currency ?? this.currency,
+      upiId: upiId ?? this.upiId,
+      upiPayeeName: upiPayeeName ?? this.upiPayeeName,
+      bankAccountHolder: bankAccountHolder ?? this.bankAccountHolder,
+      bankAccountNumber: bankAccountNumber ?? this.bankAccountNumber,
+      bankIfsc: bankIfsc ?? this.bankIfsc,
+      bankName: bankName ?? this.bankName,
+      showUpiQrOnBill: showUpiQrOnBill ?? this.showUpiQrOnBill,
+      showBankDetailsOnBill: showBankDetailsOnBill ?? this.showBankDetailsOnBill,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
