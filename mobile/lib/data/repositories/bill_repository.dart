@@ -141,6 +141,17 @@ class BillRepository {
     );
   }
 
+  /// Permanently deletes a bill. Restricted to Cancelled bills so Paid/Pending/Overdue
+  /// bills — which represent real dues or payment history — can never be erased.
+  Future<void> deleteCancelledBill(String billId) async {
+    final db = await _db;
+    await db.delete(
+      'bills',
+      where: 'id = ? AND status = ?',
+      whereArgs: [billId, 'Cancelled'],
+    );
+  }
+
   Future<double> getTotalDueAmount() async {
     final db = await _db;
     final result = await db.rawQuery(

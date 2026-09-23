@@ -93,6 +93,23 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
     }
   }
 
+  Future<void> _deleteBill() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => const ConfirmationDialog(
+        title: 'Delete This Bill?',
+        message: 'This cancelled bill will be permanently deleted. This action cannot be undone.',
+        confirmText: 'Delete',
+        isDestructive: true,
+      ),
+    );
+    if (confirmed == true && mounted) {
+      await _billRepo.deleteCancelledBill(_bill.id);
+      AppStateService.instance.notifyBillsChanged();
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy');
@@ -120,6 +137,12 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
               icon: const Icon(Icons.cancel_outlined, color: AppTheme.statusOverdue),
               tooltip: 'Cancel Bill',
               onPressed: _cancelBill,
+            ),
+          if (_bill.isCancelled)
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, color: AppTheme.statusOverdue),
+              tooltip: 'Delete Bill',
+              onPressed: _deleteBill,
             ),
         ],
       ),

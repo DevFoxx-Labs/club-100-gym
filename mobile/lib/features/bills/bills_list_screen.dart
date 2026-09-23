@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/services/app_state_service.dart';
 import '../../data/models/bill_model.dart';
 import '../../data/repositories/bill_repository.dart';
+import '../../shared/widgets/confirmation_dialog.dart';
 import '../../shared/widgets/status_badge.dart';
 import 'bill_detail_screen.dart';
 
@@ -62,6 +63,11 @@ class _BillsListScreenState extends State<BillsListScreen> {
       });
       _applyFilters();
     }
+  }
+
+  Future<void> _deleteCancelledBill(BillModel bill) async {
+    await _billRepo.deleteCancelledBill(bill.id);
+    AppStateService.instance.notifyBillsChanged();
   }
 
   void _applyFilters() {
@@ -145,7 +151,7 @@ class _BillsListScreenState extends State<BillsListScreen> {
                       itemCount: _filteredBills.length,
                       itemBuilder: (context, index) {
                         final bill = _filteredBills[index];
-                        return Card(
+                        final card = Card(
                           margin: const EdgeInsets.only(bottom: 10),
                           child: ListTile(
                             onTap: () async {
@@ -194,6 +200,36 @@ class _BillsListScreenState extends State<BillsListScreen> {
                               style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 16),
                             ),
                           ),
+                        );
+
+                        if (!bill.isCancelled) return card;
+
+                        return Dismissible(
+                          key: ValueKey(bill.id),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.statusOverdue.withValues(alpha: 0.85),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+                          ),
+                          confirmDismiss: (direction) async {
+                            return await showDialog<bool>(
+                              context: context,
+                              builder: (ctx) => const ConfirmationDialog(
+                                title: 'Delete This Bill?',
+                                message: 'This cancelled bill will be permanently deleted. This action cannot be undone.',
+                                confirmText: 'Delete',
+                                isDestructive: true,
+                              ),
+                            );
+                          },
+                          onDismissed: (direction) => _deleteCancelledBill(bill),
+                          child: card,
                         );
                       },
                     ),
