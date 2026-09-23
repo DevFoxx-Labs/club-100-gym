@@ -131,6 +131,10 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                     const Divider(color: AppTheme.darkBorder, height: 24),
 
                     _RowInfo(label: 'Receipt Number', value: widget.receipt.receiptNumber),
+                    if (widget.receipt.billNumber != null && widget.receipt.billNumber!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _RowInfo(label: 'Bill Number', value: widget.receipt.billNumber!),
+                    ],
                     const SizedBox(height: 8),
                     _RowInfo(label: 'Member Name', value: widget.receipt.memberName),
                     const SizedBox(height: 8),

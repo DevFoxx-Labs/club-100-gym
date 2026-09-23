@@ -2,6 +2,7 @@ class ReceiptModel {
   final String id;
   final String paymentId;
   final String receiptNumber; // e.g. GYM-2026-00001
+  final String? billNumber; // e.g. BILL-2026-00001, when tied to a generated bill
   final String memberName;
   final String memberPhone;
   final String planName;
@@ -19,6 +20,7 @@ class ReceiptModel {
     required this.id,
     required this.paymentId,
     required this.receiptNumber,
+    this.billNumber,
     required this.memberName,
     required this.memberPhone,
     required this.planName,
@@ -38,6 +40,7 @@ class ReceiptModel {
       'id': id,
       'paymentId': paymentId,
       'receiptNumber': receiptNumber,
+      'billNumber': billNumber,
       'memberName': memberName,
       'memberPhone': memberPhone,
       'planName': planName,
@@ -58,6 +61,7 @@ class ReceiptModel {
       id: map['id'] ?? '',
       paymentId: map['paymentId'] ?? '',
       receiptNumber: map['receiptNumber'] ?? '',
+      billNumber: map['billNumber'],
       memberName: map['memberName'] ?? '',
       memberPhone: map['memberPhone'] ?? '',
       planName: map['planName'] ?? '',
@@ -77,6 +81,7 @@ class ReceiptModel {
     String? id,
     String? paymentId,
     String? receiptNumber,
+    String? billNumber,
     String? memberName,
     String? memberPhone,
     String? planName,
@@ -94,6 +99,7 @@ class ReceiptModel {
       id: id ?? this.id,
       paymentId: paymentId ?? this.paymentId,
       receiptNumber: receiptNumber ?? this.receiptNumber,
+      billNumber: billNumber ?? this.billNumber,
       memberName: memberName ?? this.memberName,
       memberPhone: memberPhone ?? this.memberPhone,
       planName: planName ?? this.planName,

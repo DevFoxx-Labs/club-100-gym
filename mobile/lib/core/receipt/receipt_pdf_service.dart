@@ -130,6 +130,10 @@ class ReceiptPdfService {
               pw.Text('Date: ${dateFormat.format(receipt.paymentDate)}', style: const pw.TextStyle(fontSize: 10)),
             ],
           ),
+          if (receipt.billNumber != null && receipt.billNumber!.trim().isNotEmpty) ...[
+            pw.SizedBox(height: 4),
+            pw.Text('Bill No: ${receipt.billNumber}', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+          ],
           pw.SizedBox(height: 10),
 
           // Member Details
@@ -307,6 +311,8 @@ class ReceiptPdfService {
         ThermalLayout.dashedDivider(),
 
         ThermalLayout.row('Receipt No', receipt.receiptNumber, fontSize: 8, bold: true),
+        if (receipt.billNumber != null && receipt.billNumber!.trim().isNotEmpty)
+          ThermalLayout.row('Bill No', receipt.billNumber!, fontSize: 8),
         ThermalLayout.row('Date', dateFormat.format(receipt.paymentDate), fontSize: 8),
         ThermalLayout.dashedDivider(),
 

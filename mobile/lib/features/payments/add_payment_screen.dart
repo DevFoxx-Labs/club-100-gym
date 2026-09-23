@@ -155,10 +155,17 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
       final amount = double.parse(_amountController.text.trim());
       final effectivePtFee = (_ptFee <= amount) ? _ptFee : amount;
 
+      // Resolve the bill being settled (explicit, or the oldest outstanding
+      // bill for this membership) up front so its number can be stamped on
+      // the receipt itself.
+      final targetBill = widget.bill ??
+          (widget.membership != null ? await _billRepo.getOldestDueBillForMembership(widget.membership!.id) : null);
+
       final receipt = ReceiptModel(
         id: receiptId,
         paymentId: paymentId,
         receiptNumber: _generatedReceiptNo,
+        billNumber: targetBill?.billNumber,
         memberName: widget.member.name,
         memberPhone: widget.member.phone,
         planName: widget.membership?.planName ?? tr('add_payment_monthly_membership'),
@@ -209,9 +216,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
 
       await _paymentRepo.addPayment(payment, finalReceipt);
 
-      // Settle the linked bill (explicit, or the oldest outstanding bill for this membership)
-      final targetBill = widget.bill ??
-          (widget.membership != null ? await _billRepo.getOldestDueBillForMembership(widget.membership!.id) : null);
+      // Settle the linked bill resolved above
       if (targetBill != null) {
         await _billRepo.markBillPaid(billId: targetBill.id, paymentId: paymentId, receiptId: receiptId);
         AppStateService.instance.notifyBillsChanged();

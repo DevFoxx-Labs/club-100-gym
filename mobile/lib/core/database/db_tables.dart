@@ -108,6 +108,7 @@ class DbTables {
       id TEXT PRIMARY KEY,
       paymentId TEXT NOT NULL,
       receiptNumber TEXT NOT NULL UNIQUE,
+      billNumber TEXT,
       memberName TEXT NOT NULL,
       memberPhone TEXT NOT NULL,
       planName TEXT NOT NULL,

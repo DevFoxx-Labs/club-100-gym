@@ -105,6 +105,11 @@ class AppDatabase {
       await db.execute('ALTER TABLE gym ADD COLUMN defaultPrintFormat TEXT;');
     } catch (_) {}
 
+    // Ensure receipts table has billNumber for receipts tied to a generated bill
+    try {
+      await db.execute('ALTER TABLE receipts ADD COLUMN billNumber TEXT;');
+    } catch (_) {}
+
     return db;
   }
 
