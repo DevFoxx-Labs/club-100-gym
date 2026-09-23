@@ -29,6 +29,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
 
   String? _logoPath;
   String _currency = 'INR (₹)';
+  GymInfoModel? _gymInfo;
   bool _isLoading = true;
 
   @override
@@ -70,6 +71,7 @@ class _EditGymScreenState extends State<EditGymScreen> {
         _cityController.text = gym.city ?? '';
         _currency = gym.currency;
         _logoPath = gym.logoPath;
+        _gymInfo = gym;
         _isLoading = false;
       });
     }
@@ -79,6 +81,9 @@ class _EditGymScreenState extends State<EditGymScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
+    // Preserve fields managed by other settings screens (UPI/bank/print format)
+    // that this form doesn't expose, instead of resetting them to their defaults.
+    final existing = _gymInfo;
     final info = GymInfoModel(
       id: 'default',
       name: _nameController.text.trim(),
@@ -90,7 +95,16 @@ class _EditGymScreenState extends State<EditGymScreen> {
       city: _cityController.text.trim().isNotEmpty ? _cityController.text.trim() : null,
       logoPath: _logoPath,
       currency: _currency,
-      createdAt: DateTime.now(),
+      upiId: existing?.upiId,
+      upiPayeeName: existing?.upiPayeeName,
+      bankAccountHolder: existing?.bankAccountHolder,
+      bankAccountNumber: existing?.bankAccountNumber,
+      bankIfsc: existing?.bankIfsc,
+      bankName: existing?.bankName,
+      showUpiQrOnBill: existing?.showUpiQrOnBill ?? true,
+      showBankDetailsOnBill: existing?.showBankDetailsOnBill ?? true,
+      defaultPrintFormat: existing?.defaultPrintFormat,
+      createdAt: existing?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
 
