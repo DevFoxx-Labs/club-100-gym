@@ -97,7 +97,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd MMM yyyy');
     final gym = _gymInfo;
-    final showUpi = gym != null && gym.showUpiQrOnBill && gym.hasUpiConfigured && _bill.isDue;
+    final showUpi = gym != null && gym.showUpiQrOnBill && gym.hasUpiConfigured;
     final showBank = gym != null && gym.showBankDetailsOnBill && gym.hasBankDetailsConfigured;
 
     String? upiUri;

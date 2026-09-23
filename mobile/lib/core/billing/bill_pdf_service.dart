@@ -14,7 +14,7 @@ class BillPdfService {
   }) async {
     final pdf = pw.Document();
     final dateFormat = DateFormat('dd MMM yyyy');
-    final showUpi = gymInfo.showUpiQrOnBill && gymInfo.hasUpiConfigured && bill.isDue;
+    final showUpi = gymInfo.showUpiQrOnBill && gymInfo.hasUpiConfigured;
     final showBank = gymInfo.showBankDetailsOnBill && gymInfo.hasBankDetailsConfigured;
 
     String? upiUri;
