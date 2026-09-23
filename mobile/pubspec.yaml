@@ -84,6 +84,14 @@ flutter:
     - assets/
     - assets/images/
     - assets/images/gymyard/
+    - assets/fonts/
+
+  fonts:
+    - family: Hind
+      fonts:
+        - asset: assets/fonts/Hind-Regular.ttf
+        - asset: assets/fonts/Hind-Bold.ttf
+          weight: 700
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

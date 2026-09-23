@@ -12,6 +12,7 @@ import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../shared/widgets/print_format_sheet.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../payments/add_payment_screen.dart';
 
@@ -284,9 +285,11 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                             text: 'Print Bill',
                             icon: Icons.print_rounded,
                             isSecondary: true,
-                            onPressed: () {
-                              if (_gymInfo != null) {
-                                BillPdfService.printBill(bill: _bill, gymInfo: _gymInfo!);
+                            onPressed: () async {
+                              if (_gymInfo == null) return;
+                              final format = await showPrintFormatSheet(context);
+                              if (format != null && mounted) {
+                                BillPdfService.printBill(bill: _bill, gymInfo: _gymInfo!, format: format);
                               }
                             },
                           ),
@@ -297,9 +300,11 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                             text: 'Share PDF',
                             icon: Icons.share_rounded,
                             isSecondary: true,
-                            onPressed: () {
-                              if (_gymInfo != null) {
-                                BillPdfService.shareBill(bill: _bill, gymInfo: _gymInfo!);
+                            onPressed: () async {
+                              if (_gymInfo == null) return;
+                              final format = await showPrintFormatSheet(context);
+                              if (format != null && mounted) {
+                                BillPdfService.shareBill(bill: _bill, gymInfo: _gymInfo!, format: format);
                               }
                             },
                           ),

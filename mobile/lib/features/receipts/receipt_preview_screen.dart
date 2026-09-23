@@ -7,6 +7,7 @@ import '../../data/models/gym_info_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/neon_button.dart';
 import '../../shared/widgets/gym_logo_view.dart';
+import '../../shared/widgets/print_format_sheet.dart';
 import 'qr_scanner_screen.dart';
 
 class ReceiptPreviewScreen extends StatefulWidget {
@@ -195,9 +196,11 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                     child: NeonButton(
                       text: 'Print Receipt',
                       icon: Icons.print_rounded,
-                      onPressed: () {
-                        if (_gymInfo != null) {
-                          ReceiptPdfService.printReceipt(receipt: widget.receipt, gymInfo: _gymInfo!);
+                      onPressed: () async {
+                        if (_gymInfo == null) return;
+                        final format = await showPrintFormatSheet(context);
+                        if (format != null && mounted) {
+                          ReceiptPdfService.printReceipt(receipt: widget.receipt, gymInfo: _gymInfo!, format: format);
                         }
                       },
                     ),
@@ -208,9 +211,11 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                       text: 'Share PDF',
                       icon: Icons.share_rounded,
                       isSecondary: true,
-                      onPressed: () {
-                        if (_gymInfo != null) {
-                          ReceiptPdfService.shareReceipt(receipt: widget.receipt, gymInfo: _gymInfo!);
+                      onPressed: () async {
+                        if (_gymInfo == null) return;
+                        final format = await showPrintFormatSheet(context);
+                        if (format != null && mounted) {
+                          ReceiptPdfService.shareReceipt(receipt: widget.receipt, gymInfo: _gymInfo!, format: format);
                         }
                       },
                     ),
