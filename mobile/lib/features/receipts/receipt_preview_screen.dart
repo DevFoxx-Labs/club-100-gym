@@ -198,7 +198,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                       icon: Icons.print_rounded,
                       onPressed: () async {
                         if (_gymInfo == null) return;
-                        final format = await showPrintFormatSheet(context);
+                        final format = await resolvePrintFormat(context, _gymInfo!);
                         if (format != null && mounted) {
                           ReceiptPdfService.printReceipt(receipt: widget.receipt, gymInfo: _gymInfo!, format: format);
                         }
@@ -213,7 +213,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                       isSecondary: true,
                       onPressed: () async {
                         if (_gymInfo == null) return;
-                        final format = await showPrintFormatSheet(context);
+                        final format = await resolvePrintFormat(context, _gymInfo!);
                         if (format != null && mounted) {
                           ReceiptPdfService.shareReceipt(receipt: widget.receipt, gymInfo: _gymInfo!, format: format);
                         }

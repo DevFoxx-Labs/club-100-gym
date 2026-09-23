@@ -19,6 +19,7 @@ class DbTables {
       bankName TEXT,
       showUpiQrOnBill INTEGER DEFAULT 1,
       showBankDetailsOnBill INTEGER DEFAULT 1,
+      defaultPrintFormat TEXT,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL
     );

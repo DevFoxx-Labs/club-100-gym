@@ -10,6 +10,7 @@ import '../../shared/widgets/confirmation_dialog.dart';
 import '../onboarding/welcome_screen.dart';
 import 'edit_gym_screen.dart';
 import 'payment_settings_screen.dart';
+import 'print_format_settings_screen.dart';
 import 'packages_and_plans_screen.dart';
 import 'archived_members_screen.dart';
 import 'notification_settings_screen.dart';
@@ -145,6 +146,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Payment Settings (UPI & Bank)',
                     subtitle: 'Set UPI ID / bank details shown on bills',
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PaymentSettingsScreen())),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Printing Section
+                  const _SectionHeader(title: 'PRINTING'),
+                  _SettingsTile(
+                    icon: Icons.print_rounded,
+                    title: 'Print Format',
+                    subtitle: 'Set a default paper size so you never need to pick one on print/share',
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PrintFormatSettingsScreen())),
                   ),
                   const SizedBox(height: 18),
 

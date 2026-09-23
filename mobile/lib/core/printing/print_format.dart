@@ -42,3 +42,13 @@ extension PrintFormatX on PrintFormat {
         PrintFormat.a4 => PdfPageFormat.a4,
       };
 }
+
+/// Looks up a [PrintFormat] by its enum name (as persisted in gym settings),
+/// returning null if [name] is null/blank or unrecognized.
+PrintFormat? printFormatFromName(String? name) {
+  if (name == null || name.trim().isEmpty) return null;
+  for (final format in PrintFormat.values) {
+    if (format.name == name) return format;
+  }
+  return null;
+}

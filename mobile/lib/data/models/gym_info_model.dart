@@ -17,6 +17,10 @@ class GymInfoModel {
   final String? bankName;
   final bool showUpiQrOnBill;
   final bool showBankDetailsOnBill;
+
+  /// Name of the [PrintFormat] enum value to use by default when printing/sharing
+  /// bills and receipts (e.g. 'thermal58', 'a5'). Null means "always ask".
+  final String? defaultPrintFormat;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -39,6 +43,7 @@ class GymInfoModel {
     this.bankName,
     this.showUpiQrOnBill = true,
     this.showBankDetailsOnBill = true,
+    this.defaultPrintFormat,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -71,6 +76,7 @@ class GymInfoModel {
       'bankName': bankName,
       'showUpiQrOnBill': showUpiQrOnBill ? 1 : 0,
       'showBankDetailsOnBill': showBankDetailsOnBill ? 1 : 0,
+      'defaultPrintFormat': defaultPrintFormat,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -96,6 +102,7 @@ class GymInfoModel {
       bankName: map['bankName'],
       showUpiQrOnBill: (map['showUpiQrOnBill'] ?? 1) == 1,
       showBankDetailsOnBill: (map['showBankDetailsOnBill'] ?? 1) == 1,
+      defaultPrintFormat: map['defaultPrintFormat'],
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
       updatedAt: map['updatedAt'] != null ? DateTime.parse(map['updatedAt']) : DateTime.now(),
     );
@@ -120,6 +127,8 @@ class GymInfoModel {
     String? bankName,
     bool? showUpiQrOnBill,
     bool? showBankDetailsOnBill,
+    String? defaultPrintFormat,
+    bool clearDefaultPrintFormat = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -142,6 +151,7 @@ class GymInfoModel {
       bankName: bankName ?? this.bankName,
       showUpiQrOnBill: showUpiQrOnBill ?? this.showUpiQrOnBill,
       showBankDetailsOnBill: showBankDetailsOnBill ?? this.showBankDetailsOnBill,
+      defaultPrintFormat: clearDefaultPrintFormat ? null : (defaultPrintFormat ?? this.defaultPrintFormat),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

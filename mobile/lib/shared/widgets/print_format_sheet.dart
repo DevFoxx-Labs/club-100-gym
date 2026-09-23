@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../core/printing/print_format.dart';
 import '../../core/theme/app_theme.dart';
+import '../../data/models/gym_info_model.dart';
+
+/// Resolves which [PrintFormat] to use for printing/sharing: if the admin has
+/// configured a default paper format in settings, it's used directly and the
+/// picker sheet is skipped. Otherwise falls back to [showPrintFormatSheet].
+Future<PrintFormat?> resolvePrintFormat(BuildContext context, GymInfoModel gymInfo) {
+  final defaultFormat = printFormatFromName(gymInfo.defaultPrintFormat);
+  if (defaultFormat != null) return Future.value(defaultFormat);
+  return showPrintFormatSheet(context);
+}
 
 /// Bottom sheet letting the admin pick a paper format before printing/sharing
 /// a bill or receipt: 58mm/80mm thermal roll, or A5/A4 document.

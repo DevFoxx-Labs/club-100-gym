@@ -293,7 +293,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                             isSecondary: true,
                             onPressed: () async {
                               if (_gymInfo == null) return;
-                              final format = await showPrintFormatSheet(context);
+                              final format = await resolvePrintFormat(context, _gymInfo!);
                               if (format != null && mounted) {
                                 BillPdfService.printBill(
                                   bill: _bill,
@@ -314,7 +314,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                             isSecondary: true,
                             onPressed: () async {
                               if (_gymInfo == null) return;
-                              final format = await showPrintFormatSheet(context);
+                              final format = await resolvePrintFormat(context, _gymInfo!);
                               if (format != null && mounted) {
                                 BillPdfService.shareBill(
                                   bill: _bill,

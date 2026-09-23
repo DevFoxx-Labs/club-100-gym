@@ -100,6 +100,11 @@ class AppDatabase {
       await db.execute(DbTables.bills);
     } catch (_) {}
 
+    // Ensure gym table has defaultPrintFormat for remembering the preferred paper size
+    try {
+      await db.execute('ALTER TABLE gym ADD COLUMN defaultPrintFormat TEXT;');
+    } catch (_) {}
+
     return db;
   }
 
