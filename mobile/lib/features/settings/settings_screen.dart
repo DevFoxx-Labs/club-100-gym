@@ -4,10 +4,13 @@ import '../../core/theme/app_theme.dart';
 import '../../core/database/app_database.dart';
 import '../../core/security/security_service.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/sync/data_mode.dart';
+import '../../core/sync/data_mode_service.dart';
 import '../../data/models/admin_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../onboarding/welcome_screen.dart';
+import 'data_connection_screen.dart';
 import 'edit_gym_screen.dart';
 import 'payment_settings_screen.dart';
 import 'print_format_settings_screen.dart';
@@ -31,6 +34,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final _settingsRepo = SettingsRepository();
   AdminModel? _admin;
+  DataMode _dataMode = DataMode.offline;
   bool _isLoading = true;
 
   @override
@@ -55,10 +59,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadSettings() async {
     setState(() => _isLoading = true);
     final admin = await _settingsRepo.getAdminInfo();
+    final mode = await DataModeService.instance.getMode();
 
     if (mounted) {
       setState(() {
         _admin = admin;
+        _dataMode = mode;
         _isLoading = false;
       });
     }
@@ -219,6 +225,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: 'Export / Restore Backup',
                     subtitle: 'Encrypted .gymbackup file export & import',
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const BackupScreen())),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Data & Sync Section
+                  const _SectionHeader(title: 'DATA STORAGE & SYNC'),
+                  _SettingsTile(
+                    icon: _dataMode == DataMode.online ? Icons.cloud_rounded : Icons.smartphone_rounded,
+                    title: 'Data Storage Mode',
+                    subtitle: _dataMode == DataMode.online
+                        ? 'Online — using your MongoDB cluster'
+                        : 'Offline — using local device storage (default)',
+                    onTap: () async {
+                      await Navigator.push(context, MaterialPageRoute(builder: (context) => const DataConnectionScreen()));
+                      _loadSettings();
+                    },
                   ),
                   const SizedBox(height: 18),
 
