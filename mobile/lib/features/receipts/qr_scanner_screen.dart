@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/receipt/qr_service.dart';
+import '../../data/repositories/payment_repository.dart';
+
+enum _VerifyOutcome { valid, notFound, invalid }
 
 class QrScannerScreen extends StatefulWidget {
   const QrScannerScreen({super.key});
@@ -12,6 +15,7 @@ class QrScannerScreen extends StatefulWidget {
 
 class _QrScannerScreenState extends State<QrScannerScreen> {
   final MobileScannerController _controller = MobileScannerController();
+  final _paymentRepo = PaymentRepository();
   bool _isScanned = false;
 
   void _onDetect(BarcodeCapture capture) {
@@ -26,8 +30,25 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     }
   }
 
-  void _verifyPayload(String rawPayload) {
+  Future<void> _verifyPayload(String rawPayload) async {
     final result = QrService.verifyQrPayload(rawPayload);
+
+    // A matching signature only proves the QR content wasn't tampered with —
+    // it says nothing about whether the receipt still exists on this device.
+    // Since the signing secret is baked into every install, a receipt QR from
+    // any copy of the app (including one wiped/reinstalled) would otherwise
+    // "verify" forever. Cross-check against the local receipts table too.
+    var outcome = _VerifyOutcome.invalid;
+    if (result != null) {
+      final recNo = result['recNo'] as String?;
+      final receipt = recNo != null ? await _paymentRepo.getReceiptByNumber(recNo) : null;
+      final matches = receipt != null &&
+          receipt.memberName == result['member'] &&
+          receipt.amount == (result['amount'] as num).toDouble();
+      outcome = matches ? _VerifyOutcome.valid : _VerifyOutcome.notFound;
+    }
+
+    if (!mounted) return;
 
     showDialog(
       context: context,
@@ -36,35 +57,45 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         title: Row(
           children: [
             Icon(
-              result != null ? Icons.verified_rounded : Icons.error_rounded,
-              color: result != null ? AppTheme.neonLime : AppTheme.statusOverdue,
+              outcome == _VerifyOutcome.valid ? Icons.verified_rounded : Icons.error_rounded,
+              color: outcome == _VerifyOutcome.valid ? AppTheme.neonLime : AppTheme.statusOverdue,
             ),
             const SizedBox(width: 10),
-            Text(
-              result != null ? 'VALID RECEIPT ✓' : 'INVALID / TAMPERED',
-              style: TextStyle(
-                color: result != null ? AppTheme.neonLime : AppTheme.statusOverdue,
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
+            Expanded(
+              child: Text(
+                switch (outcome) {
+                  _VerifyOutcome.valid => 'VALID RECEIPT ✓',
+                  _VerifyOutcome.notFound => 'NOT FOUND IN SYSTEM',
+                  _VerifyOutcome.invalid => 'INVALID / TAMPERED',
+                },
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: outcome == _VerifyOutcome.valid ? AppTheme.neonLime : AppTheme.statusOverdue,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
               ),
             ),
           ],
         ),
-        content: result != null
+        content: outcome == _VerifyOutcome.valid
             ? Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Receipt No: ${result['recNo']}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textWhite)),
+                  Text('Receipt No: ${result!['recNo']}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.textWhite)),
                   Text('Member: ${result['member']}', style: const TextStyle(color: AppTheme.textWhite)),
                   Text('Amount: ₹${result['amount']}', style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold)),
                   Text('Plan: ${result['plan']}', style: const TextStyle(color: AppTheme.textMuted)),
                   Text('Date: ${result['date']}', style: const TextStyle(color: AppTheme.textMuted)),
                 ],
               )
-            : const Text(
-                'This QR signature could not be verified. The receipt data may have been altered or generated outside Elite Fitness Gym.',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+            : Text(
+                outcome == _VerifyOutcome.notFound
+                    ? 'This receipt\'s signature is genuine, but no matching record exists in this app\'s current data. It may have been deleted, or the app data was reset/reinstalled since this receipt was generated.'
+                    : 'This QR signature could not be verified. The receipt data may have been altered or generated outside Elite Fitness Gym.',
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
               ),
         actions: [
           ElevatedButton(
