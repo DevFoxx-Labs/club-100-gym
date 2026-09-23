@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../data/models/bill_model.dart';
 import '../../data/models/gym_info_model.dart';
+import '../printing/pdf_filename.dart';
 import '../printing/pdf_theme_service.dart';
 import '../printing/print_format.dart';
 import '../printing/thermal_layout.dart';
@@ -285,15 +286,31 @@ class BillPdfService {
     );
   }
 
+  /// Builds the share/print file name using the member name and the actual
+  /// plan period (e.g. "Bill-Rahul_Sharma-Sep-Oct-2026" for a monthly plan,
+  /// "Bill-Rahul_Sharma-Sep-Dec-2026" for a quarterly one). Falls back to the
+  /// bill/due dates when the membership's real period isn't available.
+  static String _fileName({
+    required BillModel bill,
+    DateTime? periodStart,
+    DateTime? periodEnd,
+  }) {
+    final start = periodStart ?? (bill.billDate.isBefore(bill.dueDate) ? bill.billDate : bill.dueDate);
+    final end = periodEnd ?? (bill.billDate.isBefore(bill.dueDate) ? bill.dueDate : bill.billDate);
+    return PdfFileName.build(prefix: 'Bill', memberName: bill.memberName, periodStart: start, periodEnd: end);
+  }
+
   static Future<void> printBill({
     required BillModel bill,
     required GymInfoModel gymInfo,
     PrintFormat format = PrintFormat.a5,
+    DateTime? periodStart,
+    DateTime? periodEnd,
   }) async {
     final pdfBytes = await generateBillPdf(bill: bill, gymInfo: gymInfo, format: format);
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat _) async => pdfBytes,
-      name: 'Bill_${bill.billNumber}',
+      name: _fileName(bill: bill, periodStart: periodStart, periodEnd: periodEnd),
       format: format.pdfPageFormat,
       dynamicLayout: false,
       forceCustomPrintPaper: format.isThermal,
@@ -304,8 +321,13 @@ class BillPdfService {
     required BillModel bill,
     required GymInfoModel gymInfo,
     PrintFormat format = PrintFormat.a5,
+    DateTime? periodStart,
+    DateTime? periodEnd,
   }) async {
     final pdfBytes = await generateBillPdf(bill: bill, gymInfo: gymInfo, format: format);
-    await Printing.sharePdf(bytes: pdfBytes, filename: 'Bill_${bill.billNumber}.pdf');
+    await Printing.sharePdf(
+      bytes: pdfBytes,
+      filename: '${_fileName(bill: bill, periodStart: periodStart, periodEnd: periodEnd)}.pdf',
+    );
   }
 }

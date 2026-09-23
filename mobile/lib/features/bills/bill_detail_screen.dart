@@ -32,6 +32,8 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
 
   late BillModel _bill;
   GymInfoModel? _gymInfo;
+  DateTime? _periodStart;
+  DateTime? _periodEnd;
   bool _isLoading = true;
   bool _isRecordingPayment = false;
 
@@ -45,10 +47,14 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
   Future<void> _loadData() async {
     final gym = await _settingsRepo.getGymInfo();
     final latestBill = await _billRepo.getBillById(_bill.id);
+    final bill = latestBill ?? _bill;
+    final membership = bill.membershipId != null ? await _memberRepo.getMembershipById(bill.membershipId!) : null;
     if (mounted) {
       setState(() {
         _gymInfo = gym;
-        if (latestBill != null) _bill = latestBill;
+        _bill = bill;
+        _periodStart = membership?.startDate;
+        _periodEnd = membership?.endDate;
         _isLoading = false;
       });
     }
@@ -289,7 +295,13 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                               if (_gymInfo == null) return;
                               final format = await showPrintFormatSheet(context);
                               if (format != null && mounted) {
-                                BillPdfService.printBill(bill: _bill, gymInfo: _gymInfo!, format: format);
+                                BillPdfService.printBill(
+                                  bill: _bill,
+                                  gymInfo: _gymInfo!,
+                                  format: format,
+                                  periodStart: _periodStart,
+                                  periodEnd: _periodEnd,
+                                );
                               }
                             },
                           ),
@@ -304,7 +316,13 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                               if (_gymInfo == null) return;
                               final format = await showPrintFormatSheet(context);
                               if (format != null && mounted) {
-                                BillPdfService.shareBill(bill: _bill, gymInfo: _gymInfo!, format: format);
+                                BillPdfService.shareBill(
+                                  bill: _bill,
+                                  gymInfo: _gymInfo!,
+                                  format: format,
+                                  periodStart: _periodStart,
+                                  periodEnd: _periodEnd,
+                                );
                               }
                             },
                           ),

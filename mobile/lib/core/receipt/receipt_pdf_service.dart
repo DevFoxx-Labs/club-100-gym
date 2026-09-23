@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../data/models/receipt_model.dart';
 import '../../data/models/gym_info_model.dart';
+import '../printing/pdf_filename.dart';
 import '../printing/pdf_theme_service.dart';
 import '../printing/print_format.dart';
 import '../printing/thermal_layout.dart';
@@ -307,6 +308,15 @@ class ReceiptPdfService {
     );
   }
 
+  static String _fileName(ReceiptModel receipt) {
+    return PdfFileName.build(
+      prefix: 'Receipt',
+      memberName: receipt.memberName,
+      periodStart: receipt.startDate,
+      periodEnd: receipt.endDate,
+    );
+  }
+
   static Future<void> printReceipt({
     required ReceiptModel receipt,
     required GymInfoModel gymInfo,
@@ -315,7 +325,7 @@ class ReceiptPdfService {
     final pdfBytes = await generateReceiptPdf(receipt: receipt, gymInfo: gymInfo, format: format);
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat _) async => pdfBytes,
-      name: 'Receipt_${receipt.receiptNumber}',
+      name: _fileName(receipt),
       format: format.pdfPageFormat,
       dynamicLayout: false,
       forceCustomPrintPaper: format.isThermal,
@@ -330,7 +340,7 @@ class ReceiptPdfService {
     final pdfBytes = await generateReceiptPdf(receipt: receipt, gymInfo: gymInfo, format: format);
     await Printing.sharePdf(
       bytes: pdfBytes,
-      filename: 'Receipt_${receipt.receiptNumber}.pdf',
+      filename: '${_fileName(receipt)}.pdf',
     );
   }
 }
