@@ -1,6 +1,8 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/database/app_database.dart';
+import '../../core/sync/data_mode_service.dart';
+import '../../core/sync/mongo_collection_store.dart';
 import '../models/notification_model.dart';
 import '../../core/services/app_state_service.dart';
 
@@ -12,6 +14,12 @@ class NotificationRepository {
   }
 
   Future<List<NotificationItemModel>> getAllNotifications({int limit = 100}) async {
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('notifications');
+      final list = docs.map((m) => NotificationItemModel.fromMap(m)).toList();
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list.take(limit).toList();
+    }
     final db = await _db;
     final List<Map<String, dynamic>> maps = await db.query(
       'notifications',
@@ -22,20 +30,28 @@ class NotificationRepository {
   }
 
   Future<void> insertNotification(NotificationItemModel notification) async {
-    final db = await _db;
-    await db.insert(
-      'notifications',
-      notification.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.upsert('notifications', 'id', notification.toMap());
+    } else {
+      final db = await _db;
+      await db.insert(
+        'notifications',
+        notification.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
     AppStateService.instance.notifyNotificationsChanged();
   }
 
   /// Checks if a reminder key was dismissed by the user today to prevent resurfacing on resume.
   Future<bool> isDismissedToday(String key, {DateTime? date}) async {
     try {
-      final db = await _db;
       final dateKey = _formatDateKey(date ?? DateTime.now());
+      if (await DataModeService.instance.isOnline) {
+        final doc = await MongoCollectionStore.findById('dismissed_notifications', key);
+        return doc != null && doc['dismissedDate'] == dateKey;
+      }
+      final db = await _db;
       final res = await db.query(
         'dismissed_notifications',
         where: 'dismissKey = ? AND dismissedDate = ?',
@@ -51,8 +67,16 @@ class NotificationRepository {
   /// Marks a reminder key as dismissed today.
   Future<void> recordDismissal(String key, {DateTime? date}) async {
     try {
-      final db = await _db;
       final dateKey = _formatDateKey(date ?? DateTime.now());
+      if (await DataModeService.instance.isOnline) {
+        await MongoCollectionStore.upsert(
+          'dismissed_notifications',
+          'dismissKey',
+          {'dismissKey': key, 'dismissedDate': dateKey},
+        );
+        return;
+      }
+      final db = await _db;
       await db.insert(
         'dismissed_notifications',
         {
@@ -70,16 +94,26 @@ class NotificationRepository {
     required String type,
     required DateTime scheduledAt,
   }) async {
-    final db = await _db;
-    final start = DateTime(scheduledAt.year, scheduledAt.month, scheduledAt.day).toIso8601String();
-    final end = DateTime(scheduledAt.year, scheduledAt.month, scheduledAt.day)
-        .add(const Duration(days: 1))
-        .toIso8601String();
+    final start = DateTime(scheduledAt.year, scheduledAt.month, scheduledAt.day);
+    final end = start.add(const Duration(days: 1));
 
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('notifications');
+      for (final doc in docs) {
+        if (doc['memberId'] != memberId || doc['type'] != type) continue;
+        final scheduled = DateTime.tryParse(doc['scheduledAt'] as String? ?? '');
+        if (scheduled != null && !scheduled.isBefore(start) && scheduled.isBefore(end)) {
+          return NotificationItemModel.fromMap(doc);
+        }
+      }
+      return null;
+    }
+
+    final db = await _db;
     final List<Map<String, dynamic>> maps = await db.query(
       'notifications',
       where: 'memberId = ? AND type = ? AND scheduledAt >= ? AND scheduledAt < ?',
-      whereArgs: [memberId, type, start, end],
+      whereArgs: [memberId, type, start.toIso8601String(), end.toIso8601String()],
       limit: 1,
     );
 
@@ -131,6 +165,10 @@ class NotificationRepository {
   }
 
   Future<int> getUnreadCount() async {
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('notifications');
+      return docs.where((m) => (m['isRead'] ?? 0) == 0).length;
+    }
     final db = await _db;
     final result = await db.rawQuery('SELECT COUNT(*) as count FROM notifications WHERE isRead = 0');
     if (result.isNotEmpty && result.first['count'] != null) {
@@ -140,29 +178,43 @@ class NotificationRepository {
   }
 
   Future<void> markAsRead(String id) async {
-    final db = await _db;
-    await db.update(
-      'notifications',
-      {'isRead': 1},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.updateFields('notifications', id, {'isRead': 1});
+    } else {
+      final db = await _db;
+      await db.update(
+        'notifications',
+        {'isRead': 1},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    }
     AppStateService.instance.notifyNotificationsChanged();
   }
 
   Future<void> markAllAsRead() async {
-    final db = await _db;
-    await db.update('notifications', {'isRead': 1});
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.updateWhere('notifications', (m) => true, {'isRead': 1});
+    } else {
+      final db = await _db;
+      await db.update('notifications', {'isRead': 1});
+    }
     AppStateService.instance.notifyNotificationsChanged();
   }
 
   Future<void> deleteNotification(String id) async {
-    final db = await _db;
     // Look up notification to record tombstone dismissal
     try {
-      final rows = await db.query('notifications', where: 'id = ?', whereArgs: [id], limit: 1);
-      if (rows.isNotEmpty) {
-        final notif = NotificationItemModel.fromMap(rows.first);
+      NotificationItemModel? notif;
+      if (await DataModeService.instance.isOnline) {
+        final doc = await MongoCollectionStore.findById('notifications', id);
+        notif = doc == null ? null : NotificationItemModel.fromMap(doc);
+      } else {
+        final db = await _db;
+        final rows = await db.query('notifications', where: 'id = ?', whereArgs: [id], limit: 1);
+        notif = rows.isNotEmpty ? NotificationItemModel.fromMap(rows.first) : null;
+      }
+      if (notif != null) {
         if (notif.memberId != null) {
           await recordDismissal('${notif.memberId}:${notif.type}', date: notif.scheduledAt);
         } else {
@@ -171,12 +223,16 @@ class NotificationRepository {
       }
     } catch (_) {}
 
-    await db.delete('notifications', where: 'id = ?', whereArgs: [id]);
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.deleteById('notifications', id);
+    } else {
+      final db = await _db;
+      await db.delete('notifications', where: 'id = ?', whereArgs: [id]);
+    }
     AppStateService.instance.notifyNotificationsChanged();
   }
 
   Future<void> clearAll() async {
-    final db = await _db;
     try {
       // Record dismissal for all existing notifications so daily scan doesn't recreate them today
       final all = await getAllNotifications();
@@ -189,7 +245,12 @@ class NotificationRepository {
       }
     } catch (_) {}
 
-    await db.delete('notifications');
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.deleteAll('notifications');
+    } else {
+      final db = await _db;
+      await db.delete('notifications');
+    }
     AppStateService.instance.notifyNotificationsChanged();
   }
 }

@@ -26,6 +26,10 @@ class DataModeService {
     return DataMode.fromStorageValue(value);
   }
 
+  /// Convenience check used at the top of every repository method to decide
+  /// whether to route to the MongoDB (Online) or SQLite (Offline) code path.
+  Future<bool> get isOnline async => (await getMode()) == DataMode.online;
+
   Future<void> setMode(DataMode mode) async {
     await _storage.write(key: _modeKey, value: mode.toStorageValue());
   }

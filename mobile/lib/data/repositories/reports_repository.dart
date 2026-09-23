@@ -1,5 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
+import '../../core/sync/data_mode_service.dart';
+import '../../core/sync/mongo_collection_store.dart';
 
 /// A single aggregated data point for a given period (start-of-month or start-of-year).
 class PeriodValue {
@@ -13,10 +15,10 @@ class PeriodValue {
 enum ReportGranularity { monthly, yearly }
 
 /// Aggregates income (payments), expenses, and member-growth data for the
-/// Reports & Analytics dashboard. All heavy lifting (grouping/summing) is
-/// pushed down to SQLite via strftime() grouping for performance, then the
-/// Dart layer fills in any periods with no activity as zero so chart axes
-/// are always contiguous.
+/// Reports & Analytics dashboard. Offline mode pushes the grouping/summing
+/// down to SQLite via strftime(); Online (MongoDB) mode replicates the exact
+/// same period-bucketing logic in Dart over the fetched collections, since
+/// MongoDB has no equivalent of strftime() grouping here.
 class ReportsRepository {
   Future<Database> get _db async => await AppDatabase.instance.database;
 
@@ -70,17 +72,55 @@ class ReportsRepository {
     return map;
   }
 
+  Map<String, double> _sumGroupedByMonthFromDocs(List<Map<String, dynamic>> docs, String dateColumn) {
+    final map = <String, double>{};
+    for (final doc in docs) {
+      final dateStr = doc[dateColumn] as String?;
+      if (dateStr == null || dateStr.length < 7) continue;
+      final period = dateStr.substring(0, 7);
+      map[period] = (map[period] ?? 0.0) + ((doc['amount'] as num?)?.toDouble() ?? 0.0);
+    }
+    return map;
+  }
+
+  Map<String, double> _sumGroupedByYearFromDocs(List<Map<String, dynamic>> docs, String dateColumn) {
+    final map = <String, double>{};
+    for (final doc in docs) {
+      final dateStr = doc[dateColumn] as String?;
+      if (dateStr == null || dateStr.length < 4) continue;
+      final period = dateStr.substring(0, 4);
+      map[period] = (map[period] ?? 0.0) + ((doc['amount'] as num?)?.toDouble() ?? 0.0);
+    }
+    return map;
+  }
+
   Future<List<PeriodValue>> getIncomeSeries({required ReportGranularity granularity, int periods = 12}) async {
-    final raw = granularity == ReportGranularity.monthly
-        ? await _sumGroupedByMonth('payments', 'paymentDate')
-        : await _sumGroupedByYear('payments', 'paymentDate');
+    Map<String, double> raw;
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('payments');
+      raw = granularity == ReportGranularity.monthly
+          ? _sumGroupedByMonthFromDocs(docs, 'paymentDate')
+          : _sumGroupedByYearFromDocs(docs, 'paymentDate');
+    } else {
+      raw = granularity == ReportGranularity.monthly
+          ? await _sumGroupedByMonth('payments', 'paymentDate')
+          : await _sumGroupedByYear('payments', 'paymentDate');
+    }
     return _buildSeries(raw, granularity, periods);
   }
 
   Future<List<PeriodValue>> getExpenseSeries({required ReportGranularity granularity, int periods = 12}) async {
-    final raw = granularity == ReportGranularity.monthly
-        ? await _sumGroupedByMonth('expenses', 'expenseDate')
-        : await _sumGroupedByYear('expenses', 'expenseDate');
+    Map<String, double> raw;
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('expenses');
+      raw = granularity == ReportGranularity.monthly
+          ? _sumGroupedByMonthFromDocs(docs, 'expenseDate')
+          : _sumGroupedByYearFromDocs(docs, 'expenseDate');
+    } else {
+      raw = granularity == ReportGranularity.monthly
+          ? await _sumGroupedByMonth('expenses', 'expenseDate')
+          : await _sumGroupedByYear('expenses', 'expenseDate');
+    }
     return _buildSeries(raw, granularity, periods);
   }
 
@@ -94,19 +134,32 @@ class ReportsRepository {
 
   /// New member sign-ups per period (non-deleted members grouped by createdAt).
   Future<List<PeriodValue>> getNewMemberSeries({required ReportGranularity granularity, int periods = 12}) async {
-    final db = await _db;
-    final format = granularity == ReportGranularity.monthly ? '%Y-%m' : '%Y';
-    final rows = await db.rawQuery('''
-      SELECT strftime('$format', createdAt) AS period, COUNT(*) AS cnt
-      FROM members
-      WHERE deletedAt IS NULL
-      GROUP BY period
-    ''');
     final raw = <String, double>{};
-    for (final row in rows) {
-      final period = row['period'] as String?;
-      if (period != null) {
-        raw[period] = (row['cnt'] as num?)?.toDouble() ?? 0.0;
+
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('members');
+      for (final doc in docs) {
+        if (doc['deletedAt'] != null) continue;
+        final dateStr = doc['createdAt'] as String?;
+        final minLen = granularity == ReportGranularity.monthly ? 7 : 4;
+        if (dateStr == null || dateStr.length < minLen) continue;
+        final period = dateStr.substring(0, minLen);
+        raw[period] = (raw[period] ?? 0.0) + 1;
+      }
+    } else {
+      final db = await _db;
+      final format = granularity == ReportGranularity.monthly ? '%Y-%m' : '%Y';
+      final rows = await db.rawQuery('''
+        SELECT strftime('$format', createdAt) AS period, COUNT(*) AS cnt
+        FROM members
+        WHERE deletedAt IS NULL
+        GROUP BY period
+      ''');
+      for (final row in rows) {
+        final period = row['period'] as String?;
+        if (period != null) {
+          raw[period] = (row['cnt'] as num?)?.toDouble() ?? 0.0;
+        }
       }
     }
     return _buildSeries(raw, granularity, periods);
@@ -118,13 +171,24 @@ class ReportsRepository {
     final newMembers = await getNewMemberSeries(granularity: granularity, periods: periods);
     if (newMembers.isEmpty) return [];
 
-    final db = await _db;
     final firstPeriodStart = newMembers.first.period;
-    final baselineResult = await db.rawQuery(
-      'SELECT COUNT(*) AS cnt FROM members WHERE deletedAt IS NULL AND createdAt < ?',
-      [firstPeriodStart.toIso8601String()],
-    );
-    double running = (baselineResult.first['cnt'] as num?)?.toDouble() ?? 0.0;
+    double running;
+
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('members');
+      running = docs.where((doc) {
+        if (doc['deletedAt'] != null) return false;
+        final createdAt = DateTime.tryParse(doc['createdAt'] as String? ?? '');
+        return createdAt != null && createdAt.isBefore(firstPeriodStart);
+      }).length.toDouble();
+    } else {
+      final db = await _db;
+      final baselineResult = await db.rawQuery(
+        'SELECT COUNT(*) AS cnt FROM members WHERE deletedAt IS NULL AND createdAt < ?',
+        [firstPeriodStart.toIso8601String()],
+      );
+      running = (baselineResult.first['cnt'] as num?)?.toDouble() ?? 0.0;
+    }
 
     return newMembers.map((pv) {
       running += pv.value;
@@ -132,8 +196,34 @@ class ReportsRepository {
     }).toList();
   }
 
+  Map<String, double> _breakdownFromDocs(
+    List<Map<String, dynamic>> docs,
+    String dateColumn,
+    String groupColumn, {
+    DateTime? from,
+    DateTime? to,
+  }) {
+    final totals = <String, double>{};
+    for (final doc in docs) {
+      final dateStr = doc[dateColumn] as String?;
+      final date = dateStr == null ? null : DateTime.tryParse(dateStr);
+      if (from != null && (date == null || date.isBefore(from))) continue;
+      if (to != null && (date == null || !date.isBefore(to))) continue;
+      final key = doc[groupColumn] as String?;
+      if (key == null) continue;
+      totals[key] = (totals[key] ?? 0.0) + ((doc['amount'] as num?)?.toDouble() ?? 0.0);
+    }
+    final sortedEntries = totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return {for (final e in sortedEntries) e.key: e.value};
+  }
+
   /// Expense totals grouped by category within an optional date range (inclusive start, exclusive end).
   Future<Map<String, double>> getExpenseCategoryBreakdown({DateTime? from, DateTime? to}) async {
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('expenses');
+      return _breakdownFromDocs(docs, 'expenseDate', 'category', from: from, to: to);
+    }
+
     final db = await _db;
     final where = <String>[];
     final args = <Object?>[];
@@ -166,6 +256,11 @@ class ReportsRepository {
 
   /// Income totals grouped by payment method within an optional date range.
   Future<Map<String, double>> getPaymentMethodBreakdown({DateTime? from, DateTime? to}) async {
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('payments');
+      return _breakdownFromDocs(docs, 'paymentDate', 'paymentMethod', from: from, to: to);
+    }
+
     final db = await _db;
     final where = <String>[];
     final args = <Object?>[];

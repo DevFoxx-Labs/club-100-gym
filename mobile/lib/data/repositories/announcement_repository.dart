@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
+import '../../core/sync/data_mode_service.dart';
+import '../../core/sync/mongo_collection_store.dart';
 import '../models/announcement_model.dart';
 import '../../core/services/app_state_service.dart';
 
@@ -11,27 +13,42 @@ class AnnouncementRepository {
   Future<Database> get _db async => await AppDatabase.instance.database;
 
   Future<List<AnnouncementModel>> getAll() async {
-    final db = await _db;
-    final hasSeed = Sqflite.firstIntValue(
-      await db.rawQuery("SELECT COUNT(*) FROM announcements WHERE id = 'seed-zumba-1'"),
-    ) ?? 0;
+    List<AnnouncementModel> list;
+    if (await DataModeService.instance.isOnline) {
+      final hasSeed = await MongoCollectionStore.findById('announcements', 'seed-zumba-1');
+      if (hasSeed == null) {
+        await _seedDefaultAnnouncementsMongo();
+      }
+      final docs = await MongoCollectionStore.all('announcements');
+      list = docs.map((m) => AnnouncementModel.fromMap(m)).toList();
+      list.sort((a, b) {
+        final byPinned = (b.isPinned ? 1 : 0).compareTo(a.isPinned ? 1 : 0);
+        if (byPinned != 0) return byPinned;
+        return b.createdAt.compareTo(a.createdAt);
+      });
+    } else {
+      final db = await _db;
+      final hasSeed = Sqflite.firstIntValue(
+        await db.rawQuery("SELECT COUNT(*) FROM announcements WHERE id = 'seed-zumba-1'"),
+      ) ?? 0;
 
-    if (hasSeed == 0) {
-      await _seedDefaultAnnouncements(db);
+      if (hasSeed == 0) {
+        await _seedDefaultAnnouncements(db);
+      }
+
+      final maps = await db.query(
+        'announcements',
+        orderBy: 'isPinned DESC, createdAt DESC',
+      );
+      list = maps.map((m) => AnnouncementModel.fromMap(m)).toList();
     }
-
-    final maps = await db.query(
-      'announcements',
-      orderBy: 'isPinned DESC, createdAt DESC',
-    );
-    final list = maps.map((m) => AnnouncementModel.fromMap(m)).toList();
     _exportSharedBroadcasts(list);
     return list;
   }
 
-  Future<void> _seedDefaultAnnouncements(Database db) async {
+  List<AnnouncementModel> _defaultSeeds() {
     final now = DateTime.now();
-    final seeds = [
+    return [
       AnnouncementModel(
         id: 'seed-zumba-1',
         title: 'Zumba Class Tomorrow',
@@ -100,8 +117,10 @@ class AnnouncementRepository {
         createdAt: now.subtract(const Duration(days: 12, hours: 14)),
       ),
     ];
+  }
 
-    for (final seed in seeds) {
+  Future<void> _seedDefaultAnnouncements(Database db) async {
+    for (final seed in _defaultSeeds()) {
       await db.insert(
         'announcements',
         seed.toMap(),
@@ -110,79 +129,126 @@ class AnnouncementRepository {
     }
   }
 
+  Future<void> _seedDefaultAnnouncementsMongo() async {
+    for (final seed in _defaultSeeds()) {
+      await MongoCollectionStore.upsert('announcements', 'id', seed.toMap());
+    }
+  }
+
   Future<void> insert(AnnouncementModel announcement) async {
-    final db = await _db;
-    await db.insert(
-      'announcements',
-      announcement.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.upsert('announcements', 'id', announcement.toMap());
+    } else {
+      final db = await _db;
+      await db.insert(
+        'announcements',
+        announcement.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
     AppStateService.instance.notifyNotificationsChanged();
     _exportLatest();
   }
 
   Future<void> update(AnnouncementModel announcement) async {
-    final db = await _db;
-    await db.update(
-      'announcements',
-      announcement.toMap(),
-      where: 'id = ?',
-      whereArgs: [announcement.id],
-    );
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.upsert('announcements', 'id', announcement.toMap());
+    } else {
+      final db = await _db;
+      await db.update(
+        'announcements',
+        announcement.toMap(),
+        where: 'id = ?',
+        whereArgs: [announcement.id],
+      );
+    }
     AppStateService.instance.notifyNotificationsChanged();
     _exportLatest();
   }
 
   Future<void> delete(String id) async {
-    final db = await _db;
-    await db.delete('announcements', where: 'id = ?', whereArgs: [id]);
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.deleteById('announcements', id);
+    } else {
+      final db = await _db;
+      await db.delete('announcements', where: 'id = ?', whereArgs: [id]);
+    }
     AppStateService.instance.notifyNotificationsChanged();
     _exportLatest();
   }
 
   Future<void> setPinned(String id, bool isPinned) async {
-    final db = await _db;
-    await db.update(
-      'announcements',
-      {'isPinned': isPinned ? 1 : 0},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final fields = {'isPinned': isPinned ? 1 : 0};
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.updateFields('announcements', id, fields);
+    } else {
+      final db = await _db;
+      await db.update(
+        'announcements',
+        fields,
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    }
     AppStateService.instance.notifyNotificationsChanged();
     _exportLatest();
   }
 
   Future<void> setImportant(String id, bool isImportant) async {
-    final db = await _db;
-    await db.update(
-      'announcements',
-      {'isImportant': isImportant ? 1 : 0},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    final fields = {'isImportant': isImportant ? 1 : 0};
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.updateFields('announcements', id, fields);
+    } else {
+      final db = await _db;
+      await db.update(
+        'announcements',
+        fields,
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+    }
     AppStateService.instance.notifyNotificationsChanged();
     _exportLatest();
   }
 
   /// Promotes any scheduled announcements whose scheduled time has passed to 'sent'.
   Future<List<AnnouncementModel>> promoteDueScheduled() async {
-    final db = await _db;
     final now = DateTime.now();
-    final maps = await db.query(
-      'announcements',
-      where: 'status = ? AND scheduledAt IS NOT NULL AND scheduledAt <= ?',
-      whereArgs: ['scheduled', now.toIso8601String()],
-    );
+    List<AnnouncementModel> due;
 
-    final due = maps.map((m) => AnnouncementModel.fromMap(m)).toList();
-    for (final item in due) {
-      await db.update(
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('announcements');
+      due = docs.where((m) {
+        if (m['status'] != 'scheduled' || m['scheduledAt'] == null) return false;
+        final scheduledAt = DateTime.tryParse(m['scheduledAt'] as String);
+        return scheduledAt != null && !scheduledAt.isAfter(now);
+      }).map((m) => AnnouncementModel.fromMap(m)).toList();
+      for (final item in due) {
+        await MongoCollectionStore.updateFields(
+          'announcements',
+          item.id,
+          {'status': 'sent', 'sentAt': now.toIso8601String()},
+        );
+      }
+    } else {
+      final db = await _db;
+      final maps = await db.query(
         'announcements',
-        {'status': 'sent', 'sentAt': now.toIso8601String()},
-        where: 'id = ?',
-        whereArgs: [item.id],
+        where: 'status = ? AND scheduledAt IS NOT NULL AND scheduledAt <= ?',
+        whereArgs: ['scheduled', now.toIso8601String()],
       );
+
+      due = maps.map((m) => AnnouncementModel.fromMap(m)).toList();
+      for (final item in due) {
+        await db.update(
+          'announcements',
+          {'status': 'sent', 'sentAt': now.toIso8601String()},
+          where: 'id = ?',
+          whereArgs: [item.id],
+        );
+      }
     }
+
     if (due.isNotEmpty) {
       AppStateService.instance.notifyNotificationsChanged();
       _exportLatest();

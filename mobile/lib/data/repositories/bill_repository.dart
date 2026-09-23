@@ -1,6 +1,8 @@
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
+import '../../core/sync/data_mode_service.dart';
+import '../../core/sync/mongo_collection_store.dart';
 import '../models/bill_model.dart';
 
 class BillRepository {
@@ -14,10 +16,25 @@ class BillRepository {
   }
 
   Future<String> generateNextBillNumber() async {
-    final db = await _db;
     final year = DateTime.now().year;
     final prefix = 'BILL-$year-';
 
+    if (await DataModeService.instance.isOnline) {
+      final bills = await MongoCollectionStore.all('bills');
+      final matching = bills
+          .map((b) => b['billNumber'] as String?)
+          .whereType<String>()
+          .where((no) => no.startsWith(prefix))
+          .toList();
+      if (matching.isEmpty) return '${prefix}00001';
+      matching.sort();
+      final lastNoStr = matching.last;
+      final numPart = int.tryParse(lastNoStr.replaceAll(prefix, '')) ?? 0;
+      final nextNum = numPart + 1;
+      return '$prefix${nextNum.toString().padLeft(5, '0')}';
+    }
+
+    final db = await _db;
     final result = await db.rawQuery(
       "SELECT billNumber FROM bills WHERE billNumber LIKE '$prefix%' ORDER BY billNumber DESC LIMIT 1",
     );
@@ -32,11 +49,21 @@ class BillRepository {
   }
 
   Future<void> createBill(BillModel bill) async {
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.upsert('bills', 'id', bill.toMap());
+      return;
+    }
     final db = await _db;
     await db.insert('bills', bill.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<BillModel>> getBills({String? status}) async {
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('bills');
+      final filtered = docs.where((m) => status == null || m['status'] == status).map((m) => BillModel.fromMap(m)).toList();
+      filtered.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+      return filtered;
+    }
     final db = await _db;
     final maps = await db.query(
       'bills',
@@ -48,6 +75,12 @@ class BillRepository {
   }
 
   Future<List<BillModel>> getDueBills() async {
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('bills');
+      final filtered = docs.where((m) => m['status'] == 'Pending' || m['status'] == 'Overdue').map((m) => BillModel.fromMap(m)).toList();
+      filtered.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+      return filtered;
+    }
     final db = await _db;
     final maps = await db.query(
       'bills',
@@ -59,6 +92,12 @@ class BillRepository {
   }
 
   Future<List<BillModel>> getBillsByMember(String memberId) async {
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('bills');
+      final filtered = docs.where((m) => m['memberId'] == memberId).map((m) => BillModel.fromMap(m)).toList();
+      filtered.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+      return filtered;
+    }
     final db = await _db;
     final maps = await db.query(
       'bills',
@@ -70,6 +109,10 @@ class BillRepository {
   }
 
   Future<BillModel?> getBillById(String id) async {
+    if (await DataModeService.instance.isOnline) {
+      final doc = await MongoCollectionStore.findById('bills', id);
+      return doc == null ? null : BillModel.fromMap(doc);
+    }
     final db = await _db;
     final maps = await db.query('bills', where: 'id = ?', whereArgs: [id], limit: 1);
     if (maps.isEmpty) return null;
@@ -77,8 +120,12 @@ class BillRepository {
   }
 
   Future<bool> billExistsForCycle(String membershipId, DateTime dueDate) async {
-    final db = await _db;
     final key = cycleKeyFor(membershipId, dueDate);
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('bills');
+      return docs.any((m) => m['cycleKey'] == key);
+    }
+    final db = await _db;
     final maps = await db.query('bills', where: 'cycleKey = ?', whereArgs: [key], limit: 1);
     return maps.isNotEmpty;
   }
@@ -86,6 +133,16 @@ class BillRepository {
   /// Finds the oldest outstanding (Pending/Overdue) bill tied to a membership,
   /// used to auto-settle the right bill when a payment is recorded against it.
   Future<BillModel?> getOldestDueBillForMembership(String membershipId) async {
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('bills');
+      final filtered = docs
+          .where((m) => m['membershipId'] == membershipId && (m['status'] == 'Pending' || m['status'] == 'Overdue'))
+          .map((m) => BillModel.fromMap(m))
+          .toList();
+      if (filtered.isEmpty) return null;
+      filtered.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+      return filtered.first;
+    }
     final db = await _db;
     final maps = await db.query(
       'bills',
@@ -103,47 +160,66 @@ class BillRepository {
     required String paymentId,
     required String receiptId,
   }) async {
+    final fields = {
+      'status': 'Paid',
+      'paymentId': paymentId,
+      'receiptId': receiptId,
+      'updatedAt': DateTime.now().toIso8601String(),
+    };
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.updateFields('bills', billId, fields);
+      return;
+    }
     final db = await _db;
-    await db.update(
-      'bills',
-      {
-        'status': 'Paid',
-        'paymentId': paymentId,
-        'receiptId': receiptId,
-        'updatedAt': DateTime.now().toIso8601String(),
-      },
-      where: 'id = ?',
-      whereArgs: [billId],
-    );
+    await db.update('bills', fields, where: 'id = ?', whereArgs: [billId]);
   }
 
   Future<void> cancelBill(String billId) async {
+    final fields = {'status': 'Cancelled', 'updatedAt': DateTime.now().toIso8601String()};
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.updateFields('bills', billId, fields);
+      return;
+    }
     final db = await _db;
-    await db.update(
-      'bills',
-      {'status': 'Cancelled', 'updatedAt': DateTime.now().toIso8601String()},
-      where: 'id = ?',
-      whereArgs: [billId],
-    );
+    await db.update('bills', fields, where: 'id = ?', whereArgs: [billId]);
   }
 
   /// Marks any Pending bill whose due date has passed as Overdue. Called during
   /// the daily reminder/billing scan so bill status always reflects reality.
   Future<void> refreshOverdueStatuses({DateTime? referenceDate}) async {
-    final db = await _db;
     final now = referenceDate ?? DateTime.now();
-    final today = DateTime(now.year, now.month, now.day).toIso8601String();
+    final today = DateTime(now.year, now.month, now.day);
+    final fields = {'status': 'Overdue', 'updatedAt': DateTime.now().toIso8601String()};
+
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.updateWhere(
+        'bills',
+        (m) {
+          if (m['status'] != 'Pending') return false;
+          final dueDate = DateTime.tryParse(m['dueDate'] as String? ?? '');
+          return dueDate != null && dueDate.isBefore(today);
+        },
+        fields,
+      );
+      return;
+    }
+
+    final db = await _db;
     await db.update(
       'bills',
-      {'status': 'Overdue', 'updatedAt': DateTime.now().toIso8601String()},
+      fields,
       where: 'status = ? AND dueDate < ?',
-      whereArgs: ['Pending', today],
+      whereArgs: ['Pending', today.toIso8601String()],
     );
   }
 
   /// Permanently deletes a bill. Restricted to Cancelled bills so Paid/Pending/Overdue
   /// bills — which represent real dues or payment history — can never be erased.
   Future<void> deleteCancelledBill(String billId) async {
+    if (await DataModeService.instance.isOnline) {
+      await MongoCollectionStore.deleteWhere('bills', (m) => m['id'] == billId && m['status'] == 'Cancelled');
+      return;
+    }
     final db = await _db;
     await db.delete(
       'bills',
@@ -153,6 +229,16 @@ class BillRepository {
   }
 
   Future<double> getTotalDueAmount() async {
+    if (await DataModeService.instance.isOnline) {
+      final docs = await MongoCollectionStore.all('bills');
+      var total = 0.0;
+      for (final doc in docs) {
+        if (doc['status'] == 'Pending' || doc['status'] == 'Overdue') {
+          total += (doc['amount'] as num?)?.toDouble() ?? 0.0;
+        }
+      }
+      return total;
+    }
     final db = await _db;
     final result = await db.rawQuery(
       "SELECT SUM(amount) AS total FROM bills WHERE status IN ('Pending', 'Overdue')",
