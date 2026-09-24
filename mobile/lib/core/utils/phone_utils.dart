@@ -1,3 +1,5 @@
+import 'package:country_code_picker/country_code_picker.dart' show codes;
+
 /// Helpers for splitting/combining a phone number and its country dial code.
 ///
 /// Numbers are persisted as a single string (e.g. `+919876543210`) so no
@@ -7,6 +9,19 @@ class PhoneUtils {
   PhoneUtils._();
 
   static const String defaultDialCode = '+91';
+
+  /// All real dial codes (e.g. `+91`, `+1`, `+971`), longest first so a
+  /// number is matched against the most specific code before a shorter,
+  /// ambiguous prefix (avoids mis-splitting `+91...` as some 4-digit code).
+  static final List<String> _knownDialCodes = () {
+    final set = <String>{
+      for (final c in codes)
+        if ((c['dial_code'] ?? '').isNotEmpty) c['dial_code']!,
+    };
+    final list = set.toList();
+    list.sort((a, b) => b.length.compareTo(a.length));
+    return list;
+  }();
 
   /// Expected local-number digit length per dial code, used for
   /// country-aware validation. Falls back to a generic 6-14 digit range
@@ -37,6 +52,12 @@ class PhoneUtils {
   static (String, String) split(String? raw) {
     final value = (raw ?? '').trim();
     if (value.startsWith('+')) {
+      for (final code in _knownDialCodes) {
+        if (value.startsWith(code)) {
+          final digits = value.substring(code.length).replaceAll(RegExp(r'\D'), '');
+          return (code, digits);
+        }
+      }
       final match = RegExp(r'^(\+\d{1,4})(.*)$').firstMatch(value);
       if (match != null) {
         final digits = match.group(2)!.replaceAll(RegExp(r'\D'), '');
