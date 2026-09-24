@@ -72,9 +72,9 @@ class _AccentColorScreenState extends State<AccentColorScreen> {
                 'Choose a favorite color to replace the app\'s highlight color everywhere — buttons, badges, active states, and icons.',
                 style: TextStyle(color: AppTheme.textMuted, fontSize: 12.5, height: 1.4),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               _buildPreviewCard(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               const Text(
                 'PRESET COLORS',
@@ -173,83 +173,55 @@ class _AccentColorScreenState extends State<AccentColorScreen> {
     );
   }
 
+  /// Single-row preview (icon, badge, pill button) — kept deliberately small
+  /// since the swatches right below already show the color itself.
   Widget _buildPreviewCard() {
+    final onAccent = _selectedColor.computeLuminance() > 0.5 ? AppTheme.darkBackground : Colors.white;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppTheme.darkSurface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.darkBorder),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          const Text(
-            'LIVE PREVIEW',
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: _selectedColor.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(Icons.fitness_center_rounded, color: _selectedColor, size: 16),
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: _selectedColor.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _selectedColor.withValues(alpha: 0.35)),
-                ),
-                child: Icon(Icons.fitness_center_rounded, color: _selectedColor, size: 20),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: _selectedColor.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'ACTIVE',
-                        style: TextStyle(color: _selectedColor, fontSize: 10, fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Sample Member Card',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13.5),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: _selectedColor),
-            ],
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            height: 42,
-            child: ElevatedButton(
-              onPressed: null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _selectedColor,
-                disabledBackgroundColor: _selectedColor,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: _selectedColor.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                'Sample Button',
-                style: TextStyle(
-                  color: _selectedColor.computeLuminance() > 0.5 ? AppTheme.darkBackground : Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13,
-                ),
+                'ACTIVE',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: _selectedColor, fontSize: 10, fontWeight: FontWeight.w900),
               ),
+            ),
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            decoration: BoxDecoration(
+              color: _selectedColor,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Button',
+              style: TextStyle(color: onAccent, fontWeight: FontWeight.w900, fontSize: 12),
             ),
           ),
         ],
