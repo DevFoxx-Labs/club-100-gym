@@ -445,7 +445,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 2),
+                      
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
