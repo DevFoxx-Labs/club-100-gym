@@ -453,6 +453,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                               if (picked != null) setState(() => _startDate = picked);
                             },
                             child: Container(
+                              width: double.infinity,
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(color: AppTheme.darkBackground, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.darkBorder)),
                               child: Text(dateFormat.format(_startDate), style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold)),
@@ -479,6 +480,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                               if (picked != null) setState(() => _endDate = picked);
                             },
                             child: Container(
+                              width: double.infinity,
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(color: AppTheme.darkBackground, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.darkBorder)),
                               child: Text(dateFormat.format(_endDate), style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold)),
