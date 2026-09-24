@@ -96,7 +96,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  _gymInfo?.name ?? 'GymYardHQ',
+                  _gymInfo?.name ?? 'Elite Fitness Gym',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(

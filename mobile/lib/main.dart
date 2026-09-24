@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'core/theme/app_theme.dart';
 import 'core/security/security_service.dart';
 import 'core/services/app_state_service.dart';
+import 'core/utils/phone_utils.dart';
 import 'core/localization/locale_service.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/notifications/reminder_scheduler.dart';
@@ -59,6 +60,8 @@ void main() async {
     debugPrint('Failed to load saved language: $e');
   }
 
+ // Pre-select the admin's own country code in phone fields
+  await PhoneUtils.init();
   runApp(Club100GymApp(isSetupComplete: isComplete));
 }
 
