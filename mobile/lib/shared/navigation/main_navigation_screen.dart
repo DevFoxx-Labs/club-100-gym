@@ -59,6 +59,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     if (state == AppLifecycleState.resumed) {
       ReminderScheduler().runDailyScan();
       NotificationService().syncAllUpcomingEventNotifications();
+      NotificationService().syncAllMembershipNotifications();
     }
   }
 

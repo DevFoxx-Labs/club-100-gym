@@ -43,6 +43,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       await ReminderScheduler().runDailyScan();
       await NotificationService().syncAllUpcomingEventNotifications();
+      await NotificationService().syncAllMembershipNotifications();
     } catch (_) {}
 
     // 2. Load notifications from the database
@@ -408,6 +409,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           onRefresh: () async {
                             await ReminderScheduler().runDailyScan();
                             await NotificationService().syncAllUpcomingEventNotifications();
+                            await NotificationService().syncAllMembershipNotifications();
                             await _loadNotifications(showSpinner: false);
                           },
                           child: ListView.builder(

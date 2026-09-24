@@ -4,8 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../../data/models/event_model.dart';
+import '../../data/models/member_model.dart';
+import '../../data/models/membership_model.dart';
 import '../../data/models/notification_model.dart';
 import '../../data/repositories/event_repository.dart';
+import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../services/app_state_service.dart';
@@ -288,16 +291,22 @@ class NotificationService {
         );
       } else if (start.isAfter(now)) {
         // Event starts in <= 15 minutes! Send an immediate alert so user doesn't miss it!
-        final remainingMins = start.difference(now).inMinutes;
-        final countdownText = remainingMins <= 1 ? 'in 1 minute' : 'in $remainingMins minutes';
-        await _safeZonedSchedule(
-          id: baseId + 1,
-          title: 'Gym Event Starting Soon: ${event.title}',
-          body: 'Starts $countdownText at $timeStr$locationStr!',
-          scheduledDate: now.add(const Duration(seconds: 4)),
-          notificationDetails: eventNotificationDetails,
-          payload: 'event:${event.id}',
-        );
+        // Guarded by a persisted marker: without it, every app resume within this
+        // window would re-send the "starting soon" push over and over.
+        final firedKey = 'event_${event.id}_15m_fired';
+        if (!await NotificationRepository().hasFiredOnce(firedKey)) {
+          final remainingMins = start.difference(now).inMinutes;
+          final countdownText = remainingMins <= 1 ? 'in 1 minute' : 'in $remainingMins minutes';
+          await _safeZonedSchedule(
+            id: baseId + 1,
+            title: 'Gym Event Starting Soon: ${event.title}',
+            body: 'Starts $countdownText at $timeStr$locationStr!',
+            scheduledDate: now.add(const Duration(seconds: 4)),
+            notificationDetails: eventNotificationDetails,
+            payload: 'event:${event.id}',
+          );
+          await NotificationRepository().markFiredOnce(firedKey);
+        }
       }
     }
 
@@ -313,15 +322,21 @@ class NotificationService {
           payload: 'event:${event.id}',
         );
       } else if (now.difference(start) < const Duration(minutes: 10)) {
-        // Event started in last few minutes: notify user that it's live
-        await _safeZonedSchedule(
-          id: baseId + 2,
-          title: 'Gym Event In Progress: ${event.title}',
-          body: '${event.title} is now in progress$locationStr.',
-          scheduledDate: now.add(const Duration(seconds: 3)),
-          notificationDetails: eventNotificationDetails,
-          payload: 'event:${event.id}',
-        );
+        // Event started in last few minutes: notify user that it's live.
+        // Guarded by a persisted marker so this fires exactly once — previously
+        // every foreground resume in this window re-sent the "in progress" push.
+        final firedKey = 'event_${event.id}_start_fired';
+        if (!await NotificationRepository().hasFiredOnce(firedKey)) {
+          await _safeZonedSchedule(
+            id: baseId + 2,
+            title: 'Gym Event In Progress: ${event.title}',
+            body: '${event.title} is now in progress$locationStr.',
+            scheduledDate: now.add(const Duration(seconds: 3)),
+            notificationDetails: eventNotificationDetails,
+            payload: 'event:${event.id}',
+          );
+          await NotificationRepository().markFiredOnce(firedKey);
+        }
       }
     }
 
@@ -379,6 +394,117 @@ class NotificationService {
       }
     } catch (e) {
       debugPrint('syncAllUpcomingEventNotifications error: $e');
+    }
+  }
+
+  /// Schedules background (device-level) membership renewal reminders for a
+  /// member — delivered by the OS on the exact calendar day, even if the app
+  /// is never opened. Mirrors [scheduleEventNotification]'s tiered design:
+  ///   Tier 1: 7 days before the membership expires
+  ///   Tier 2: 3 days before
+  ///   Tier 3: 1 day before
+  ///   Tier 4: On the expiry day itself
+  /// Each tier is scheduled for one fixed point in time, so calling this again
+  /// (e.g. every app resume, to re-register alarms cleared by a device reboot)
+  /// is idempotent: flutter_local_notifications replaces the pending alarm for
+  /// that id rather than sending a fresh push, and any tier whose time has
+  /// already passed is skipped outright — so a member never gets the same
+  /// renewal reminder twice, read or not.
+  Future<void> scheduleMembershipNotification(MemberModel member, MembershipModel membership) async {
+    final settings = await SettingsRepository().getNotificationSettings();
+    final endDate = DateTime(membership.endDate.year, membership.endDate.month, membership.endDate.day);
+    const reminderHour = 10; // 10:00 AM local
+
+    final int baseId = membership.id.hashCode.abs() % 100000 + 70000;
+
+    final androidDetails = AndroidNotificationDetails(
+      'gym_membership_channel',
+      'Membership Renewal Reminders',
+      channelDescription: 'Reminders for upcoming membership expiries and renewals',
+      importance: Importance.high,
+      priority: Priority.high,
+      color: AppTheme.neonLime,
+    );
+    final notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    );
+
+    final tiers = [
+      (
+        offset: 0,
+        daysBefore: 7,
+        enabled: settings['expiry7d'] ?? true,
+        title: 'Membership Expiring in 7 Days',
+        body: "${member.name}'s gym membership expires in 7 days on ${DateFormat('dd MMM').format(endDate)}.",
+      ),
+      (
+        offset: 1,
+        daysBefore: 3,
+        enabled: settings['expiry3d'] ?? true,
+        title: 'Membership Expiring in 3 Days',
+        body: "${member.name}'s gym membership expires in 3 days on ${DateFormat('dd MMM').format(endDate)}.",
+      ),
+      (
+        offset: 2,
+        daysBefore: 1,
+        enabled: settings['expiry1d'] ?? true,
+        title: 'Membership Expiring Tomorrow',
+        body: "${member.name}'s gym membership expires tomorrow. Renew to avoid interruption.",
+      ),
+      (
+        offset: 3,
+        daysBefore: 0,
+        enabled: settings['expiry1d'] ?? true,
+        title: 'Membership Expiring Today',
+        body: "${member.name}'s gym membership expires today. Renew to avoid interruption.",
+      ),
+    ];
+
+    for (final tier in tiers) {
+      final id = baseId + tier.offset;
+      if (!tier.enabled) {
+        await cancelNotification(id);
+        continue;
+      }
+      final fireDate = DateTime(endDate.year, endDate.month, endDate.day - tier.daysBefore, reminderHour);
+      await _safeZonedSchedule(
+        id: id,
+        title: tier.title,
+        body: tier.body,
+        scheduledDate: fireDate,
+        notificationDetails: notificationDetails,
+        payload: 'member:${member.id}',
+      );
+    }
+  }
+
+  /// Cancels all scheduled background reminders for the given membership ID
+  /// (e.g. when it's superseded by a plan change/renewal).
+  Future<void> cancelMembershipNotification(String membershipId) async {
+    final int baseId = membershipId.hashCode.abs() % 100000 + 70000;
+    for (var i = 0; i < 4; i++) {
+      await cancelNotification(baseId + i);
+    }
+  }
+
+  /// Synchronizes background membership renewal reminders for all active members.
+  Future<void> syncAllMembershipNotifications() async {
+    try {
+      final memberRepo = MemberRepository();
+      final members = await memberRepo.getMembers();
+      for (final member in members) {
+        if (!member.isActive) continue;
+        final membership = await memberRepo.getLatestMembership(member.id);
+        if (membership == null) continue;
+        await scheduleMembershipNotification(member, membership);
+      }
+    } catch (e) {
+      debugPrint('syncAllMembershipNotifications error: $e');
     }
   }
 

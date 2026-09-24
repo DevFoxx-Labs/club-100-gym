@@ -6,6 +6,7 @@ import '../../core/utils/member_photo_picker.dart';
 import '../../core/utils/contact_sync_service.dart';
 import '../../core/utils/form_validators.dart';
 import '../../core/utils/phone_utils.dart';
+import '../../core/notifications/notification_service.dart';
 import '../../core/services/app_state_service.dart';
 import '../../core/localization/app_translations.dart';
 import '../../data/models/bill_model.dart';
@@ -204,6 +205,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
       );
 
       await _memberRepo.addMember(member, membership);
+      await NotificationService().scheduleMembershipNotification(member, membership);
 
       // Auto-generate the first bill for this membership, due on the onboarding start date.
       final firstBill = BillModel(

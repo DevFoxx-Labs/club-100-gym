@@ -34,6 +34,7 @@ void main() async {
   try {
     await NotificationService().init();
     NotificationService().syncAllUpcomingEventNotifications();
+    NotificationService().syncAllMembershipNotifications();
     ReminderScheduler().runDailyScan();
   } catch (e, stackTrace) {
     debugPrint('NotificationService init failed: $e\n$stackTrace');

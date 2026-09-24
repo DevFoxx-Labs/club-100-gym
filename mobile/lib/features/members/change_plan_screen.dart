@@ -11,6 +11,7 @@ import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/package_repository.dart';
 import '../../data/repositories/plan_repository.dart';
 import '../../data/repositories/trainer_repository.dart';
+import '../../core/notifications/notification_service.dart';
 import '../../core/utils/form_validators.dart';
 import '../../core/services/app_state_service.dart';
 import '../../core/localization/app_translations.dart';
@@ -198,6 +199,11 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
       newMembership: newMembership,
       log: log,
     );
+
+    // The old membership is superseded — drop its pending renewal reminders
+    // so the member doesn't get an "expiring" push for a plan they've already left.
+    await NotificationService().cancelMembershipNotification(widget.currentMembership.id);
+    await NotificationService().scheduleMembershipNotification(widget.member, newMembership);
 
     AppStateService.instance.notifyMembersChanged();
 

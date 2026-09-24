@@ -174,6 +174,49 @@ class NotificationRepository {
     return id;
   }
 
+  /// Returns true if [markerKey] was already marked fired via [markFiredOnce].
+  /// Used to dedupe one-shot "catch up" push notifications (e.g. an event
+  /// that's already starting) so re-syncing never resends the same alert.
+  Future<bool> hasFiredOnce(String markerKey) async {
+    try {
+      if (await DataModeService.instance.isOnline) {
+        final doc = await MongoCollectionStore.findById('notification_fire_markers', markerKey);
+        return doc != null;
+      }
+      final db = await _db;
+      final res = await db.query(
+        'notification_fire_markers',
+        where: 'markerKey = ?',
+        whereArgs: [markerKey],
+        limit: 1,
+      );
+      return res.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Permanently marks [markerKey] as fired so [hasFiredOnce] returns true from now on.
+  Future<void> markFiredOnce(String markerKey) async {
+    try {
+      final firedAt = DateTime.now().toIso8601String();
+      if (await DataModeService.instance.isOnline) {
+        await MongoCollectionStore.upsert(
+          'notification_fire_markers',
+          'markerKey',
+          {'markerKey': markerKey, 'firedAt': firedAt},
+        );
+        return;
+      }
+      final db = await _db;
+      await db.insert(
+        'notification_fire_markers',
+        {'markerKey': markerKey, 'firedAt': firedAt},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (_) {}
+  }
+
   Future<int> getUnreadCount() async {
     if (await DataModeService.instance.isOnline) {
       final docs = await MongoCollectionStore.all('notifications');

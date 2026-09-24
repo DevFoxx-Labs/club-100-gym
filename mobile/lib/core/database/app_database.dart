@@ -63,6 +63,18 @@ class AppDatabase {
       ''');
     } catch (_) {}
 
+    // Ensure notification_fire_markers table exists for one-shot dedup of
+    // "catch up" push notifications (e.g. an event that's already starting/in
+    // progress), so re-running a sync never resends the same alert.
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS notification_fire_markers (
+          markerKey TEXT PRIMARY KEY,
+          firedAt TEXT NOT NULL
+        );
+      ''');
+    } catch (_) {}
+
     // Ensure announcements table exists for the Announcements broadcast feature
     try {
       await db.execute(DbTables.announcements);

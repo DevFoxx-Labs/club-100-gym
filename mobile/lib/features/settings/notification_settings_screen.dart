@@ -36,6 +36,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     await _repository.saveNotificationSettings(_settings);
     if (key.startsWith('event') && val) {
       NotificationService().syncAllUpcomingEventNotifications();
+    } else if (key.startsWith('expiry')) {
+      // Re-syncing re-schedules newly enabled tiers and cancels newly disabled ones.
+      NotificationService().syncAllMembershipNotifications();
     }
   }
 
