@@ -27,10 +27,12 @@ class _ManagePlansScreenState extends State<ManagePlansScreen> {
   Future<void> _loadPlans() async {
     setState(() => _isLoading = true);
     final plans = await _planRepo.getPlans(activeOnly: false);
-    setState(() {
-      _plans = plans;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _plans = plans;
+        _isLoading = false;
+      });
+    }
   }
 
   void _showAddEditPlanModal({PlanModel? plan}) {
@@ -110,7 +112,12 @@ class _ManagePlansScreenState extends State<ManagePlansScreen> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      nameController.dispose();
+      durationController.dispose();
+      feeController.dispose();
+      descController.dispose();
+    });
   }
 
   @override

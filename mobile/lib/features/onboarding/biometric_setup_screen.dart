@@ -52,7 +52,7 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
 
   Future<void> _checkBiometrics() async {
     final avail = await _biometricService.isBiometricAvailable();
-    setState(() => _isAvailable = avail);
+    if (mounted) setState(() => _isAvailable = avail);
   }
 
   Future<void> _finishSetup({bool enableBiometric = false}) async {
@@ -64,8 +64,8 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
           localizedReason: 'Scan fingerprint/face to enable biometric login for Elite Fitness Gym',
         );
         if (!authenticated) {
-          setState(() => _isLoading = false);
           if (mounted) {
+            setState(() => _isLoading = false);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Biometric authentication failed or cancelled.')),
             );
@@ -114,7 +114,7 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
         (route) => false,
       );
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

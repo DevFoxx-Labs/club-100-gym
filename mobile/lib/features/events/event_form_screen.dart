@@ -111,7 +111,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
         child: child!,
       ),
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null && mounted) setState(() => _date = picked);
   }
 
   Future<void> _pickTime({required bool isStart}) async {
@@ -129,7 +129,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
         child: child!,
       ),
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         if (isStart) {
           _startTime = picked;

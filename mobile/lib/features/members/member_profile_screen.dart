@@ -149,9 +149,11 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
     if (_member == null) return;
     final updated = _member!.copyWith(photoPath: newPath);
     await _memberRepo.updateMember(updated);
-    setState(() {
-      _member = updated;
-    });
+    if (mounted) {
+      setState(() {
+        _member = updated;
+      });
+    }
   }
 
   Future<void> _syncContact() async {

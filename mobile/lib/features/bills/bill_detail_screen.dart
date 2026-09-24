@@ -148,7 +148,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                         firstDate: DateTime(2020),
                         lastDate: DateTime(2035),
                       );
-                      if (picked != null) setSheetState(() => resumeDate = picked);
+                      if (picked != null && mounted) setSheetState(() => resumeDate = picked);
                     },
                     child: Container(
                       width: double.infinity,

@@ -22,28 +22,26 @@ class _BackupScreenState extends State<BackupScreen> {
     setState(() => _isLoading = true);
     try {
       final file = await _backupService.exportBackup();
+      if (!mounted) return;
       setState(() => _isLoading = false);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Encrypted backup created: ${p.basename(file.path)}')),
-        );
-        await Share.shareXFiles([XFile(file.path)], text: 'Elite Fitness Gym Data Backup');
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Encrypted backup created: ${p.basename(file.path)}')),
+      );
+      await Share.shareXFiles([XFile(file.path)], text: 'Elite Fitness Gym Data Backup');
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _importBackup() async {
     final result = await FilePicker.platform.pickFiles();
-    if (result != null && result.files.single.path != null) {
+    if (result != null && result.files.single.path != null && mounted) {
       setState(() => _isLoading = true);
       final file = File(result.files.single.path!);
       final success = await _backupService.importBackup(file);
-      setState(() => _isLoading = false);
-
       if (mounted) {
+        setState(() => _isLoading = false);
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Backup restored successfully! All gym records updated.')),

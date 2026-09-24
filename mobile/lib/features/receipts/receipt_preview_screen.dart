@@ -31,7 +31,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
 
   Future<void> _loadGymInfo() async {
     final gym = await _settingsRepo.getGymInfo();
-    setState(() => _gymInfo = gym);
+    if (mounted) setState(() => _gymInfo = gym);
   }
 
   @override

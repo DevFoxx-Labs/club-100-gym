@@ -450,7 +450,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                                 firstDate: DateTime(2020),
                                 lastDate: DateTime(2030),
                               );
-                              if (picked != null) setState(() => _startDate = picked);
+                              if (picked != null && mounted) setState(() => _startDate = picked);
                             },
                             child: Container(
                               width: double.infinity,
@@ -477,7 +477,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                                 firstDate: DateTime(2020),
                                 lastDate: DateTime(2030),
                               );
-                              if (picked != null) setState(() => _endDate = picked);
+                              if (picked != null && mounted) setState(() => _endDate = picked);
                             },
                             child: Container(
                               width: double.infinity,

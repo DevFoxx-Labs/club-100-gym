@@ -42,6 +42,7 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
   Future<void> _proceed() async {
     if (_step == 0) {
       final valid = await _security.verifyMPIN(_oldMpin);
+      if (!mounted) return;
       if (valid) {
         setState(() => _step = 1);
       } else {

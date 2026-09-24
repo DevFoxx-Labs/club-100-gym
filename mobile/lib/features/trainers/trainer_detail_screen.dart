@@ -209,7 +209,10 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
           );
         },
       ),
-    );
+    ).whenComplete(() {
+      amountController.dispose();
+      notesController.dispose();
+    });
   }
 
   @override

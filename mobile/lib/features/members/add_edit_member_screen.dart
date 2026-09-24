@@ -427,7 +427,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                                   firstDate: DateTime(2020),
                                   lastDate: DateTime(2030),
                                 );
-                                if (picked != null) setState(() => _startDate = picked);
+                                if (picked != null && mounted) setState(() => _startDate = picked);
                               },
                               child: Container(
                                 width: double.infinity,

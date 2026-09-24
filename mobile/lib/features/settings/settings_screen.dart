@@ -87,7 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       updatedAt: DateTime.now(),
     );
     await _settingsRepo.saveAdminInfo(updated);
-    setState(() => _admin = updated);
+    if (mounted) setState(() => _admin = updated);
   }
 
   Future<void> _resetData() async {
