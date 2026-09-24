@@ -2,6 +2,7 @@ class PaymentModel {
   final String id;
   final String memberId;
   final String? membershipId;
+  final String? billId;
   final double amount;
   final DateTime paymentDate;
   final String paymentMethod; // Cash, UPI, Card, Bank Transfer, Other
@@ -17,6 +18,7 @@ class PaymentModel {
     required this.id,
     required this.memberId,
     this.membershipId,
+    this.billId,
     required this.amount,
     required this.paymentDate,
     required this.paymentMethod,
@@ -34,6 +36,7 @@ class PaymentModel {
       'id': id,
       'memberId': memberId,
       'membershipId': membershipId,
+      'billId': billId,
       'amount': amount,
       'paymentDate': paymentDate.toIso8601String(),
       'paymentMethod': paymentMethod,
@@ -50,6 +53,7 @@ class PaymentModel {
       id: map['id'] ?? '',
       memberId: map['memberId'] ?? '',
       membershipId: map['membershipId'],
+      billId: map['billId'],
       amount: (map['amount'] ?? 0.0).toDouble(),
       paymentDate: DateTime.parse(map['paymentDate']),
       paymentMethod: map['paymentMethod'] ?? 'Cash',
@@ -67,6 +71,7 @@ class PaymentModel {
     String? id,
     String? memberId,
     String? membershipId,
+    String? billId,
     double? amount,
     DateTime? paymentDate,
     String? paymentMethod,
@@ -82,6 +87,7 @@ class PaymentModel {
       id: id ?? this.id,
       memberId: memberId ?? this.memberId,
       membershipId: membershipId ?? this.membershipId,
+      billId: billId ?? this.billId,
       amount: amount ?? this.amount,
       paymentDate: paymentDate ?? this.paymentDate,
       paymentMethod: paymentMethod ?? this.paymentMethod,

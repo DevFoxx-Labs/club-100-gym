@@ -853,7 +853,7 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                                 Row(
                                   children: [
                                     Text(
-                                      '₹${bill.amount.toStringAsFixed(0)}',
+                                      '₹${(bill.paidAmount > 0 ? bill.remainingBalance : bill.amount).toStringAsFixed(0)}',
                                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.neonLime),
                                     ),
                                     const SizedBox(width: 8),

@@ -78,15 +78,15 @@ class BillRepository {
   Future<List<BillModel>> getDueBills() async {
     if (await DataModeService.instance.isOnline) {
       final docs = await MongoCollectionStore.all('bills');
-      final filtered = docs.where((m) => m['status'] == 'Pending' || m['status'] == 'Overdue').map((m) => BillModel.fromMap(m)).toList();
+      final filtered = docs.where((m) => m['status'] == 'Pending' || m['status'] == 'Overdue' || m['status'] == 'Partially Paid').map((m) => BillModel.fromMap(m)).toList();
       filtered.sort((a, b) => a.dueDate.compareTo(b.dueDate));
       return filtered;
     }
     final db = await _db;
     final maps = await db.query(
       'bills',
-      where: 'status IN (?, ?)',
-      whereArgs: ['Pending', 'Overdue'],
+      where: 'status IN (?, ?, ?)',
+      whereArgs: ['Pending', 'Overdue', 'Partially Paid'],
       orderBy: 'dueDate ASC',
     );
     return maps.map((m) => BillModel.fromMap(m)).toList();
@@ -137,7 +137,7 @@ class BillRepository {
     if (await DataModeService.instance.isOnline) {
       final docs = await MongoCollectionStore.all('bills');
       final filtered = docs
-          .where((m) => m['membershipId'] == membershipId && (m['status'] == 'Pending' || m['status'] == 'Overdue'))
+          .where((m) => m['membershipId'] == membershipId && (m['status'] == 'Pending' || m['status'] == 'Overdue' || m['status'] == 'Partially Paid'))
           .map((m) => BillModel.fromMap(m))
           .toList();
       if (filtered.isEmpty) return null;
@@ -147,8 +147,8 @@ class BillRepository {
     final db = await _db;
     final maps = await db.query(
       'bills',
-      where: 'membershipId = ? AND status IN (?, ?)',
-      whereArgs: [membershipId, 'Pending', 'Overdue'],
+      where: 'membershipId = ? AND status IN (?, ?, ?)',
+      whereArgs: [membershipId, 'Pending', 'Overdue', 'Partially Paid'],
       orderBy: 'dueDate ASC',
       limit: 1,
     );
@@ -156,13 +156,26 @@ class BillRepository {
     return BillModel.fromMap(maps.first);
   }
 
-  Future<void> markBillPaid({
+  /// Applies a (possibly partial) payment to a bill: adds [paymentAmount] to
+  /// the bill's running paidAmount and only flips status to 'Paid' once the
+  /// cumulative paid amount reaches the bill's full amount — otherwise the
+  /// bill is marked 'Partially Paid' so the remaining balance keeps showing
+  /// as due. Supports being called multiple times for the same bill.
+  Future<void> applyPaymentToBill({
     required String billId,
     required String paymentId,
     required String receiptId,
+    required double paymentAmount,
   }) async {
+    final bill = await getBillById(billId);
+    if (bill == null) return;
+
+    final newPaidAmount = bill.paidAmount + paymentAmount;
+    final newStatus = newPaidAmount >= bill.amount - 0.01 ? 'Paid' : 'Partially Paid';
+
     final fields = {
-      'status': 'Paid',
+      'status': newStatus,
+      'paidAmount': newPaidAmount,
       'paymentId': paymentId,
       'receiptId': receiptId,
       'updatedAt': DateTime.now().toIso8601String(),
@@ -267,15 +280,20 @@ class BillRepository {
       final docs = await MongoCollectionStore.all('bills');
       var total = 0.0;
       for (final doc in docs) {
+        final amount = (doc['amount'] as num?)?.toDouble() ?? 0.0;
+        final paidAmount = (doc['paidAmount'] as num?)?.toDouble() ?? 0.0;
         if (doc['status'] == 'Pending' || doc['status'] == 'Overdue') {
-          total += (doc['amount'] as num?)?.toDouble() ?? 0.0;
+          total += amount;
+        } else if (doc['status'] == 'Partially Paid') {
+          total += (amount - paidAmount) < 0 ? 0.0 : (amount - paidAmount);
         }
       }
       return total;
     }
     final db = await _db;
     final result = await db.rawQuery(
-      "SELECT SUM(amount) AS total FROM bills WHERE status IN ('Pending', 'Overdue')",
+      "SELECT SUM(CASE WHEN status IN ('Pending', 'Overdue') THEN amount WHEN status = 'Partially Paid' THEN MAX(amount - paidAmount, 0) ELSE 0 END) AS total "
+      "FROM bills WHERE status IN ('Pending', 'Overdue', 'Partially Paid')",
     );
     if (result.isNotEmpty && result.first['total'] != null) {
       return (result.first['total'] as num).toDouble();

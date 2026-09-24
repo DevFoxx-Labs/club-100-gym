@@ -197,7 +197,7 @@ class _BillsListScreenState extends State<BillsListScreen> {
                               ],
                             ),
                             trailing: Text(
-                              '₹${bill.amount.toStringAsFixed(0)}',
+                              '₹${(bill.paidAmount > 0 ? bill.remainingBalance : bill.amount).toStringAsFixed(0)}',
                               style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 16),
                             ),
                           ),

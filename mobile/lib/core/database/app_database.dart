@@ -122,6 +122,20 @@ class AppDatabase {
       await db.execute('ALTER TABLE receipts ADD COLUMN billNumber TEXT;');
     } catch (_) {}
 
+    // Ensure bills table can track cumulative paidAmount for partial payments,
+    // and payments can link back to the specific bill they were applied to.
+    try {
+      await db.execute('ALTER TABLE bills ADD COLUMN paidAmount REAL NOT NULL DEFAULT 0;');
+    } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE payments ADD COLUMN billId TEXT;');
+    } catch (_) {}
+    // Backfill paidAmount for bills that were already fully settled before
+    // this column existed, so their balance reads as fully paid, not 0.
+    try {
+      await db.execute("UPDATE bills SET paidAmount = amount WHERE status = 'Paid' AND paidAmount = 0;");
+    } catch (_) {}
+
     return db;
   }
 

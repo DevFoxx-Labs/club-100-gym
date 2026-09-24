@@ -370,6 +370,7 @@ class AppTranslations {
     'bill_status_paid': {'en': 'Paid', 'hi': 'भुगतान हो गया'},
     'bill_status_pending': {'en': 'Pending', 'hi': 'लंबित'},
     'bill_status_overdue': {'en': 'Overdue', 'hi': 'बकाया'},
+    'bill_status_partially paid': {'en': 'Partially Paid', 'hi': 'आंशिक भुगतान'},
     'bill_status_cancelled': {'en': 'Cancelled', 'hi': 'रद्द'},
 
     // ===== BILL DETAIL =====
@@ -388,6 +389,8 @@ class AppTranslations {
     'bill_detail_notes': {'en': 'Notes', 'hi': 'नोट्स'},
     'bill_detail_amount_paid': {'en': 'Amount Paid', 'hi': 'भुगतान की गई राशि'},
     'bill_detail_amount_due': {'en': 'Amount Due', 'hi': 'देय राशि'},
+    'bill_detail_bill_amount': {'en': 'Bill Amount', 'hi': 'बिल राशि'},
+    'bill_detail_balance_remaining': {'en': 'Balance Remaining', 'hi': 'शेष बैलेंस'},
     'bill_detail_scan_upi': {'en': 'Scan with any UPI app to pay ₹{amount}', 'hi': '₹{amount} भुगतान करने के लिए किसी भी UPI ऐप से स्कैन करें'},
     'bill_detail_bank_transfer_details': {'en': 'BANK TRANSFER DETAILS', 'hi': 'बैंक ट्रांसफर विवरण'},
     'bill_detail_ac_holder': {'en': 'A/C Holder', 'hi': 'खाता धारक'},
@@ -430,6 +433,10 @@ class AppTranslations {
     'add_payment_receipt_no': {'en': 'RECEIPT NO:', 'hi': 'रसीद संख्या:'},
     'add_payment_amount_label': {'en': 'Payment Amount (₹) *', 'hi': 'भुगतान राशि (₹) *'},
     'add_payment_amount_field': {'en': 'Payment Amount', 'hi': 'भुगतान राशि'},
+    'add_payment_bill_total': {'en': 'Bill Total', 'hi': 'कुल बिल राशि'},
+    'add_payment_already_paid': {'en': 'Already Paid', 'hi': 'पहले से भुगतान'},
+    'add_payment_balance_remaining': {'en': 'Balance Remaining', 'hi': 'शेष बैलेंस'},
+    'add_payment_amount_exceeds_balance': {'en': 'Cannot exceed remaining balance of ₹{amount}', 'hi': 'शेष बैलेंस ₹{amount} से अधिक नहीं हो सकता'},
     'add_payment_method': {'en': 'PAYMENT METHOD', 'hi': 'भुगतान विधि'},
     'add_payment_new_start_date': {'en': 'NEW START DATE', 'hi': 'नई प्रारंभ तिथि'},
     'add_payment_new_end_date': {'en': 'NEW END DATE', 'hi': 'नई समाप्ति तिथि'},

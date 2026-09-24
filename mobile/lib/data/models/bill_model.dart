@@ -13,7 +13,8 @@ class BillModel {
   final double amount;
   final DateTime billDate;
   final DateTime dueDate;
-  final String status; // Pending, Overdue, Paid, Cancelled
+  final String status; // Pending, Overdue, Partially Paid, Paid, Cancelled
+  final double paidAmount; // cumulative amount settled so far via one or more payments
   final String? paymentId;
   final String? receiptId;
   final String? notes;
@@ -34,6 +35,7 @@ class BillModel {
     required this.billDate,
     required this.dueDate,
     required this.status,
+    this.paidAmount = 0.0,
     this.paymentId,
     this.receiptId,
     this.notes,
@@ -44,8 +46,10 @@ class BillModel {
   });
 
   bool get isPaid => status == 'Paid';
+  bool get isPartiallyPaid => status == 'Partially Paid';
   bool get isCancelled => status == 'Cancelled';
-  bool get isDue => status == 'Pending' || status == 'Overdue';
+  bool get isDue => status == 'Pending' || status == 'Overdue' || status == 'Partially Paid';
+  double get remainingBalance => (amount - paidAmount) < 0 ? 0.0 : (amount - paidAmount);
 
   Map<String, dynamic> toMap() {
     return {
@@ -60,6 +64,7 @@ class BillModel {
       'billDate': billDate.toIso8601String(),
       'dueDate': dueDate.toIso8601String(),
       'status': status,
+      'paidAmount': paidAmount,
       'paymentId': paymentId,
       'receiptId': receiptId,
       'notes': notes,
@@ -83,6 +88,7 @@ class BillModel {
       billDate: DateTime.parse(map['billDate']),
       dueDate: DateTime.parse(map['dueDate']),
       status: map['status'] ?? 'Pending',
+      paidAmount: (map['paidAmount'] ?? 0.0).toDouble(),
       paymentId: map['paymentId'],
       receiptId: map['receiptId'],
       notes: map['notes'],
@@ -105,6 +111,7 @@ class BillModel {
     DateTime? billDate,
     DateTime? dueDate,
     String? status,
+    double? paidAmount,
     String? paymentId,
     String? receiptId,
     String? notes,
@@ -125,6 +132,7 @@ class BillModel {
       billDate: billDate ?? this.billDate,
       dueDate: dueDate ?? this.dueDate,
       status: status ?? this.status,
+      paidAmount: paidAmount ?? this.paidAmount,
       paymentId: paymentId ?? this.paymentId,
       receiptId: receiptId ?? this.receiptId,
       notes: notes ?? this.notes,

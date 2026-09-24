@@ -19,6 +19,10 @@ class StatusBadge extends StatelessWidget {
       bg = AppTheme.statusOverdue.withValues(alpha: 0.15);
       fg = AppTheme.statusOverdue;
       icon = Icons.warning_rounded;
+    } else if (lower.contains('partial')) {
+      bg = AppTheme.statusDueSoon.withValues(alpha: 0.15);
+      fg = AppTheme.statusDueSoon;
+      icon = Icons.pie_chart_rounded;
     } else if (lower.contains('due') || lower.contains('expiring')) {
       bg = AppTheme.statusDueSoon.withValues(alpha: 0.15);
       fg = AppTheme.statusDueSoon;

@@ -251,7 +251,10 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
       appBar: AppBar(
         title: Text(tr('bill_detail_appbar_title', {'number': _bill.billNumber})),
         actions: [
-          if (_bill.isDue)
+          // Only fully-unpaid bills can be cancelled — once a partial payment
+          // has been received against a bill, cancelling it would orphan that
+          // payment record, so the option is hidden.
+          if (_bill.status == 'Pending' || _bill.status == 'Overdue')
             IconButton(
               icon: const Icon(Icons.cancel_outlined, color: AppTheme.statusOverdue),
               tooltip: tr('bill_detail_cancel_confirm'),
@@ -320,10 +323,20 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                           ],
                           const SizedBox(height: 8),
                           _RowInfo(
-                            label: _bill.isPaid ? tr('bill_detail_amount_paid') : tr('bill_detail_amount_due'),
+                            label: tr('bill_detail_bill_amount'),
                             value: '₹${_bill.amount.toStringAsFixed(0)}',
-                            isHighlight: true,
+                            isHighlight: _bill.paidAmount <= 0,
                           ),
+                          if (_bill.paidAmount > 0) ...[
+                            const SizedBox(height: 8),
+                            _RowInfo(label: tr('bill_detail_amount_paid'), value: '₹${_bill.paidAmount.toStringAsFixed(0)}'),
+                            const SizedBox(height: 8),
+                            _RowInfo(
+                              label: tr('bill_detail_balance_remaining'),
+                              value: '₹${_bill.remainingBalance.toStringAsFixed(0)}',
+                              isHighlight: true,
+                            ),
+                          ],
 
                           if (showUpi && upiUri != null) ...[
                             const Divider(color: AppTheme.darkBorder, height: 24),

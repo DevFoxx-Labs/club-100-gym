@@ -60,6 +60,11 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
   bool _isLoading = false;
   String _generatedReceiptNo = '';
 
+  // The bill this payment will be applied to, if any — used to show the
+  // total/already-paid/remaining breakdown and to cap the entered amount so
+  // a partial payment can never overshoot what's actually still owed.
+  BillModel? _resolvedBill;
+
   @override
   void initState() {
     super.initState();
@@ -67,39 +72,71 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
     final totalFee = widget.membership?.feeAmount ?? 1500.0;
     _baseFee = (totalFee > _ptFee) ? (totalFee - _ptFee) : 0.0;
 
-    _amountController = TextEditingController(
-      text: widget.bill != null ? widget.bill!.amount.toStringAsFixed(0) : totalFee.toStringAsFixed(0),
-    );
+    _resolvedBill = widget.bill;
+    final initialAmount = _resolvedBill != null ? _resolvedBill!.remainingBalance : totalFee;
+    _amountController = TextEditingController(text: initialAmount.toStringAsFixed(0));
     _amountController.addListener(_onAmountChanged);
     _notesController = TextEditingController();
 
     if (widget.membership != null) {
-      // Preserve the membership's actual plan length (30/90/180/365 days) so
-      // the receipt's validity span matches the plan, not a hardcoded month.
-      final cycleDuration = widget.membership!.endDate.difference(widget.membership!.startDate);
-
       if (widget.bill != null) {
         // Settling a specific bill: the receipt must cover exactly the cycle
         // that bill was raised for (its dueDate is that cycle's start date),
         // e.g. the first bill raised on onboarding is due on the membership's
         // own start date, not on its end date.
-        _startDate = widget.bill!.dueDate;
+        _applyDatesForBill(widget.bill!);
       } else {
-        // Ad-hoc renewal with no linked bill: extend from the current cycle's
-        // end date, or from today if the membership has already lapsed.
-        _startDate = widget.membership!.endDate.isBefore(DateTime.now())
-            ? DateTime.now()
-            : widget.membership!.endDate;
+        // No bill passed in yet — assume an ad-hoc renewal (extend from the
+        // current cycle's end date, or from today if already lapsed) until
+        // the async lookup below finds a real outstanding bill to anchor on.
+        _applyDatesForRenewal();
       }
-      _endDate = _startDate.add(cycleDuration);
 
       if (widget.membership!.trainerId != null && widget.membership!.trainerId!.isNotEmpty) {
         _loadTrainer(widget.membership!.trainerId!);
       }
       _resolveBasePlanFee();
+
+      // No bill was passed in explicitly — look up the oldest outstanding
+      // bill for this membership so a second/third partial payment made from
+      // a generic "Add Payment" entry point (e.g. member profile) still
+      // settles the SAME bill/cycle instead of extending membership dates
+      // again on top of what an earlier partial payment already granted.
+      if (widget.bill == null) {
+        _resolveOutstandingBill();
+      }
     }
 
     _loadReceiptNumber();
+  }
+
+  // Preserves the membership's actual plan length (30/90/180/365 days) so
+  // the receipt's validity span matches the plan, not a hardcoded month.
+  void _applyDatesForBill(BillModel bill) {
+    final cycleDuration = widget.membership!.endDate.difference(widget.membership!.startDate);
+    _startDate = bill.dueDate;
+    _endDate = _startDate.add(cycleDuration);
+  }
+
+  void _applyDatesForRenewal() {
+    final cycleDuration = widget.membership!.endDate.difference(widget.membership!.startDate);
+    _startDate = widget.membership!.endDate.isBefore(DateTime.now()) ? DateTime.now() : widget.membership!.endDate;
+    _endDate = _startDate.add(cycleDuration);
+  }
+
+  Future<void> _resolveOutstandingBill() async {
+    if (widget.membership == null) return;
+    final bill = await _billRepo.getOldestDueBillForMembership(widget.membership!.id);
+    if (bill != null && mounted) {
+      setState(() {
+        _resolvedBill = bill;
+        _amountController.text = bill.remainingBalance.toStringAsFixed(0);
+        // A real outstanding bill was found after all — anchor the
+        // membership period on it instead of the ad-hoc renewal guess above,
+        // so this payment settles that bill's cycle exactly once.
+        _applyDatesForBill(bill);
+      });
+    }
   }
 
   void _onAmountChanged() {
@@ -202,6 +239,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         id: paymentId,
         memberId: widget.member.id,
         membershipId: widget.membership?.id,
+        billId: targetBill?.id,
         amount: amount,
         paymentDate: _paymentDate,
         paymentMethod: _paymentMethod,
@@ -218,7 +256,9 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
         final updatedMembership = widget.membership!.copyWith(
           startDate: _startDate,
           endDate: _endDate,
-          feeAmount: amount,
+          // The membership's fee should always reflect the bill's full cycle
+          // amount, not just whatever partial amount was paid just now.
+          feeAmount: targetBill?.amount ?? amount,
           status: 'Active',
           trainerId: widget.membership!.trainerId,
           personalTrainingFee: effectivePtFee,
@@ -232,7 +272,7 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
 
       // Settle the linked bill resolved above
       if (targetBill != null) {
-        await _billRepo.markBillPaid(billId: targetBill.id, paymentId: paymentId, receiptId: receiptId);
+        await _billRepo.applyPaymentToBill(billId: targetBill.id, paymentId: paymentId, receiptId: receiptId, paymentAmount: amount);
         AppStateService.instance.notifyBillsChanged();
       }
 
@@ -301,8 +341,9 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Bill Being Settled Banner
-                if (widget.bill != null) ...[
+                // Bill Being Settled Banner — shows the total/already-paid/
+                // remaining breakdown once this bill has a prior partial payment.
+                if (_resolvedBill != null) ...[
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -310,18 +351,35 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.3)),
                     ),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            tr('add_payment_settling_bill', {'number': widget.bill!.billNumber}),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w800, fontSize: 12.5),
-                          ),
+                        Row(
+                          children: [
+                            Icon(Icons.receipt_long_rounded, color: AppTheme.neonLime, size: 18),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                tr('add_payment_settling_bill', {'number': _resolvedBill!.billNumber}),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w800, fontSize: 12.5),
+                              ),
+                            ),
+                          ],
                         ),
+                        if (_resolvedBill!.paidAmount > 0) ...[
+                          const Divider(color: AppTheme.darkBorder, height: 20),
+                          _BillAmountRow(label: tr('add_payment_bill_total'), amount: _resolvedBill!.amount),
+                          const SizedBox(height: 4),
+                          _BillAmountRow(label: tr('add_payment_already_paid'), amount: _resolvedBill!.paidAmount),
+                          const SizedBox(height: 4),
+                          _BillAmountRow(
+                            label: tr('add_payment_balance_remaining'),
+                            amount: _resolvedBill!.remainingBalance,
+                            highlight: true,
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -412,7 +470,18 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
                   hint: '1500',
                   controller: _amountController,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  validator: (v) => FormValidators.validateAmount(v, fieldName: tr('add_payment_amount_field')),
+                  validator: (v) {
+                    final basicError = FormValidators.validateAmount(v, fieldName: tr('add_payment_amount_field'));
+                    if (basicError != null) return basicError;
+                    final bill = _resolvedBill;
+                    if (bill != null) {
+                      final entered = double.tryParse(v!.trim()) ?? 0;
+                      if (entered > bill.remainingBalance + 0.01) {
+                        return tr('add_payment_amount_exceeds_balance', {'amount': bill.remainingBalance.toStringAsFixed(0)});
+                      }
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -512,6 +581,32 @@ class _AddPaymentScreenState extends State<AddPaymentScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _BillAmountRow extends StatelessWidget {
+  final String label;
+  final double amount;
+  final bool highlight;
+
+  const _BillAmountRow({required this.label, required this.amount, this.highlight = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: AppTheme.textMuted, fontSize: 12.5)),
+        Text(
+          '₹${amount.toStringAsFixed(0)}',
+          style: TextStyle(
+            color: highlight ? AppTheme.neonLime : AppTheme.textWhite,
+            fontWeight: FontWeight.w800,
+            fontSize: highlight ? 14 : 12.5,
+          ),
+        ),
+      ],
     );
   }
 }
