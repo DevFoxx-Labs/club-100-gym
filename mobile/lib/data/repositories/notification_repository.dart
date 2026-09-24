@@ -29,6 +29,16 @@ class NotificationRepository {
     return maps.map((m) => NotificationItemModel.fromMap(m)).toList();
   }
 
+  Future<NotificationItemModel?> getById(String id) async {
+    if (await DataModeService.instance.isOnline) {
+      final doc = await MongoCollectionStore.findById('notifications', id);
+      return doc != null ? NotificationItemModel.fromMap(doc) : null;
+    }
+    final db = await _db;
+    final maps = await db.query('notifications', where: 'id = ?', whereArgs: [id], limit: 1);
+    return maps.isNotEmpty ? NotificationItemModel.fromMap(maps.first) : null;
+  }
+
   Future<void> insertNotification(NotificationItemModel notification) async {
     if (await DataModeService.instance.isOnline) {
       await MongoCollectionStore.upsert('notifications', 'id', notification.toMap());

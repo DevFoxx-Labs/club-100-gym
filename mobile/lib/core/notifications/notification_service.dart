@@ -324,22 +324,36 @@ class NotificationService {
       }
     }
 
-    // Persist event notification entry so it is visible in the in-app notification screen
+    // Persist event notification entry so it is visible in the in-app notification screen.
+    // Only write (and notify listeners) if the content actually changed: this is re-run on
+    // every event-list reload, and an unconditional write here would re-fire
+    // notifyNotificationsChanged() every time, which re-triggers this very reload — an
+    // infinite refresh loop that shows up as a flickering screen.
     try {
-      await NotificationRepository().insertNotification(
-        NotificationItemModel(
-          id: 'event_${event.id}',
-          memberId: event.trainerId,
-          type: 'EVENT',
-          title: 'Gym Event: ${event.title}',
-          message: 'Starts at $timeStr$locationStr. Don\'t miss out!',
-          scheduledAt: start,
-          triggeredAt: now.isAfter(start) ? start : null,
-          isRead: false,
-          createdAt: DateTime.now(),
-        ),
-      );
-      AppStateService.instance.notifyNotificationsChanged();
+      final notificationRepo = NotificationRepository();
+      final id = 'event_${event.id}';
+      final message = 'Starts at $timeStr$locationStr. Don\'t miss out!';
+      final existing = await notificationRepo.getById(id);
+      final triggeredAt = now.isAfter(start) ? start : null;
+      final unchanged = existing != null &&
+          existing.message == message &&
+          existing.scheduledAt == start &&
+          existing.triggeredAt == triggeredAt;
+      if (!unchanged) {
+        await notificationRepo.insertNotification(
+          NotificationItemModel(
+            id: id,
+            memberId: event.trainerId,
+            type: 'EVENT',
+            title: 'Gym Event: ${event.title}',
+            message: message,
+            scheduledAt: start,
+            triggeredAt: triggeredAt,
+            isRead: existing?.isRead ?? false,
+            createdAt: existing?.createdAt ?? DateTime.now(),
+          ),
+        );
+      }
     } catch (_) {}
   }
 
