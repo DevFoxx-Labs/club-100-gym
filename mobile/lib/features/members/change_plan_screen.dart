@@ -16,6 +16,7 @@ import '../../core/services/app_state_service.dart';
 import '../../core/localization/app_translations.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../core/theme/app_theme.dart';
 
 class ChangePlanScreen extends StatefulWidget {
   final MemberModel member;
@@ -113,10 +114,10 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
       lastDate: DateTime(2035),
       builder: (context, child) => Theme(
         data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFFD4FF00),
-            onPrimary: Color(0xFF121212),
-            surface: Color(0xFF1E1E1E),
+          colorScheme: ColorScheme.dark(
+            primary: AppTheme.neonLime,
+            onPrimary: const Color(0xFF121212),
+            surface: const Color(0xFF1E1E1E),
           ),
         ),
         child: child!,
@@ -219,7 +220,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
         ),
       ),
       body: _isInit
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFD4FF00)))
+          ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Form(
@@ -240,7 +241,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                                   backgroundColor: const Color(0xFF121212),
                                   child: Text(
                                     widget.member.name.isNotEmpty ? widget.member.name[0].toUpperCase() : 'M',
-                                    style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold),
+                                    style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -292,7 +293,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                                     const SizedBox(height: 2),
                                     Text(
                                       dateFormat.format(widget.currentMembership.endDate),
-                                      style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 14),
+                                      style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 14),
                                     ),
                                   ],
                                 ),
@@ -310,11 +311,11 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E1E1E),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFD4FF00).withValues(alpha: 0.2)),
+                        border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline, color: Color(0xFFD4FF00), size: 18),
+                          Icon(Icons.info_outline, color: AppTheme.neonLime, size: 18),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -339,7 +340,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: tr('change_plan_choose_hint'),
-                        prefixIcon: const Icon(Icons.card_membership, color: Color(0xFFD4FF00)),
+                        prefixIcon: Icon(Icons.card_membership, color: AppTheme.neonLime),
                       ),
                       items: _plans.map((p) {
                         return DropdownMenuItem(
@@ -373,7 +374,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                               title: Text(tr('change_plan_new_end_date'), style: const TextStyle(color: Colors.white60, fontSize: 11)),
                               subtitle: Text(
                                 dateFormat.format(_endDate),
-                                style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 13),
+                                style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 13),
                               ),
                               onTap: () => _pickDate(isStart: false),
                             ),
@@ -395,7 +396,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: tr('change_plan_assign_trainer_hint'),
-                        prefixIcon: const Icon(Icons.sports_gymnastics, color: Color(0xFFD4FF00)),
+                        prefixIcon: Icon(Icons.sports_gymnastics, color: AppTheme.neonLime),
                       ),
                       items: [
                         DropdownMenuItem(value: null, child: Text(tr('change_plan_none_self_trained'))),
@@ -443,7 +444,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                           style: TextStyle(
                             fontSize: 11,
                             color: _currentPlanFee != _selectedPlan!.defaultFee
-                                ? const Color(0xFFD4FF00)
+                                ? AppTheme.neonLime
                                 : Colors.white54,
                             fontWeight: _currentPlanFee != _selectedPlan!.defaultFee
                                 ? FontWeight.w600
@@ -462,7 +463,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: _currentPlanFee != (_selectedPlan?.defaultFee ?? 0.0)
-                              ? const Color(0xFFD4FF00).withValues(alpha: 0.5)
+                              ? AppTheme.neonLime.withValues(alpha: 0.5)
                               : const Color(0xFF333333),
                         ),
                       ),
@@ -485,13 +486,13 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFD4FF00).withValues(alpha: 0.2),
+                                    color: AppTheme.neonLime.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
                                     tr('change_plan_custom_rate_badge'),
-                                    style: const TextStyle(
-                                      color: Color(0xFFD4FF00),
+                                    style: TextStyle(
+                                      color: AppTheme.neonLime,
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -524,7 +525,7 @@ class _ChangePlanScreenState extends State<ChangePlanScreen> {
                               Text(tr('change_plan_total_to_collect'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
                               Text(
                                 '₹${_totalFee.toStringAsFixed(0)}',
-                                style: const TextStyle(color: Color(0xFFD4FF00), fontSize: 16, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: AppTheme.neonLime, fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),

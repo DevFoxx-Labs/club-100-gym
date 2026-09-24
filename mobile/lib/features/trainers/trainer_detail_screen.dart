@@ -9,6 +9,7 @@ import '../../shared/widgets/confirmation_dialog.dart';
 import '../../shared/widgets/neon_button.dart';
 import '../members/member_profile_screen.dart';
 import 'trainer_form_screen.dart';
+import '../../core/theme/app_theme.dart';
 
 class TrainerDetailScreen extends StatefulWidget {
   final String trainerId;
@@ -100,9 +101,9 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                       controller: amountController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Payout Amount (₹) *',
-                        prefixIcon: Icon(Icons.currency_rupee, color: Color(0xFFD4FF00)),
+                        prefixIcon: Icon(Icons.currency_rupee, color: AppTheme.neonLime),
                       ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Amount is required';
@@ -126,7 +127,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                     const SizedBox(height: 16),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.calendar_today, color: Color(0xFFD4FF00)),
+                      leading: Icon(Icons.calendar_today, color: AppTheme.neonLime),
                       title: const Text('Payout Date', style: TextStyle(color: Colors.white70, fontSize: 13)),
                       subtitle: Text(
                         DateFormat('dd MMMM yyyy').format(payoutDate),
@@ -141,10 +142,10 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                           lastDate: DateTime(2035),
                           builder: (context, child) => Theme(
                             data: ThemeData.dark().copyWith(
-                              colorScheme: const ColorScheme.dark(
-                                primary: Color(0xFFD4FF00),
-                                onPrimary: Color(0xFF121212),
-                                surface: Color(0xFF1E1E1E),
+                              colorScheme: ColorScheme.dark(
+                                primary: AppTheme.neonLime,
+                                onPrimary: const Color(0xFF121212),
+                                surface: const Color(0xFF1E1E1E),
                               ),
                             ),
                             child: child!,
@@ -173,7 +174,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD4FF00),
+                  backgroundColor: AppTheme.neonLime,
                   foregroundColor: const Color(0xFF121212),
                 ),
                 onPressed: () async {
@@ -214,9 +215,9 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF121212),
-        body: Center(child: CircularProgressIndicator(color: Color(0xFFD4FF00))),
+      return Scaffold(
+        backgroundColor: const Color(0xFF121212),
+        body: Center(child: CircularProgressIndicator(color: AppTheme.neonLime)),
       );
     }
 
@@ -277,7 +278,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
         ],
       ),
       body: RefreshIndicator(
-        color: const Color(0xFFD4FF00),
+        color: AppTheme.neonLime,
         backgroundColor: const Color(0xFF1E1E1E),
         onRefresh: _loadData,
         child: ListView(
@@ -315,13 +316,13 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFD4FF00).withValues(alpha: 0.12),
+                          color: AppTheme.neonLime.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFD4FF00).withValues(alpha: 0.3)),
+                          border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           trainer.specialization!,
-                          style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.w600, fontSize: 13),
+                          style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w600, fontSize: 13),
                         ),
                       ),
                     ],
@@ -378,7 +379,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
                   ),
                   child: Text(
                     '${_assignedMembers.length}',
-                    style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 12),
+                    style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
                 ),
               ],
@@ -454,7 +455,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: accentColor ?? const Color(0xFFD4FF00)),
+              Icon(icon, size: 16, color: accentColor ?? AppTheme.neonLime),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -493,7 +494,7 @@ class _TrainerDetailScreenState extends State<TrainerDetailScreen> {
           backgroundColor: const Color(0xFF121212),
           child: Text(
             memberName.isNotEmpty ? memberName[0].toUpperCase() : 'M',
-            style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold),
+            style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold),
           ),
         ),
         title: Text(memberName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),

@@ -11,6 +11,7 @@ import '../../core/notifications/notification_service.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../core/theme/app_theme.dart';
 
 class EventFormScreen extends StatefulWidget {
   final EventModel? event;
@@ -101,10 +102,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
       lastDate: DateTime(2035),
       builder: (context, child) => Theme(
         data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFFD4FF00),
-            onPrimary: Color(0xFF121212),
-            surface: Color(0xFF1E1E1E),
+          colorScheme: ColorScheme.dark(
+            primary: AppTheme.neonLime,
+            onPrimary: const Color(0xFF121212),
+            surface: const Color(0xFF1E1E1E),
           ),
         ),
         child: child!,
@@ -119,10 +120,10 @@ class _EventFormScreenState extends State<EventFormScreen> {
       initialTime: isStart ? _startTime : _endTime,
       builder: (context, child) => Theme(
         data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFFD4FF00),
-            onPrimary: Color(0xFF121212),
-            surface: Color(0xFF1E1E1E),
+          colorScheme: ColorScheme.dark(
+            primary: AppTheme.neonLime,
+            onPrimary: const Color(0xFF121212),
+            surface: const Color(0xFF1E1E1E),
           ),
         ),
         child: child!,
@@ -263,7 +264,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
               // Date Picker Tile
               Card(
                 child: ListTile(
-                  leading: const Icon(Icons.calendar_month, color: Color(0xFFD4FF00)),
+                  leading: Icon(Icons.calendar_month, color: AppTheme.neonLime),
                   title: const Text('Event Date', style: TextStyle(color: Colors.white70, fontSize: 13)),
                   subtitle: Text(
                     DateFormat('EEEE, dd MMMM yyyy').format(_date),
@@ -282,7 +283,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
                     child: Card(
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        leading: const Icon(Icons.schedule, color: Color(0xFFD4FF00), size: 20),
+                        leading: Icon(Icons.schedule, color: AppTheme.neonLime, size: 20),
                         title: const Text('Start Time', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         subtitle: Text(
                           _startTime.format(context),
@@ -297,7 +298,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
                     child: Card(
                       child: ListTile(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        leading: const Icon(Icons.schedule, color: Color(0xFFD4FF00), size: 20),
+                        leading: Icon(Icons.schedule, color: AppTheme.neonLime, size: 20),
                         title: const Text('End Time', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         subtitle: Text(
                           _endTime.format(context),
@@ -321,9 +322,9 @@ class _EventFormScreenState extends State<EventFormScreen> {
                 initialValue: _selectedTrainerId,
                 dropdownColor: const Color(0xFF252525),
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Select Trainer (Optional)',
-                  prefixIcon: Icon(Icons.person_outline, color: Color(0xFFD4FF00)),
+                  prefixIcon: Icon(Icons.person_outline, color: AppTheme.neonLime),
                 ),
                 items: [
                   const DropdownMenuItem(value: null, child: Text('No Trainer Assigned')),

@@ -10,6 +10,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../data/repositories/notification_repository.dart';
 import '../services/app_state_service.dart';
 import 'package:uuid/uuid.dart';
+import '../theme/app_theme.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -97,18 +98,18 @@ class NotificationService {
     required String body,
     String? payload,
   }) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'gym_reminders_channel',
       'Fee & Membership Reminders',
       channelDescription: 'Local notifications for member fee dues and membership expiries',
       importance: Importance.high,
       priority: Priority.high,
-      color: Color(0xFFB5F63D),
+      color: AppTheme.neonLime,
     );
 
-    const NotificationDetails notificationDetails = NotificationDetails(
+    final notificationDetails = NotificationDetails(
       android: androidDetails,
-      iOS: DarwinNotificationDetails(),
+      iOS: const DarwinNotificationDetails(),
     );
 
     await _notificationsPlugin.show(
@@ -189,18 +190,18 @@ class NotificationService {
     required DateTime scheduledDate,
     String? payload,
   }) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'gym_reminders_channel',
       'Fee & Membership Reminders',
       channelDescription: 'Local notifications for member fee dues and membership expiries',
       importance: Importance.high,
       priority: Priority.high,
-      color: Color(0xFFD4FF00),
+      color: AppTheme.neonLime,
     );
 
-    const NotificationDetails notificationDetails = NotificationDetails(
+    final notificationDetails = NotificationDetails(
       android: androidDetails,
-      iOS: DarwinNotificationDetails(),
+      iOS: const DarwinNotificationDetails(),
     );
 
     await _safeZonedSchedule(
@@ -238,7 +239,7 @@ class NotificationService {
         ? ' • ${event.location!.trim()}'
         : '';
 
-    const AndroidNotificationDetails eventAndroidDetails = AndroidNotificationDetails(
+    final eventAndroidDetails = AndroidNotificationDetails(
       'gym_events_channel',
       'Gym Events & Classes',
       channelDescription: 'Reminders and notifications for scheduled gym events and classes',
@@ -246,12 +247,12 @@ class NotificationService {
       priority: Priority.high,
       enableVibration: true,
       playSound: true,
-      color: Color(0xFFD4FF00),
+      color: AppTheme.neonLime,
     );
 
-    const NotificationDetails eventNotificationDetails = NotificationDetails(
+    final eventNotificationDetails = NotificationDetails(
       android: eventAndroidDetails,
-      iOS: DarwinNotificationDetails(
+      iOS: const DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,

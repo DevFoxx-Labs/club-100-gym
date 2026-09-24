@@ -8,6 +8,7 @@ import '../../features/announcements/announcements_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/notifications/notification_service.dart';
+import '../../core/services/app_state_service.dart';
 import '../../core/theme/app_theme.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -35,12 +36,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
     WidgetsBinding.instance.addObserver(this);
     _currentIndex = widget.initialIndex;
     _membersFilter = widget.initialFilter;
+    AppStateService.instance.addListener(_onAppStateChanged);
   }
 
   @override
   void dispose() {
+    AppStateService.instance.removeListener(_onAppStateChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _onAppStateChanged() {
+    // The bottom bar reads AppTheme.neonLime directly, so repaint it when the
+    // admin picks a new highlight color.
+    if (AppStateService.instance.lastEventType == AppStateEventType.themeChanged && mounted) {
+      setState(() {});
+    }
   }
 
   @override

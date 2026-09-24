@@ -17,6 +17,7 @@ import '../../features/trainers/trainers_list_screen.dart';
 import '../../core/services/app_state_service.dart';
 import '../../core/localization/app_translations.dart';
 import 'gym_logo_view.dart';
+import '../../core/theme/app_theme.dart';
 
 class AppDrawer extends StatefulWidget {
   final int currentIndex;
@@ -95,7 +96,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  _gymInfo?.name ?? 'Elite Fitness Gym',
+                  _gymInfo?.name ?? 'GymYardHQ',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -108,7 +109,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 const SizedBox(height: 2),
                 Text(
                   '$_greeting, ${_adminInfo?.name ?? tr('drawer_default_admin')}',
-                  style: const TextStyle(color: Color(0xFFD4FF00), fontSize: 13, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: AppTheme.neonLime, fontSize: 13, fontWeight: FontWeight.w600),
                 ),
                 if (_gymInfo?.website != null && _gymInfo!.website!.trim().isNotEmpty) ...[
                   const SizedBox(height: 3),
@@ -309,19 +310,19 @@ class _AppDrawerState extends State<AppDrawer> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFD4FF00).withValues(alpha: 0.12) : Colors.transparent,
+        color: isSelected ? AppTheme.neonLime.withValues(alpha: 0.12) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
         leading: Icon(
           isSelected ? (selectedIcon ?? icon) : icon,
-          color: isSelected ? const Color(0xFFD4FF00) : Colors.white70,
+          color: isSelected ? AppTheme.neonLime : Colors.white70,
           size: 22,
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: isSelected ? const Color(0xFFD4FF00) : Colors.white,
+            color: isSelected ? AppTheme.neonLime : Colors.white,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             fontSize: 14,
           ),

@@ -8,6 +8,7 @@ import '../../core/services/app_state_service.dart';
 import 'package:intl/intl.dart';
 import 'package_form_screen.dart';
 import 'plan_form_screen.dart';
+import '../../core/theme/app_theme.dart';
 
 class PackagesAndPlansScreen extends StatefulWidget {
   const PackagesAndPlansScreen({super.key});
@@ -103,7 +104,7 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_box_outlined, color: Color(0xFFD4FF00)),
+            icon: Icon(Icons.add_box_outlined, color: AppTheme.neonLime),
             tooltip: 'Add Package',
             onPressed: () async {
               final res = await Navigator.push(
@@ -116,9 +117,9 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFD4FF00)))
+          ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
           : RefreshIndicator(
-              color: const Color(0xFFD4FF00),
+              color: AppTheme.neonLime,
               backgroundColor: const Color(0xFF1E1E1E),
               onRefresh: _loadData,
               child: ListView(
@@ -158,7 +159,7 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
           );
           if (res == true) _loadData();
         },
-        backgroundColor: const Color(0xFFD4FF00),
+        backgroundColor: AppTheme.neonLime,
         icon: const Icon(Icons.add, color: Color(0xFF121212)),
         label: const Text(
           'Add Plan',
@@ -179,10 +180,10 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
           leading: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFFD4FF00).withValues(alpha: 0.12),
+              color: AppTheme.neonLime.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.inventory_2_outlined, color: Color(0xFFD4FF00), size: 20),
+            child: Icon(Icons.inventory_2_outlined, color: AppTheme.neonLime, size: 20),
           ),
           title: Text(
             pkg.name,
@@ -198,7 +199,7 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(Icons.add_circle_outline, color: Color(0xFFD4FF00), size: 20),
+                icon: Icon(Icons.add_circle_outline, color: AppTheme.neonLime, size: 20),
                 tooltip: 'Add plan to this package',
                 onPressed: () async {
                   final res = await Navigator.push(
@@ -251,8 +252,8 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
                         );
                         if (res == true) _loadData();
                       },
-                      icon: const Icon(Icons.add, size: 16, color: Color(0xFFD4FF00)),
-                      label: const Text('Add Plan', style: TextStyle(color: Color(0xFFD4FF00), fontSize: 12)),
+                      icon: Icon(Icons.add, size: 16, color: AppTheme.neonLime),
+                      label: Text('Add Plan', style: TextStyle(color: AppTheme.neonLime, fontSize: 12)),
                     ),
                   ],
                 ),
@@ -313,7 +314,7 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
           ),
           Text(
             currencyFormat.format(plan.defaultFee),
-            style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 15),
+            style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 15),
           ),
         ],
       ),

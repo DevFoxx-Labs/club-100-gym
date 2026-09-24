@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import '../theme/app_theme.dart';
 
 Future<String> _saveGymLogo(String sourcePath) async {
   final docsDir = await getApplicationDocumentsDirectory();
@@ -48,12 +49,12 @@ Future<String?> pickGymLogo({
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_camera_outlined, color: Color(0xFFD4FF00)),
+                leading: Icon(Icons.photo_camera_outlined, color: AppTheme.neonLime),
                 title: const Text('Take Photo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                 onTap: () => Navigator.pop(context, _LogoAction.camera),
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined, color: Color(0xFFD4FF00)),
+                leading: Icon(Icons.photo_library_outlined, color: AppTheme.neonLime),
                 title: const Text('Choose from Gallery', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                 onTap: () => Navigator.pop(context, _LogoAction.gallery),
               ),
@@ -137,8 +138,8 @@ class EditableGymLogo extends StatelessWidget {
             ),
             Container(
               padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: Color(0xFFD4FF00),
+              decoration: BoxDecoration(
+                color: AppTheme.neonLime,
                 shape: BoxShape.circle,
               ),
               child: const Icon(

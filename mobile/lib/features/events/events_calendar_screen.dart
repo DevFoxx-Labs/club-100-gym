@@ -5,6 +5,7 @@ import '../../data/repositories/event_repository.dart';
 import '../../core/services/app_state_service.dart';
 import '../../core/notifications/notification_service.dart';
 import 'event_form_screen.dart';
+import '../../core/theme/app_theme.dart';
 
 class EventsCalendarScreen extends StatefulWidget {
   const EventsCalendarScreen({super.key});
@@ -98,7 +99,7 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.chevron_left, color: Color(0xFFD4FF00)),
+                  icon: Icon(Icons.chevron_left, color: AppTheme.neonLime),
                   onPressed: () => _changeMonth(-1),
                 ),
                 Text(
@@ -111,7 +112,7 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.chevron_right, color: Color(0xFFD4FF00)),
+                  icon: Icon(Icons.chevron_right, color: AppTheme.neonLime),
                   onPressed: () => _changeMonth(1),
                 ),
               ],
@@ -131,8 +132,8 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
               children: [
                 Text(
                   DateFormat('EEEE, dd MMM yyyy').format(_selectedDate).toUpperCase(),
-                  style: const TextStyle(
-                    color: Color(0xFFD4FF00),
+                  style: TextStyle(
+                    color: AppTheme.neonLime,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                     letterSpacing: 1.0,
@@ -149,7 +150,7 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
           // Events List for Selected Day
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFFD4FF00)))
+                ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
                 : _selectedDateEvents.isEmpty
                     ? Center(
                         child: Column(
@@ -184,7 +185,7 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
           );
           if (res == true) _loadEvents();
         },
-        backgroundColor: const Color(0xFFD4FF00),
+        backgroundColor: AppTheme.neonLime,
         icon: const Icon(Icons.add, color: Color(0xFF121212)),
         label: const Text(
           'Add Event',
@@ -257,13 +258,13 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
                   margin: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? const Color(0xFFD4FF00)
+                        ? AppTheme.neonLime
                         : isToday
                             ? const Color(0xFF252525)
                             : Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
                     border: isToday && !isSelected
-                        ? Border.all(color: const Color(0xFFD4FF00).withValues(alpha: 0.6))
+                        ? Border.all(color: AppTheme.neonLime.withValues(alpha: 0.6))
                         : null,
                   ),
                   child: Stack(
@@ -275,7 +276,7 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
                           color: isSelected
                               ? const Color(0xFF121212)
                               : isToday
-                                  ? const Color(0xFFD4FF00)
+                                  ? AppTheme.neonLime
                                   : Colors.white,
                           fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.normal,
                           fontSize: 13,
@@ -289,7 +290,7 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
                             height: 5,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: isSelected ? const Color(0xFF121212) : const Color(0xFFD4FF00),
+                              color: isSelected ? const Color(0xFF121212) : AppTheme.neonLime,
                             ),
                           ),
                         ),

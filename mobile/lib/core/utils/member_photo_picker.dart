@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../shared/widgets/member_avatar.dart';
+import '../theme/app_theme.dart';
 
 Future<String> _savePhoto(String sourcePath, {String subfolder = 'profile_photos'}) async {
   final docsDir = await getApplicationDocumentsDirectory();
@@ -50,12 +51,12 @@ Future<String?> pickProfilePhoto({
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_camera_outlined, color: Color(0xFFD4FF00)),
+                leading: Icon(Icons.photo_camera_outlined, color: AppTheme.neonLime),
                 title: const Text('Take Photo', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                 onTap: () => Navigator.pop(context, _PhotoAction.camera),
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined, color: Color(0xFFD4FF00)),
+                leading: Icon(Icons.photo_library_outlined, color: AppTheme.neonLime),
                 title: const Text('Choose from Gallery', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                 onTap: () => Navigator.pop(context, _PhotoAction.gallery),
               ),
@@ -146,7 +147,7 @@ class EditableMemberAvatar extends StatelessWidget {
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFD4FF00), width: 2),
+                border: Border.all(color: AppTheme.neonLime, width: 2),
               ),
               child: CircleAvatar(
                 radius: radius,
@@ -156,7 +157,7 @@ class EditableMemberAvatar extends StatelessWidget {
                     ? Text(
                         initials,
                         style: TextStyle(
-                          color: const Color(0xFFD4FF00),
+                          color: AppTheme.neonLime,
                           fontSize: radius * 0.7,
                           fontWeight: FontWeight.bold,
                         ),
@@ -166,8 +167,8 @@ class EditableMemberAvatar extends StatelessWidget {
             ),
             Container(
               padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: Color(0xFFD4FF00),
+              decoration: BoxDecoration(
+                color: AppTheme.neonLime,
                 shape: BoxShape.circle,
               ),
               child: const Icon(

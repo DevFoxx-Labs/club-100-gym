@@ -8,6 +8,7 @@ import '../../core/utils/form_validators.dart';
 import '../../core/services/app_state_service.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../core/theme/app_theme.dart';
 
 class PlanFormScreen extends StatefulWidget {
   final PlanModel? plan;
@@ -140,9 +141,9 @@ class _PlanFormScreenState extends State<PlanFormScreen> {
                 initialValue: _selectedPackageId,
                 dropdownColor: const Color(0xFF252525),
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Select Package (Optional)',
-                  prefixIcon: Icon(Icons.inventory_2_outlined, color: Color(0xFFD4FF00)),
+                  prefixIcon: Icon(Icons.inventory_2_outlined, color: AppTheme.neonLime),
                 ),
                 items: [
                   const DropdownMenuItem(value: null, child: Text('No Package (General)')),

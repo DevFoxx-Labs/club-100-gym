@@ -12,6 +12,7 @@ import '../../core/services/app_state_service.dart';
 import '../../core/localization/app_translations.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../../core/theme/app_theme.dart';
 
 class ChangeTrainerScreen extends StatefulWidget {
   final MemberModel member;
@@ -149,7 +150,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
         ),
       ),
       body: _isInit
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFD4FF00)))
+          ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Form(
@@ -170,7 +171,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                                   backgroundColor: const Color(0xFF121212),
                                   child: Text(
                                     widget.member.name.isNotEmpty ? widget.member.name[0].toUpperCase() : 'M',
-                                    style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold),
+                                    style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -222,7 +223,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                                     const SizedBox(height: 2),
                                     Text(
                                       '₹${widget.currentMembership.personalTrainingFee.toStringAsFixed(0)}',
-                                      style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 14),
+                                      style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 14),
                                     ),
                                   ],
                                 ),
@@ -240,11 +241,11 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E1E1E),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFD4FF00).withValues(alpha: 0.2)),
+                        border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline, color: Color(0xFFD4FF00), size: 18),
+                          Icon(Icons.info_outline, color: AppTheme.neonLime, size: 18),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -269,7 +270,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
                         hintText: tr('change_trainer_choose_hint'),
-                        prefixIcon: const Icon(Icons.sports_gymnastics, color: Color(0xFFD4FF00)),
+                        prefixIcon: Icon(Icons.sports_gymnastics, color: AppTheme.neonLime),
                       ),
                       items: [
                         DropdownMenuItem(value: null, child: Text(tr('change_trainer_none_remove'))),
@@ -297,7 +298,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E1E1E),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFD4FF00).withValues(alpha: 0.3)),
+                          border: Border.all(color: AppTheme.neonLime.withValues(alpha: 0.3)),
                         ),
                         child: Column(
                           children: [
@@ -315,7 +316,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                                 Text(tr('change_trainer_pt_fee_row'), style: const TextStyle(color: Colors.white70, fontSize: 13)),
                                 Text(
                                   '₹${(double.tryParse(_ptFeeController.text.trim()) ?? 0.0).toStringAsFixed(0)}',
-                                  style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.bold, fontSize: 13),
+                                  style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.bold, fontSize: 13),
                                 ),
                               ],
                             ),
@@ -326,7 +327,7 @@ class _ChangeTrainerScreenState extends State<ChangeTrainerScreen> {
                                 Text(tr('change_trainer_updated_total_fee'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                                 Text(
                                   '₹${(_basePlanFee + (double.tryParse(_ptFeeController.text.trim()) ?? 0.0)).toStringAsFixed(0)}',
-                                  style: const TextStyle(color: Color(0xFFD4FF00), fontWeight: FontWeight.w900, fontSize: 15),
+                                  style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 15),
                                 ),
                               ],
                             ),

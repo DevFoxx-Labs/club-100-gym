@@ -941,7 +941,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
                             final expiryDateStr = ms != null ? dateFormat.format(ms.endDate) : tr('common_not_available');
 
                             String daysLeftText = '';
-                            Color daysLeftColor = const Color(0xFFD4FF00);
+                            Color daysLeftColor = AppTheme.neonLime;
 
                             if (ms != null) {
                               final now = DateTime.now();
@@ -951,7 +951,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
 
                               if (diff > 0) {
                                 daysLeftText = tr('members_days_left', {'days': '$diff'});
-                                daysLeftColor = diff <= 7 ? const Color(0xFFFFB300) : const Color(0xFFD4FF00);
+                                daysLeftColor = diff <= 7 ? const Color(0xFFFFB300) : AppTheme.neonLime;
                               } else if (diff == 0) {
                                 daysLeftText = tr('members_due_today_paren');
                                 daysLeftColor = const Color(0xFFFFB300);

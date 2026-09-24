@@ -9,6 +9,7 @@ import '../../data/repositories/trainer_repository.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 import '../../shared/widgets/phone_input_field.dart';
+import '../../core/theme/app_theme.dart';
 
 class TrainerFormScreen extends StatefulWidget {
   final TrainerModel? trainer;
@@ -168,7 +169,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
                     selected: _role == 'Trainer',
                     label: const Text('Trainer'),
                     avatar: const Icon(Icons.fitness_center_rounded, size: 16),
-                    selectedColor: const Color(0xFFD4FF00),
+                    selectedColor: AppTheme.neonLime,
                     backgroundColor: const Color(0xFF1E1E1E),
                     labelStyle: TextStyle(
                       color: _role == 'Trainer' ? const Color(0xFF121212) : Colors.white,
@@ -183,7 +184,7 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
                     selected: _role == 'Staff',
                     label: const Text('Staff'),
                     avatar: const Icon(Icons.badge_outlined, size: 16),
-                    selectedColor: const Color(0xFFD4FF00),
+                    selectedColor: AppTheme.neonLime,
                     backgroundColor: const Color(0xFF1E1E1E),
                     labelStyle: TextStyle(
                       color: _role == 'Staff' ? const Color(0xFF121212) : Colors.white,
@@ -222,8 +223,8 @@ class _TrainerFormScreenState extends State<TrainerFormScreen> {
                       style: const TextStyle(color: Colors.white60, fontSize: 12),
                     ),
                     value: _isActive,
-                    activeThumbColor: const Color(0xFFD4FF00),
-                    activeTrackColor: const Color(0xFFD4FF00).withValues(alpha: 0.3),
+                    activeThumbColor: AppTheme.neonLime,
+                    activeTrackColor: AppTheme.neonLime.withValues(alpha: 0.3),
                     onChanged: (val) => setState(() => _isActive = val),
                   ),
                 ),

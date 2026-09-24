@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../core/notifications/notification_service.dart';
+import '../../core/theme/app_theme.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -49,7 +50,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFD4FF00)))
+          ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
           : ListView(
               padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + MediaQuery.paddingOf(context).bottom),
               children: [
@@ -167,7 +168,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(color: Color(0xFFD4FF00), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        style: TextStyle(color: AppTheme.neonLime, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2),
       ),
     );
   }
@@ -182,8 +183,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
       title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
       subtitle: Text(subtitle, style: const TextStyle(color: Colors.white60, fontSize: 12)),
       value: value,
-      activeThumbColor: const Color(0xFFD4FF00),
-      activeTrackColor: const Color(0xFFD4FF00).withValues(alpha: 0.3),
+      activeThumbColor: AppTheme.neonLime,
+      activeTrackColor: AppTheme.neonLime.withValues(alpha: 0.3),
       onChanged: onChanged,
     );
   }

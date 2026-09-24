@@ -3,6 +3,7 @@ import '../../data/models/member_model.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../../shared/widgets/member_avatar.dart';
+import '../../core/theme/app_theme.dart';
 
 class ArchivedMembersScreen extends StatefulWidget {
   const ArchivedMembersScreen({super.key});
@@ -63,7 +64,7 @@ class _ArchivedMembersScreenState extends State<ArchivedMembersScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
-                child: const Text('Understood', style: TextStyle(color: Color(0xFFD4FF00))),
+                child: Text('Understood', style: TextStyle(color: AppTheme.neonLime)),
               ),
             ],
           ),
@@ -108,7 +109,7 @@ class _ArchivedMembersScreenState extends State<ArchivedMembersScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFFD4FF00)))
+          ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
           : _archivedMembers.isEmpty
               ? Center(
                   child: Column(
@@ -124,7 +125,7 @@ class _ArchivedMembersScreenState extends State<ArchivedMembersScreen> {
                   ),
                 )
               : RefreshIndicator(
-                  color: const Color(0xFFD4FF00),
+                  color: AppTheme.neonLime,
                   backgroundColor: const Color(0xFF1E1E1E),
                   onRefresh: _loadArchived,
                   child: ListView.separated(
@@ -166,8 +167,8 @@ class _ArchivedMembersScreenState extends State<ArchivedMembersScreen> {
                               ),
                               TextButton.icon(
                                 onPressed: () => _restoreMember(member),
-                                icon: const Icon(Icons.restore, size: 16, color: Color(0xFFD4FF00)),
-                                label: const Text('Restore', style: TextStyle(color: Color(0xFFD4FF00), fontSize: 12)),
+                                icon: Icon(Icons.restore, size: 16, color: AppTheme.neonLime),
+                                label: Text('Restore', style: TextStyle(color: AppTheme.neonLime, fontSize: 12)),
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_forever_outlined, color: Color(0xFFFF5252), size: 20),
