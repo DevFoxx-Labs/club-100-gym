@@ -430,6 +430,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                                 if (picked != null) setState(() => _startDate = picked);
                               },
                               child: Container(
+                                width: double.infinity,
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                                 decoration: BoxDecoration(
                                   color: AppTheme.darkBackground,
@@ -445,7 +446,7 @@ class _AddEditMemberScreenState extends State<AddEditMemberScreen> {
                           ],
                         ),
                       ),
-                      
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
