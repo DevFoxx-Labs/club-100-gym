@@ -123,6 +123,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         title: const Text('EXPENSE TRACKER'),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'expenses_fab',
         backgroundColor: AppTheme.neonLime,
         foregroundColor: AppTheme.darkBackground,
         icon: const Icon(Icons.add_rounded),

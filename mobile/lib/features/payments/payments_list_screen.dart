@@ -114,6 +114,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
       ),
       floatingActionButton: _tabController.index == 0
           ? FloatingActionButton.extended(
+              heroTag: 'payments_fab',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -126,6 +127,7 @@ class _PaymentsListScreenState extends State<PaymentsListScreen> with SingleTick
               label: Text(tr('payments_add_payment_fab'), style: const TextStyle(fontWeight: FontWeight.w800)),
             )
           : FloatingActionButton.extended(
+              heroTag: 'bills_fab',
               onPressed: () {
                 Navigator.push(
                   context,

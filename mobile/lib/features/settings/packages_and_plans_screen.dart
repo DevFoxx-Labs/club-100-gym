@@ -152,6 +152,7 @@ class _PackagesAndPlansScreenState extends State<PackagesAndPlansScreen> {
               ),
             ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'packages_plans_fab',
         onPressed: () async {
           final res = await Navigator.push(
             context,

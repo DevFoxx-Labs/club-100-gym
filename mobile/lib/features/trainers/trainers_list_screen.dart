@@ -393,6 +393,7 @@ class _TrainersListScreenState extends State<TrainersListScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'trainers_fab',
         onPressed: () async {
           final res = await Navigator.push(
             context,

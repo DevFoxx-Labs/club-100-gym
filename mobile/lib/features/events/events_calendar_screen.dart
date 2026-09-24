@@ -178,6 +178,7 @@ class _EventsCalendarScreenState extends State<EventsCalendarScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'events_fab',
         onPressed: () async {
           final res = await Navigator.push(
             context,

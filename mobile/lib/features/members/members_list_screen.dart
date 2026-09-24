@@ -1320,6 +1320,7 @@ class _MembersListScreenState extends State<MembersListScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'members_fab',
         onPressed: () async {
           await Navigator.push(
             context,
