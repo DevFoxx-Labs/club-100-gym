@@ -1,24 +1,13 @@
 import 'package:flutter/material.dart';
+import '../../core/config/supabase_config.dart';
+import '../../core/sync/supabase_service.dart';
+import '../../core/sync/supabase_sync_service.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/services/app_state_service.dart';
-import '../../core/sync/data_mode.dart';
-import '../../core/sync/data_mode_service.dart';
-import '../../core/sync/mongo_connection_service.dart';
-import '../../core/sync/sync_migration_service.dart';
+import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
 
-/// Lets the admin switch the app's storage backend between the local
-/// SQLite database (Offline, the default) and their own MongoDB cluster
-/// (Online). Credentials are entered here at runtime and kept in secure
-/// storage only — never hardcoded in the app.
-///
-/// Automatic two-way sync is not implemented yet: switching to Online runs
-/// a one-time push of all existing local data into MongoDB (upserted by id,
-/// so re-running never creates duplicates), and from then on Online mode
-/// reads/writes MongoDB exclusively while Offline mode reads/writes SQLite
-/// exclusively.
 class DataConnectionScreen extends StatefulWidget {
   const DataConnectionScreen({super.key});
 
@@ -27,19 +16,17 @@ class DataConnectionScreen extends StatefulWidget {
 }
 
 class _DataConnectionScreenState extends State<DataConnectionScreen> {
-  final _uriController = TextEditingController();
-  bool _obscureUri = true;
+  final _urlController = TextEditingController();
+  final _anonKeyController = TextEditingController();
+  bool _obscureKey = true;
   bool _isLoading = true;
   bool _isTesting = false;
-  bool _isMigrating = false;
+  bool _isSyncing = false;
+  bool _isConnected = false;
+  String? _connectionMessage;
 
-  DataMode _mode = DataMode.offline;
-  DateTime? _lastMigratedAt;
   DateTime? _lastSyncAt;
-
-  String _migrationTable = '';
-  int _migrationIndex = 0;
-  int _migrationTotal = 0;
+  String _gymId = 'default';
 
   @override
   void initState() {
@@ -49,370 +36,309 @@ class _DataConnectionScreenState extends State<DataConnectionScreen> {
 
   @override
   void dispose() {
-    _uriController.dispose();
+    _urlController.dispose();
+    _anonKeyController.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
-    final mode = await DataModeService.instance.getMode();
-    final uri = await DataModeService.instance.getMongoUri();
-    final migratedAt = await DataModeService.instance.getLastMigratedAt();
-    final syncAt = await DataModeService.instance.getLastSyncAt();
+    final url = await SupabaseConfig.getUrl();
+    final anonKey = await SupabaseConfig.getAnonKey();
+    final lastSync = await SupabaseConfig.getLastSyncAt();
+    final gymInfo = await SettingsRepository().getGymInfo();
+
     if (!mounted) return;
     setState(() {
-      _mode = mode;
-      _uriController.text = uri ?? '';
-      _lastMigratedAt = migratedAt;
-      _lastSyncAt = syncAt;
+      _urlController.text = url ?? '';
+      _anonKeyController.text = anonKey ?? '';
+      _lastSyncAt = lastSync;
+      _gymId = gymInfo.id;
       _isLoading = false;
     });
-  }
 
-  String? _parsedDbName(String uri) {
-    try {
-      final parsed = Uri.parse(uri.trim());
-      final path = parsed.path.startsWith('/') ? parsed.path.substring(1) : parsed.path;
-      return path.trim().isEmpty ? null : path.trim();
-    } catch (_) {
-      return null;
+    if (url != null && anonKey != null && url.isNotEmpty && anonKey.isNotEmpty) {
+      _testConnection(silent: true);
     }
   }
 
-  String? _validateUri(String uri) {
-    final trimmed = uri.trim();
-    if (trimmed.isEmpty) return 'Connection string enter karein.';
-    if (!trimmed.startsWith('mongodb://') && !trimmed.startsWith('mongodb+srv://')) {
-      return 'Connection string "mongodb://" ya "mongodb+srv://" se shuru honi chahiye.';
-    }
-    if (_parsedDbName(trimmed) == null) {
-      return 'Connection string ke aakhir mein database ka naam bhi hona chahiye (e.g. .../myGymDb).';
-    }
-    return null;
-  }
+  Future<void> _testConnection({bool silent = false}) async {
+    if (!silent) setState(() => _isTesting = true);
 
-  Future<void> _testConnection() async {
-    final error = _validateUri(_uriController.text);
-    if (error != null) {
-      _showSnack(error, isError: true);
-      return;
-    }
-    setState(() => _isTesting = true);
-    final result = await MongoConnectionService.instance.testConnection(_uriController.text.trim());
+    final res = await SupabaseService.instance.testConnection(
+      customUrl: _urlController.text.trim(),
+      customAnonKey: _anonKeyController.text.trim(),
+    );
+
     if (!mounted) return;
-    setState(() => _isTesting = false);
-    _showSnack(result.message, isError: !result.success);
-  }
-
-  void _showSnack(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? AppTheme.statusOverdue : null,
-      ),
-    );
-  }
-
-  Future<void> _confirmSwitchToOnline() async {
-    final error = _validateUri(_uriController.text);
-    if (error != null) {
-      _showSnack(error, isError: true);
-      return;
-    }
-    showDialog(
-      context: context,
-      builder: (context) => ConfirmationDialog(
-        title: 'SWITCH TO ONLINE MODE?',
-        message: 'Aapka mojooda offline (SQLite) data pehle MongoDB mein copy kiya jayega, fir se run karne par bhi duplicate nahi banega. Uske baad app sirf MongoDB use karegi jab tak aap wapas Offline mode par switch na karein.',
-        confirmText: 'Copy Data & Go Online',
-        onConfirm: _switchToOnline,
-      ),
-    );
-  }
-
-  Future<void> _switchToOnline() async {
-    final uri = _uriController.text.trim();
-    final dbName = _parsedDbName(uri)!;
-
     setState(() {
-      _isMigrating = true;
-      _migrationTable = '';
-      _migrationIndex = 0;
-      _migrationTotal = 0;
+      _isTesting = false;
+      _isConnected = res.success;
+      _connectionMessage = res.error;
     });
 
-    try {
-      await DataModeService.instance.saveMongoConnection(uri: uri, databaseName: dbName);
-
-      final testResult = await MongoConnectionService.instance.testConnection(uri);
-      if (!testResult.success) {
-        throw StateError(testResult.message);
-      }
-
-      final counts = await SyncMigrationService.instance.migrateAllTablesToMongo(
-        onProgress: (table, index, total) {
-          if (!mounted) return;
-          setState(() {
-            _migrationTable = table;
-            _migrationIndex = index;
-            _migrationTotal = total;
-          });
-        },
+    if (!silent) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res.success ? 'Connected to Supabase Cloud successfully!' : 'Connection error: ${res.error}'),
+          backgroundColor: res.success ? AppTheme.neonLime : AppTheme.statusOverdue,
+        ),
       );
-
-      await DataModeService.instance.setMode(DataMode.online);
-      AppStateService.instance.notifyAll();
-
-      final totalRows = counts.values.fold<int>(0, (a, b) => a + b);
-      if (!mounted) return;
-      setState(() {
-        _mode = DataMode.online;
-        _isMigrating = false;
-      });
-      await _load();
-      if (!mounted) return;
-      _showSnack('Online mode chalu. $totalRows records MongoDB mein copy ho gaye.');
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isMigrating = false);
-      _showSnack('Online mode chalu nahi ho paya: $e', isError: true);
     }
   }
 
-  Future<void> _confirmSwitchToOffline() async {
+  Future<void> _saveCredentials() async {
+    final url = _urlController.text.trim();
+    final key = _anonKeyController.text.trim();
+
+    if (url.isEmpty || key.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter both Supabase Project URL and Anon Key.')),
+      );
+      return;
+    }
+
+    await SupabaseConfig.saveCredentials(url: url, anonKey: key);
+    await SupabaseService.instance.init(force: true);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: const Text('Supabase credentials saved securely!'), backgroundColor: AppTheme.neonLime),
+    );
+
+    await _testConnection();
+  }
+
+  Future<void> _confirmPushLocalData() async {
     showDialog(
       context: context,
-      builder: (context) => ConfirmationDialog(
-        title: 'SWITCH TO OFFLINE MODE?',
-        message: 'App ab is device ke local SQLite data ka use karegi. MongoDB mein jo data hai wo waisa hi surakshit rahega, lekin jab tak aap dobara Online mode par switch nahi karte, naya data sirf is device par save hoga.',
-        confirmText: 'Go Offline',
-        onConfirm: _switchToOffline,
+      builder: (ctx) => ConfirmationDialog(
+        title: 'SYNC LOCAL TO SUPABASE CLOUD?',
+        message: 'This will upload all local members, plans, payments, and receipts to your Supabase PostgreSQL cloud database. Existing cloud records with matching IDs will be safely updated without duplicates.',
+        confirmText: 'Sync to Cloud Now',
+        onConfirm: _pushLocalData,
       ),
     );
   }
 
-  Future<void> _switchToOffline() async {
-    setState(() => _isLoading = true);
-    await DataModeService.instance.setMode(DataMode.offline);
-    await MongoConnectionService.instance.close();
-    AppStateService.instance.notifyAll();
-    await _load();
+  Future<void> _pushLocalData() async {
+    setState(() => _isSyncing = true);
+    final res = await SupabaseSyncService.instance.pushAllLocalDataToSupabase(_gymId);
     if (!mounted) return;
-    _showSnack('Offline mode chalu — ab local storage use ho raha hai.');
+    setState(() {
+      _isSyncing = false;
+      _lastSyncAt = DateTime.now();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(res.success ? 'Synced ${res.totalPushed} records to Supabase!' : 'Sync failed: ${res.error}'),
+        backgroundColor: res.success ? AppTheme.neonLime : AppTheme.statusOverdue,
+      ),
+    );
+  }
+
+  Future<void> _confirmRestoreFromCloud() async {
+    showDialog(
+      context: context,
+      builder: (ctx) => ConfirmationDialog(
+        title: 'RESTORE FROM SUPABASE CLOUD?',
+        message: 'This will download all records from Supabase into your local app. Local records will be updated to match the cloud records.',
+        confirmText: 'Restore from Cloud',
+        onConfirm: _restoreFromCloud,
+      ),
+    );
+  }
+
+  Future<void> _restoreFromCloud() async {
+    setState(() => _isSyncing = true);
+    final res = await SupabaseSyncService.instance.restoreAllGymData(_gymId);
+    if (!mounted) return;
+    setState(() {
+      _isSyncing = false;
+      _lastSyncAt = DateTime.now();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(res.success ? 'Restored ${res.totalRecordsRestored} records from Supabase!' : 'Restore failed: ${res.error}'),
+        backgroundColor: res.success ? AppTheme.neonLime : AppTheme.statusOverdue,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final safeBottom = MediaQuery.paddingOf(context).bottom;
-    final isOnline = _mode == DataMode.online;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('DATA STORAGE MODE')),
+      appBar: AppBar(title: const Text('SUPABASE CLOUD SYNC')),
       body: SafeArea(
         child: _isLoading
             ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
-            : Stack(
-                children: [
-                  SingleChildScrollView(
-                    padding: EdgeInsets.fromLTRB(
-                      20,
-                      20,
-                      20,
-                      24 + safeBottom + MediaQuery.viewInsetsOf(context).bottom,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _ModeCard(
-                          icon: Icons.smartphone_rounded,
-                          title: 'Offline Mode',
-                          subtitle: 'Sab kuch is device ki local SQLite database mein save hota hai. Internet ki zaroorat nahi. (Default)',
-                          isSelected: !isOnline,
-                          onTap: !isOnline ? null : _confirmSwitchToOffline,
+            : SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 24 + safeBottom),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Cloud Status Card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkSurface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: _isConnected ? AppTheme.neonLime : AppTheme.darkBorder,
                         ),
-                        const SizedBox(height: 12),
-                        _ModeCard(
-                          icon: Icons.cloud_rounded,
-                          title: 'Online Mode',
-                          subtitle: 'Aapke apne MongoDB cluster mein data save hota hai. Neeche connection details bharein.',
-                          isSelected: isOnline,
-                          onTap: null,
-                        ),
-                        const SizedBox(height: 20),
-
-                        Text('MONGODB CONNECTION', style: TextStyle(color: AppTheme.neonLime, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Apne MongoDB Atlas (ya self-hosted) cluster ki connection string yahan daalein. Isme database ka naam bhi hona chahiye, e.g. mongodb+srv://user:pass@cluster.mongodb.net/myGymDb',
-                          style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
-                        ),
-                        const SizedBox(height: 12),
-                        CustomTextField(
-                          label: 'Connection String',
-                          hint: 'mongodb+srv://user:pass@cluster.../dbName',
-                          controller: _uriController,
-                          obscureText: _obscureUri,
-                          keyboardType: TextInputType.url,
-                          suffixIcon: IconButton(
-                            icon: Icon(_obscureUri ? Icons.visibility_rounded : Icons.visibility_off_rounded, color: AppTheme.textMuted, size: 20),
-                            onPressed: () => setState(() => _obscureUri = !_obscureUri),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: (_isConnected ? AppTheme.neonLime : Colors.white24).withValues(alpha: 0.15),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _isConnected ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
+                              color: _isConnected ? AppTheme.neonLime : Colors.white54,
+                              size: 24,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppTheme.statusOverdue.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppTheme.statusOverdue.withValues(alpha: 0.3)),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _isConnected ? 'Connected to Supabase' : 'Offline / Not Connected',
+                                  style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _lastSyncAt != null
+                                      ? 'Last synced: ${_lastSyncAt!.day}/${_lastSyncAt!.month}/${_lastSyncAt!.year} at ${_lastSyncAt!.hour.toString().padLeft(2, '0')}:${_lastSyncAt!.minute.toString().padLeft(2, '0')}'
+                                      : 'Never synced with cloud',
+                                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                                ),
+                                if (_connectionMessage != null && _connectionMessage!.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _connectionMessage!,
+                                    style: TextStyle(
+                                      color: _isConnected ? AppTheme.neonLime : AppTheme.statusOverdue,
+                                      fontSize: 11,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
-                          child: const Text(
-                            'Yeh connection string is device par surakshit (encrypted) storage mein rehti hai. Sirf apna khud ka database/cluster use karein — koi shared/public credential na daalein.',
-                            style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        NeonButton(
-                          text: 'Test Connection',
-                          isSecondary: true,
-                          width: double.infinity,
-                          isLoading: _isTesting,
-                          onPressed: _testConnection,
-                        ),
-                        const SizedBox(height: 12),
-                        NeonButton(
-                          text: isOnline ? 'Re-sync Now (Offline data → MongoDB)' : 'Switch to Online Mode',
-                          icon: isOnline ? Icons.sync_rounded : Icons.cloud_upload_rounded,
-                          width: double.infinity,
-                          onPressed: _confirmSwitchToOnline,
-                        ),
-
-                        if (_lastMigratedAt != null || _lastSyncAt != null) ...[
-                          const SizedBox(height: 20),
-                          Text('SYNC STATUS', style: TextStyle(color: AppTheme.neonLime, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                          const SizedBox(height: 6),
-                          if (_lastSyncAt != null)
-                            Text('Last synced to MongoDB: ${_lastSyncAt!.toLocal()}', style: const TextStyle(color: AppTheme.textMuted, fontSize: 12)),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-                        const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppTheme.darkSurface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.darkBorder),
+                    Text('SUPABASE CREDENTIALS', style: TextStyle(color: AppTheme.neonLime, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Enter your Supabase Project URL and public Anon API Key below. These credentials are saved securely on your device.',
+                      style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                    ),
+                    const SizedBox(height: 16),
+
+                    CustomTextField(
+                      label: 'Project URL',
+                      hint: 'https://xxxxxxxxxxxx.supabase.co',
+                      controller: _urlController,
+                      keyboardType: TextInputType.url,
+                    ),
+                    const SizedBox(height: 14),
+
+                    CustomTextField(
+                      label: 'Anon Public API Key',
+                      hint: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                      controller: _anonKeyController,
+                      obscureText: _obscureKey,
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscureKey ? Icons.visibility_rounded : Icons.visibility_off_rounded, color: AppTheme.textMuted, size: 20),
+                        onPressed: () => setState(() => _obscureKey = !_obscureKey),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: NeonButton(
+                            text: 'Save Credentials',
+                            onPressed: _saveCredentials,
                           ),
-                          child: const Text(
-                            'Note: Abhi ke liye automatic two-way sync uplabdh nahi hai — mode switch karne par ek baar ka data copy hota hai. Jab automatic sync add hoga, tab conflicts ko safely resolve kiya jayega.',
-                            style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5, height: 1.4),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: NeonButton(
+                            text: 'Test Ping',
+                            isSecondary: true,
+                            isLoading: _isTesting,
+                            onPressed: () => _testConnection(silent: false),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  if (_isMigrating) _MigrationOverlay(table: _migrationTable, index: _migrationIndex, total: _migrationTotal),
-                ],
+                    const SizedBox(height: 28),
+
+                    Text('CLOUD DATA SYNCHRONIZATION', style: TextStyle(color: AppTheme.neonLime, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                    const SizedBox(height: 12),
+
+                    NeonButton(
+                      text: 'Push Local Data to Supabase',
+                      icon: Icons.cloud_upload_rounded,
+                      width: double.infinity,
+                      isLoading: _isSyncing,
+                      onPressed: _confirmPushLocalData,
+                    ),
+                    const SizedBox(height: 12),
+
+                    NeonButton(
+                      text: 'Restore All Data from Supabase',
+                      icon: Icons.cloud_download_rounded,
+                      isSecondary: true,
+                      width: double.infinity,
+                      isLoading: _isSyncing,
+                      onPressed: _confirmRestoreFromCloud,
+                    ),
+                    const SizedBox(height: 20),
+
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkSurface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppTheme.darkBorder),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.shield_outlined, color: Colors.cyanAccent, size: 18),
+                              SizedBox(width: 8),
+                              Text('Offline-First Architecture', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13)),
+                            ],
+                          ),
+                          SizedBox(height: 6),
+                          Text(
+                            'Your gym operations always function instantly on your device via local SQLite. When internet is connected, records sync with Supabase Cloud so multiple devices, reception desks, and client apps stay updated in real time.',
+                            style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5, height: 1.4),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-      ),
-    );
-  }
-}
-
-class _ModeCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool isSelected;
-  final VoidCallback? onTap;
-
-  const _ModeCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.neonLime.withValues(alpha: 0.08) : AppTheme.darkSurface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? AppTheme.neonLime : AppTheme.darkBorder),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppTheme.neonLime.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppTheme.neonLime, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w800, fontSize: 14)),
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: const TextStyle(color: AppTheme.textMuted, fontSize: 11.5)),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              isSelected ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
-              color: isSelected ? AppTheme.neonLime : AppTheme.textMuted,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MigrationOverlay extends StatelessWidget {
-  final String table;
-  final int index;
-  final int total;
-
-  const _MigrationOverlay({required this.table, required this.index, required this.total});
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: Container(
-        color: AppTheme.darkBackground.withValues(alpha: 0.92),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(color: AppTheme.neonLime),
-                const SizedBox(height: 20),
-                const Text('Copying data to MongoDB...', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w800, fontSize: 15)),
-                const SizedBox(height: 8),
-                if (total > 0)
-                  Text(
-                    '${table.toUpperCase()} ($index / $total)',
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                  ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

@@ -41,9 +41,18 @@ class _AnnouncementsFeedScreenState extends State<AnnouncementsFeedScreen> {
   void initState() {
     super.initState();
     _initData();
+    _announcementService.onAnnouncementsUpdated = () {
+      if (mounted) setState(() {});
+    };
     ClientNotificationService.instance.onNotificationTapped = (id) {
       _openAnnouncementById(id);
     };
+  }
+
+  @override
+  void dispose() {
+    _announcementService.onAnnouncementsUpdated = null;
+    super.dispose();
   }
 
   Future<void> _initData() async {

@@ -151,6 +151,16 @@ flutter build apk --debug
 
 ---
 
+## ☁️ 3. Supabase Cloud Integration & Realtime Sync
+
+The ecosystem features a hybrid offline-first architecture powered by **Supabase (PostgreSQL & Realtime)**:
+- **Database Schema**: Full 18-table schema in [`supabase_schema.sql`](file:///e:/ProjectsFromDevFoxxLabs/MobileApps/club-100-gym/supabase_schema.sql).
+- **Auto-Recovery**: Gym owners entering the same mobile number or email during onboarding automatically restore their members, plans, and payments.
+- **Client App Realtime**: Live WebSocket announcements stream directly from Admin to the Client Notifications App.
+- **Detailed Guide**: See [`SUPABASE_SETUP.md`](file:///e:/ProjectsFromDevFoxxLabs/MobileApps/club-100-gym/SUPABASE_SETUP.md) for full setup instructions, schema details, and configuration options.
+
+---
+
 ## 🛡️ License & Credits
 - **Designed and Developed by**: [DevFoxx Labs](http://devfoxxlabs.com)
 - **Copyright**: © 2026 Club 100 The Gym. All rights reserved.

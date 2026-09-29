@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/services/client_notification_service.dart';
+import '../../core/services/client_supabase_service.dart';
 import '../../core/theme/client_theme.dart';
 
 class ClientSettingsSheet extends StatefulWidget {
@@ -166,6 +167,82 @@ class _ClientSettingsSheetState extends State<ClientSettingsSheet> {
                     activeThumbColor: Colors.black,
                     activeTrackColor: ClientTheme.neonLime,
                     onChanged: _toggleNotifications,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Supabase Cloud Sync Card
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: ClientTheme.darkCard,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: ClientSupabaseService.instance.isInitialized
+                      ? ClientTheme.neonLime.withValues(alpha: 0.4)
+                      : ClientTheme.darkBorder,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: (ClientSupabaseService.instance.isInitialized
+                              ? ClientTheme.neonLime
+                              : ClientTheme.textMuted)
+                          .withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      ClientSupabaseService.instance.isInitialized
+                          ? Icons.cloud_done_rounded
+                          : Icons.cloud_queue_rounded,
+                      color: ClientSupabaseService.instance.isInitialized
+                          ? ClientTheme.neonLime
+                          : ClientTheme.textMuted,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'Supabase Cloud Sync',
+                              style: TextStyle(color: ClientTheme.textWhite, fontWeight: FontWeight.w800, fontSize: 13.5),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: (ClientSupabaseService.instance.isInitialized ? ClientTheme.neonLime : Colors.amber).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                ClientSupabaseService.instance.isInitialized ? 'LIVE' : 'OFFLINE CACHE',
+                                style: TextStyle(
+                                  color: ClientSupabaseService.instance.isInitialized ? ClientTheme.neonLime : Colors.amber,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          ClientSupabaseService.instance.isInitialized
+                              ? 'Connected to live gym announcements'
+                              : 'Ready to connect when credentials provided',
+                          style: const TextStyle(color: ClientTheme.textMuted, fontSize: 11),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

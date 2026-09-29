@@ -7,6 +7,7 @@ import 'core/utils/phone_utils.dart';
 import 'core/localization/locale_service.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/notifications/reminder_scheduler.dart';
+import 'core/sync/supabase_service.dart';
 import 'data/repositories/settings_repository.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/auth/login_screen.dart';
@@ -29,6 +30,13 @@ void main() async {
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
+
+  // Initialize Supabase if credentials are configured (non-fatal)
+  try {
+    await SupabaseService.instance.init();
+  } catch (e) {
+    debugPrint('Supabase init failed: $e');
+  }
 
   // Initialize notifications and run automated scans (non-fatal)
   try {

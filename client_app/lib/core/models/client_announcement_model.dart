@@ -98,15 +98,19 @@ class ClientAnnouncementModel {
       id: map['id']?.toString() ?? '',
       title: map['title']?.toString(),
       message: map['message']?.toString() ?? '',
-      imagePath: map['imagePath']?.toString(),
+      imagePath: (map['imagePath'] ?? map['image_url'])?.toString(),
       category: map['category']?.toString() ?? 'general',
-      isPinned: (map['isPinned'] == 1 || map['isPinned'] == true),
-      isImportant: (map['isImportant'] == 1 || map['isImportant'] == true),
+      isPinned: (map['isPinned'] == 1 || map['isPinned'] == true || map['is_pinned'] == 1 || map['is_pinned'] == true),
+      isImportant: (map['isImportant'] == 1 || map['isImportant'] == true || map['is_important'] == 1 || map['is_important'] == true),
       createdAt: map['createdAt'] != null
           ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
-          : (map['sentAt'] != null
-              ? DateTime.tryParse(map['sentAt'].toString()) ?? DateTime.now()
-              : DateTime.now()),
+          : (map['created_at'] != null
+              ? DateTime.tryParse(map['created_at'].toString()) ?? DateTime.now()
+              : (map['sentAt'] != null
+                  ? DateTime.tryParse(map['sentAt'].toString()) ?? DateTime.now()
+                  : (map['sent_at'] != null
+                      ? DateTime.tryParse(map['sent_at'].toString()) ?? DateTime.now()
+                      : DateTime.now()))),
       isRead: isRead,
     );
   }

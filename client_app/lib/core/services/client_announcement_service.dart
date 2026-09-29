@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/client_announcement_model.dart';
 import 'client_notification_service.dart';
+import 'client_supabase_service.dart';
 
 class ClientAnnouncementService {
   static final ClientAnnouncementService instance = ClientAnnouncementService._internal();
@@ -13,12 +16,31 @@ class ClientAnnouncementService {
   List<ClientAnnouncementModel> _announcements = [];
   final Set<String> _readIds = {};
   final Set<String> _notifiedIds = {};
+  StreamSubscription? _realtimeSub;
+  VoidCallback? onAnnouncementsUpdated;
 
   List<ClientAnnouncementModel> get announcements => List.unmodifiable(_announcements);
 
   Future<void> initialize() async {
     await _loadReadState();
+    try {
+      await ClientSupabaseService.instance.initialize();
+      _setupRealtimeListener();
+    } catch (e) {
+      debugPrint('[ClientAnnouncementService] Supabase init warning: $e');
+    }
     await fetchAnnouncements(triggerNotificationsForNew: false);
+  }
+
+  void _setupRealtimeListener() {
+    _realtimeSub?.cancel();
+    final stream = ClientSupabaseService.instance.streamAnnouncements();
+    if (stream != null) {
+      _realtimeSub = stream.listen((_) async {
+        await fetchAnnouncements(triggerNotificationsForNew: true);
+        onAnnouncementsUpdated?.call();
+      });
+    }
   }
 
   Future<void> _loadReadState() async {
@@ -45,20 +67,36 @@ class ClientAnnouncementService {
   Future<List<ClientAnnouncementModel>> fetchAnnouncements({bool triggerNotificationsForNew = true}) async {
     List<ClientAnnouncementModel> loaded = [];
 
-    // 1. Check shared export file from Admin App (e.g. /sdcard/Download or app documents)
-    try {
-      final sharedFile = File('/sdcard/Download/elite_fitness_broadcasts.json');
-      if (await sharedFile.exists()) {
-        final content = await sharedFile.readAsString();
-        final List<dynamic> decoded = jsonDecode(content);
-        loaded = decoded
-            .map((item) => ClientAnnouncementModel.fromMap(
-                  item as Map<String, dynamic>,
-                  isRead: _readIds.contains(item['id']?.toString()),
-                ))
-            .toList();
+    // 1. Try Supabase Live Database First
+    if (ClientSupabaseService.instance.isInitialized) {
+      try {
+        final liveList = await ClientSupabaseService.instance.fetchLiveAnnouncements();
+        if (liveList.isNotEmpty) {
+          loaded = liveList.map((item) {
+            return item.copyWith(isRead: _readIds.contains(item.id));
+          }).toList();
+        }
+      } catch (e) {
+        debugPrint('[ClientAnnouncementService] Cloud fetch error: $e');
       }
-    } catch (_) {}
+    }
+
+    // 2. Fallback to shared export file from Admin App (e.g. /sdcard/Download or app documents)
+    if (loaded.isEmpty) {
+      try {
+        final sharedFile = File('/sdcard/Download/elite_fitness_broadcasts.json');
+        if (await sharedFile.exists()) {
+          final content = await sharedFile.readAsString();
+          final List<dynamic> decoded = jsonDecode(content);
+          loaded = decoded
+              .map((item) => ClientAnnouncementModel.fromMap(
+                    item as Map<String, dynamic>,
+                    isRead: _readIds.contains(item['id']?.toString()),
+                  ))
+              .toList();
+        }
+      } catch (_) {}
+    }
 
     if (loaded.isEmpty) {
       try {
