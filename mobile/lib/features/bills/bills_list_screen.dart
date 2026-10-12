@@ -196,9 +196,23 @@ class _BillsListScreenState extends State<BillsListScreen> {
                                 ),
                               ],
                             ),
-                            trailing: Text(
-                              '₹${(bill.paidAmount > 0 ? bill.remainingBalance : bill.amount).toStringAsFixed(0)}',
-                              style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 16),
+                            trailing: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  BillModel.money(bill.displayAmount),
+                                  style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 16),
+                                ),
+                                if (bill.isPartiallyPaid)
+                                  Text(
+                                    tr('bills_paid_of_total', {
+                                      'paid': BillModel.money(bill.paidAmount),
+                                      'total': BillModel.money(bill.amount),
+                                    }),
+                                    style: const TextStyle(color: AppTheme.textMuted, fontSize: 10.5),
+                                  ),
+                              ],
                             ),
                           ),
                         );

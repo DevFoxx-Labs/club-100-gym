@@ -121,7 +121,9 @@ class DbTables {
       startDate TEXT NOT NULL,
       endDate TEXT NOT NULL,
       qrPayload TEXT NOT NULL,
-      createdAt TEXT NOT NULL
+      createdAt TEXT NOT NULL,
+      billTotal REAL,
+      balanceDue REAL
     );
   ''';
 

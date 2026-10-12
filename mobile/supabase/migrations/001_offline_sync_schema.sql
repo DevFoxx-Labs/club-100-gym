@@ -133,6 +133,7 @@ create table if not exists receipts (
   plan_name text, trainer_name text, personal_training_fee double precision,
   amount double precision, payment_method text, payment_date text,
   start_date text, end_date text, qr_payload text, created_at text,
+  bill_total double precision, balance_due double precision,
   is_deleted boolean not null default false, server_updated_at timestamptz not null default now(),
   primary key (gym_id, id)
 );

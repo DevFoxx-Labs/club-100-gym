@@ -16,6 +16,14 @@ class ReceiptModel {
   final String qrPayload;
   final DateTime createdAt;
 
+  /// Snapshot of the linked bill at the moment this receipt was issued: the
+  /// bill's full amount and what was still owed AFTER this payment. Null for
+  /// receipts not tied to a bill (and for receipts issued before this field
+  /// existed). Snapshotted so reprinting an old installment receipt later
+  /// still shows the balance as it was on that day.
+  final double? billTotal;
+  final double? balanceDue;
+
   ReceiptModel({
     required this.id,
     required this.paymentId,
@@ -33,7 +41,14 @@ class ReceiptModel {
     required this.endDate,
     required this.qrPayload,
     required this.createdAt,
+    this.billTotal,
+    this.balanceDue,
   });
+
+  /// True when this payment covered only part of its bill (an installment).
+  bool get isInstallment => billTotal != null && amount < billTotal! - 0.01;
+
+  bool get leavesBalance => (balanceDue ?? 0) > 0.009;
 
   Map<String, dynamic> toMap() {
     return {
@@ -53,6 +68,8 @@ class ReceiptModel {
       'endDate': endDate.toIso8601String(),
       'qrPayload': qrPayload,
       'createdAt': createdAt.toIso8601String(),
+      'billTotal': billTotal,
+      'balanceDue': balanceDue,
     };
   }
 
@@ -74,6 +91,8 @@ class ReceiptModel {
       endDate: DateTime.parse(map['endDate']),
       qrPayload: map['qrPayload'] ?? '',
       createdAt: map['createdAt'] != null ? DateTime.parse(map['createdAt']) : DateTime.now(),
+      billTotal: (map['billTotal'] as num?)?.toDouble(),
+      balanceDue: (map['balanceDue'] as num?)?.toDouble(),
     );
   }
 
@@ -94,6 +113,8 @@ class ReceiptModel {
     DateTime? endDate,
     String? qrPayload,
     DateTime? createdAt,
+    double? billTotal,
+    double? balanceDue,
   }) {
     return ReceiptModel(
       id: id ?? this.id,
@@ -112,6 +133,8 @@ class ReceiptModel {
       endDate: endDate ?? this.endDate,
       qrPayload: qrPayload ?? this.qrPayload,
       createdAt: createdAt ?? this.createdAt,
+      billTotal: billTotal ?? this.billTotal,
+      balanceDue: balanceDue ?? this.balanceDue,
     );
   }
 }

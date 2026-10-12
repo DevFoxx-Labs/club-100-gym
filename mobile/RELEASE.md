@@ -6,7 +6,8 @@ Follow these steps in order before handing a build to the client.
 
 1. Create a project at https://supabase.com (region close to the client, e.g. Mumbai).
 2. **SQL Editor → New query**: paste and run `supabase/migrations/001_offline_sync_schema.sql`.
-   If 001 was already run on this project before, also run `002_harden_device_tokens.sql`.
+   If 001 was already run on this project before, also run `002_harden_device_tokens.sql` and
+   **`003_receipt_balance_snapshot.sql`** (without 003, receipts stop syncing).
 3. **Authentication → Sign In / Providers → Email**: enabled.
    - "Confirm email": turn **OFF** for the smoothest signup. If you keep it ON, the app tells the
      admin to confirm their email and then sign in — that works too.
@@ -57,6 +58,10 @@ For day-to-day development: `flutter run --dart-define-from-file=env/supabase.js
 | 8 | Old offline install (no account) → Settings → Cloud Account & Sync → Link | Existing data uploads; if the account already has a gym, app asks Upload vs Use Cloud |
 | 9 | Second test account | Cannot see the first account's gym |
 | 10 | Switch language to Hindi | No raw keys (like `authTitleSignIn`) visible anywhere |
+| 11 | Bill of ₹2000 → Record Payment ₹1200 | Receipt shows "PART PAID", Bill Total ₹2000, Balance Due ₹800; bill is "Partially Paid"; member profile shows Total Balance Due ₹800 |
+| 12 | Same bill → bill detail | Button reads "Collect Balance ₹800", UPI QR asks for ₹800 (not ₹2000), installment #1 listed |
+| 13 | Pay ₹800 | Bill becomes Paid, both installments listed, receipt shows "bill fully paid" |
+| 14 | Member with no open bill → Add Payment, enter less than the fee | Note says a bill will be created; after saving the balance shows in Bills & Dues |
 
 ## 5. Known limits (tell the client)
 

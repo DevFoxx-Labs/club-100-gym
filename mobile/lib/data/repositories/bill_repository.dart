@@ -167,25 +167,82 @@ class BillRepository {
     required String receiptId,
     required double paymentAmount,
   }) async {
-    final bill = await getBillById(billId);
-    if (bill == null) return;
-
-    final newPaidAmount = bill.paidAmount + paymentAmount;
-    final newStatus = newPaidAmount >= bill.amount - 0.01 ? 'Paid' : 'Partially Paid';
-
-    final fields = {
-      'status': newStatus,
-      'paidAmount': newPaidAmount,
-      'paymentId': paymentId,
-      'receiptId': receiptId,
-      'updatedAt': DateTime.now().toIso8601String(),
-    };
     if (await DataModeService.instance.isOnline) {
-      await MongoCollectionStore.updateFields('bills', billId, fields);
+      final bill = await getBillById(billId);
+      if (bill == null) return;
+      final newPaidAmount = bill.paidAmount + paymentAmount;
+      await MongoCollectionStore.updateFields('bills', billId, {
+        'status': newPaidAmount >= bill.amount - 0.01 ? 'Paid' : 'Partially Paid',
+        'paidAmount': newPaidAmount,
+        'paymentId': paymentId,
+        'receiptId': receiptId,
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
       return;
     }
     final db = await _db;
-    await db.update('bills', fields, where: 'id = ?', whereArgs: [billId]);
+    await applyPaymentInTxn(db, billId: billId, paymentId: paymentId, receiptId: receiptId, amount: paymentAmount);
+  }
+
+  /// SQLite core of [applyPaymentToBill], usable inside a transaction. The
+  /// increment happens in a single UPDATE (every SET expression sees the
+  /// pre-update row), so two installments can never overwrite each other.
+  static Future<void> applyPaymentInTxn(
+    DatabaseExecutor db, {
+    required String billId,
+    required String paymentId,
+    required String receiptId,
+    required double amount,
+  }) async {
+    await db.rawUpdate(
+      """
+      UPDATE bills SET
+        paidAmount = paidAmount + ?,
+        status = CASE WHEN paidAmount + ? >= amount - 0.01 THEN 'Paid' ELSE 'Partially Paid' END,
+        paymentId = ?,
+        receiptId = ?,
+        updatedAt = ?
+      WHERE id = ?
+      """,
+      [amount, amount, paymentId, receiptId, DateTime.now().toIso8601String(), billId],
+    );
+  }
+
+  /// Total still owed on every open (Pending/Overdue/Partially Paid) bill of
+  /// a membership, or null when the membership has no bills at all (members
+  /// created before billing existed), so callers can fall back.
+  Future<double?> getOutstandingForMembership(String membershipId) async {
+    if (await DataModeService.instance.isOnline) {
+      final bills = (await MongoCollectionStore.all('bills'))
+          .where((m) => m['membershipId'] == membershipId)
+          .map((m) => BillModel.fromMap(m))
+          .toList();
+      if (bills.isEmpty) return null;
+      return bills.where((b) => b.isDue).fold<double>(0.0, (sum, b) => sum + b.remainingBalance);
+    }
+    final db = await _db;
+    final result = await db.rawQuery(
+      "SELECT COUNT(*) AS billCount, "
+      "SUM(CASE WHEN status IN ('Pending', 'Overdue', 'Partially Paid') THEN MAX(amount - paidAmount, 0) ELSE 0 END) AS outstanding "
+      "FROM bills WHERE membershipId = ?",
+      [membershipId],
+    );
+    final row = result.first;
+    if (((row['billCount'] as num?) ?? 0) == 0) return null;
+    return ((row['outstanding'] as num?) ?? 0).toDouble();
+  }
+
+  /// Total still owed by a member across all of their open bills.
+  Future<double> getOutstandingForMember(String memberId) async {
+    final bills = await getBillsByMember(memberId);
+    return bills.where((b) => b.isDue).fold<double>(0.0, (sum, b) => sum + b.remainingBalance);
+  }
+
+  /// Open bills that have received at least one installment but still have a
+  /// balance left — used for the weekly "balance pending" reminder.
+  Future<List<BillModel>> getPartiallyPaidBills() async {
+    final bills = await getBills(status: 'Partially Paid');
+    return bills.where((b) => b.remainingBalance > 0.009).toList();
   }
 
   Future<void> cancelBill(String billId) async {

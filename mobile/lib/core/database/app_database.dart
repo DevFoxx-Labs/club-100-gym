@@ -123,6 +123,15 @@ class AppDatabase {
       await db.execute('ALTER TABLE receipts ADD COLUMN billNumber TEXT;');
     } catch (_) {}
 
+    // Ensure receipts snapshot the linked bill's total and the balance still
+    // owed after that payment, so installment receipts show what's left.
+    try {
+      await db.execute('ALTER TABLE receipts ADD COLUMN billTotal REAL;');
+    } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE receipts ADD COLUMN balanceDue REAL;');
+    } catch (_) {}
+
     // Ensure bills table can track cumulative paidAmount for partial payments,
     // and payments can link back to the specific bill they were applied to.
     try {

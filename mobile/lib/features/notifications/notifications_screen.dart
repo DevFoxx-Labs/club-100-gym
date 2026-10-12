@@ -101,6 +101,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           color = Colors.purple;
           icon = Icons.hourglass_bottom_rounded;
           badge = p.type.contains('EXPIRED') ? 'EXPIRED' : 'EXPIRING';
+        } else if (p.type == 'BALANCE_DUE') {
+          cat = 'Fee Dues';
+          color = AppTheme.statusDueSoon;
+          icon = Icons.account_balance_wallet_outlined;
+          badge = 'BALANCE DUE';
         } else if (p.type.contains('DUE_TODAY')) {
           cat = 'Fee Dues';
           color = Colors.orange;

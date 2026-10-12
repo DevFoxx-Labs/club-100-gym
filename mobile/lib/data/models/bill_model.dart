@@ -51,6 +51,15 @@ class BillModel {
   bool get isDue => status == 'Pending' || status == 'Overdue' || status == 'Partially Paid';
   double get remainingBalance => (amount - paidAmount) < 0 ? 0.0 : (amount - paidAmount);
 
+  /// The headline amount for list rows: what's still owed on an open bill
+  /// that has received installments, otherwise the full bill amount (so a
+  /// settled bill shows what it was for, never "₹0").
+  double get displayAmount => (isDue && paidAmount > 0) ? remainingBalance : amount;
+
+  /// Formats a rupee amount, keeping paise only when present (₹1500, ₹333.33).
+  static String money(double v) =>
+      '₹${(v - v.roundToDouble()).abs() < 0.005 ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,

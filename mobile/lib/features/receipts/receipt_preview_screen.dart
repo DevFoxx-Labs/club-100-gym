@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../core/localization/app_translations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/receipt/receipt_pdf_service.dart';
+import '../../data/models/bill_model.dart';
 import '../../data/models/receipt_model.dart';
 import '../../data/models/gym_info_model.dart';
 import '../../data/repositories/settings_repository.dart';
@@ -118,12 +120,12 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppTheme.neonLime,
+                            color: widget.receipt.leavesBalance ? AppTheme.statusDueSoon : AppTheme.neonLime,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            'PAID',
-                            style: TextStyle(color: AppTheme.darkBackground, fontWeight: FontWeight.w900, fontSize: 12),
+                          child: Text(
+                            widget.receipt.leavesBalance ? tr('receipt_part_payment_badge') : 'PAID',
+                            style: const TextStyle(color: AppTheme.darkBackground, fontWeight: FontWeight.w900, fontSize: 12),
                           ),
                         ),
                       ],
@@ -141,7 +143,7 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                     _RowInfo(label: 'Mobile Number', value: widget.receipt.memberPhone),
                     const SizedBox(height: 8),
                     _RowInfo(label: 'Plan Name', value: widget.receipt.planName),
-                    if (widget.receipt.personalTrainingFee > 0) ...[
+                    if (widget.receipt.personalTrainingFee > 0 && !widget.receipt.isInstallment) ...[
                       const SizedBox(height: 8),
                       _RowInfo(
                         label: 'Personal Trainer',
@@ -161,7 +163,17 @@ class _ReceiptPreviewScreenState extends State<ReceiptPreviewScreen> {
                     const SizedBox(height: 8),
                     _RowInfo(label: 'Payment Method', value: widget.receipt.paymentMethod),
                     const SizedBox(height: 8),
-                    _RowInfo(label: 'Total Amount Paid', value: '₹${widget.receipt.amount.toStringAsFixed(0)}', isHighlight: true),
+                    _RowInfo(label: 'Total Amount Paid', value: BillModel.money(widget.receipt.amount), isHighlight: true),
+                    if (widget.receipt.isInstallment) ...[
+                      const SizedBox(height: 8),
+                      _RowInfo(label: tr('receipt_bill_total'), value: BillModel.money(widget.receipt.billTotal!)),
+                      const SizedBox(height: 8),
+                      _RowInfo(
+                        label: widget.receipt.leavesBalance ? tr('receipt_balance_due') : tr('receipt_bill_fully_paid'),
+                        value: BillModel.money(widget.receipt.balanceDue ?? 0),
+                        isHighlight: widget.receipt.leavesBalance,
+                      ),
+                    ],
                     const Divider(color: AppTheme.darkBorder, height: 24),
 
                     // QR Code Image Center

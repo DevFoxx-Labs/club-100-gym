@@ -123,3 +123,27 @@
 - `PaymentModel.billId` — हर payment record बताता है वो किस बिल पर लगा
 - `BillRepository.applyPaymentToBill()` — हर payment पर बुलाया जाता है; `paidAmount` जोड़ता है और सही status तय करता है (`markBillPaid` अब मौजूद नहीं, इसी से रिप्लेस हो गया)
 - `AddPaymentScreen` — Amount फ़ील्ड की validation से partial amount कभी bill की remaining balance से ज़्यादा नहीं जा सकता; membership की तारीखें हमेशा उसी बिल के `dueDate` पर anchor होती हैं ताकि एक ही बिल पर 2-3 किस्तें आने पर membership बार-बार आगे न खिंचे
+- `PaymentRepository.recordPayment()` — एक ही SQLite transaction में: (ज़रूरत हो तो) नया बिल, membership update, payment, receipt और बिल settle। बिल को transaction के अंदर दोबारा पढ़कर जाँचता है — बैलेंस से ज़्यादा या बंद बिल पर payment हो तो `PaymentRejected` फेंकता है और कुछ भी सेव नहीं होता
+- `BillRepository.applyPaymentInTxn()` — `paidAmount` एक ही `UPDATE` में बढ़ता है, ताकि दो किस्तें एक-दूसरे को overwrite न करें
+- `ReceiptModel.billTotal` / `balanceDue` — रसीद बनते समय बिल की कुल राशि और इस payment के **बाद** बचा बैलेंस (snapshot), ताकि पुरानी किस्त की रसीद दोबारा प्रिंट करने पर भी उस दिन का बैलेंस दिखे
+
+---
+
+## 6. Production Hardening (Oct 2026)
+
+| क्या | अब कैसे काम करता है |
+|---|---|
+| बिल के बिना आंशिक भुगतान | Member Profile → Add Payment में फीस से कम राशि डाली और कोई खुला बिल नहीं है → पूरी फीस का बिल उसी समय बनता है, बाकी राशि बकाया में दिखती है। स्क्रीन पर पहले से नोट दिखता है |
+| Payment स्क्रीन | "पूरा ₹X" / "आधा ₹Y" बटन, और "इस भुगतान के बाद बाकी" लाइव दिखता है |
+| UPI QR (बिल स्क्रीन + बिल PDF) | आंशिक भुगतान के बाद सिर्फ़ **बाकी राशि** माँगता है, पूरी नहीं |
+| बिल डिटेल | "इस बिल पर भुगतान" सूची (हर किस्त — तारीख, तरीका, रसीद नंबर; टैप करें तो रसीद), "बाकी ₹X जमा करें" बटन, due date निकल जाने पर लाल चेतावनी |
+| रसीद (स्क्रीन + PDF) | किस्त की रसीद पर "PART PAID", Bill Total, Balance Due |
+| बिल PDF | "Less: Paid so far" और "BALANCE DUE" |
+| Member Profile | "कुल बकाया राशि" बैनर; हर बिल पर "₹X में से ₹Y चुकाया"; चुके हुए बिल अब ₹0 नहीं, अपनी राशि दिखाते हैं |
+| Reminders | फीस बकाया अब बिलों से तय होता है (पहले सभी पुराने payments जोड़कर — जिससे दूसरे साइकिल से reminder बंद हो जाते थे)। आंशिक बिल पर due date के बाद हर 7 दिन "Balance Pending" reminder |
+| PT फीस | आंशिक भुगतान से membership की PT फीस अब कम नहीं होती |
+| पैसे (paise) | ₹333.33 जैसा बैलेंस पूरा चुकाया जा सकता है (पहले ₹0.33 हमेशा बाकी रह जाता था) |
+| Errors | Payment सेव न हो तो साफ़ मैसेज दिखता है (पहले कुछ नहीं होता था) |
+| Cloud | Supabase में `003_receipt_balance_snapshot.sql` चलाना ज़रूरी (नहीं तो रसीदें sync नहीं होंगी) |
+
+Tests: `test/payments/partial_payment_test.dart`

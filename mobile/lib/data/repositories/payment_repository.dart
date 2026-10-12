@@ -2,8 +2,12 @@ import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
 import '../../core/sync/data_mode_service.dart';
 import '../../core/sync/mongo_collection_store.dart';
+import '../models/bill_model.dart';
+import '../models/membership_model.dart';
 import '../models/payment_model.dart';
 import '../models/receipt_model.dart';
+import 'bill_repository.dart';
+import 'member_repository.dart';
 
 class PaymentRepository {
   /// Mirrors the SQL `LEFT JOIN` used by the offline queries: attaches the
@@ -62,6 +66,123 @@ class PaymentRepository {
       ORDER BY p.paymentDate DESC
     ''', [memberId]);
     return maps.map((map) => PaymentModel.fromMap(map)).toList();
+  }
+
+  /// Every installment paid against [billId], oldest first.
+  Future<List<PaymentModel>> getPaymentsByBill(String billId) async {
+    if (await DataModeService.instance.isOnline) {
+      final payments = (await MongoCollectionStore.all('payments')).where((p) => p['billId'] == billId).toList();
+      final joined = await _joinedPayments(payments);
+      final list = joined.map((map) => PaymentModel.fromMap(map)).toList();
+      list.sort((a, b) => a.paymentDate.compareTo(b.paymentDate));
+      return list;
+    }
+    final db = await AppDatabase.instance.database;
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT p.*, COALESCE(r.memberName, m.name) AS memberName, r.planName AS planName
+      FROM payments p
+      LEFT JOIN receipts r ON p.id = r.paymentId
+      LEFT JOIN members m ON p.memberId = m.id
+      WHERE p.billId = ?
+      ORDER BY p.paymentDate ASC, p.createdAt ASC
+    ''', [billId]);
+    return maps.map((map) => PaymentModel.fromMap(map)).toList();
+  }
+
+  /// Records a payment and everything it affects as ONE atomic unit, so a
+  /// crash or error can never leave e.g. a payment saved but its bill still
+  /// showing the old balance:
+  /// - [newBill]: a bill raised on the spot for this cycle (a part payment
+  ///   made before any bill existed), inserted first;
+  /// - [updatedMembership]: the membership's new validity period;
+  /// - the payment and its receipt;
+  /// - [settleBillId]: the bill this payment is applied to.
+  ///
+  /// When settling a bill, the bill is re-read inside the transaction: the
+  /// payment is rejected if the bill is no longer open or the amount exceeds
+  /// what is still owed, and the returned receipt carries a snapshot of the
+  /// bill total and the balance left after this payment.
+  Future<ReceiptModel> recordPayment({
+    required PaymentModel payment,
+    required ReceiptModel receipt,
+    MembershipModel? updatedMembership,
+    BillModel? newBill,
+    String? settleBillId,
+  }) async {
+    if (await DataModeService.instance.isOnline) {
+      final billRepo = BillRepository();
+      if (newBill != null) await billRepo.createBill(newBill);
+      var finalReceipt = receipt;
+      if (settleBillId != null) {
+        final bill = await billRepo.getBillById(settleBillId);
+        if (bill != null) {
+          finalReceipt = receipt.copyWith(
+            billTotal: bill.amount,
+            balanceDue: _balanceAfter(bill, payment.amount),
+          );
+        }
+      }
+      if (updatedMembership != null) await MemberRepository().updateMembership(updatedMembership);
+      await addPayment(payment, finalReceipt);
+      if (settleBillId != null) {
+        await billRepo.applyPaymentToBill(
+          billId: settleBillId,
+          paymentId: payment.id,
+          receiptId: finalReceipt.id,
+          paymentAmount: payment.amount,
+        );
+      }
+      return finalReceipt;
+    }
+
+    final db = await AppDatabase.instance.database;
+    return db.transaction((txn) async {
+      if (newBill != null) {
+        await txn.insert('bills', newBill.toMap());
+      }
+
+      var finalReceipt = receipt;
+      if (settleBillId != null) {
+        final rows = await txn.query('bills', where: 'id = ?', whereArgs: [settleBillId], limit: 1);
+        if (rows.isEmpty) throw const PaymentRejected(PaymentRejectedReason.billNotFound);
+        final bill = BillModel.fromMap(rows.first);
+        if (!bill.isDue) throw const PaymentRejected(PaymentRejectedReason.billClosed);
+        if (payment.amount > bill.remainingBalance + 0.01) {
+          throw PaymentRejected(PaymentRejectedReason.exceedsBalance, remaining: bill.remainingBalance);
+        }
+        finalReceipt = receipt.copyWith(
+          billTotal: bill.amount,
+          balanceDue: _balanceAfter(bill, payment.amount),
+        );
+      }
+
+      if (updatedMembership != null) {
+        await txn.update(
+          'memberships',
+          updatedMembership.toMap(),
+          where: 'id = ?',
+          whereArgs: [updatedMembership.id],
+        );
+      }
+      await txn.insert('payments', payment.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      await txn.insert('receipts', finalReceipt.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+
+      if (settleBillId != null) {
+        await BillRepository.applyPaymentInTxn(
+          txn,
+          billId: settleBillId,
+          paymentId: payment.id,
+          receiptId: finalReceipt.id,
+          amount: payment.amount,
+        );
+      }
+      return finalReceipt;
+    });
+  }
+
+  static double _balanceAfter(BillModel bill, double paymentAmount) {
+    final left = bill.amount - bill.paidAmount - paymentAmount;
+    return left < 0.01 ? 0.0 : double.parse(left.toStringAsFixed(2));
   }
 
   Future<List<PaymentModel>> getRecentPayments({int limit = 5}) async {
@@ -203,4 +324,18 @@ class PaymentRepository {
     }
     return 0.0;
   }
+}
+
+enum PaymentRejectedReason { billNotFound, billClosed, exceedsBalance }
+
+/// Thrown by [PaymentRepository.recordPayment] when the bill changed since
+/// the payment screen was opened (e.g. already settled from another phone).
+class PaymentRejected implements Exception {
+  final PaymentRejectedReason reason;
+  final double? remaining;
+
+  const PaymentRejected(this.reason, {this.remaining});
+
+  @override
+  String toString() => 'PaymentRejected($reason, remaining: $remaining)';
 }

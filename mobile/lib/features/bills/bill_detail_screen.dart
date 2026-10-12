@@ -8,14 +8,17 @@ import '../../core/localization/app_translations.dart';
 import '../../core/services/app_state_service.dart';
 import '../../data/models/bill_model.dart';
 import '../../data/models/gym_info_model.dart';
+import '../../data/models/payment_model.dart';
 import '../../data/repositories/bill_repository.dart';
 import '../../data/repositories/member_repository.dart';
+import '../../data/repositories/payment_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
 import '../../shared/widgets/neon_button.dart';
 import '../../shared/widgets/print_format_sheet.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../payments/add_payment_screen.dart';
+import '../receipts/receipt_preview_screen.dart';
 
 class BillDetailScreen extends StatefulWidget {
   final BillModel bill;
@@ -30,9 +33,11 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
   final _billRepo = BillRepository();
   final _memberRepo = MemberRepository();
   final _settingsRepo = SettingsRepository();
+  final _paymentRepo = PaymentRepository();
 
   late BillModel _bill;
   GymInfoModel? _gymInfo;
+  List<PaymentModel> _installments = [];
   DateTime? _periodStart;
   DateTime? _periodEnd;
   bool _isLoading = true;
@@ -51,15 +56,45 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
     final latestBill = await _billRepo.getBillById(_bill.id);
     final bill = latestBill ?? _bill;
     final membership = bill.membershipId != null ? await _memberRepo.getMembershipById(bill.membershipId!) : null;
+    final installments = await _paymentRepo.getPaymentsByBill(bill.id);
     if (mounted) {
       setState(() {
         _gymInfo = gym;
         _bill = bill;
+        _installments = installments;
         _periodStart = membership?.startDate;
         _periodEnd = membership?.endDate;
         _isLoading = false;
       });
     }
+  }
+
+  static String _money(double v) =>
+      '₹${(v - v.roundToDouble()).abs() < 0.005 ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
+
+  /// What the member still has to pay on this bill right now.
+  double get _amountToCollect => _bill.isDue ? _bill.remainingBalance : _bill.amount;
+
+  /// A balance is still open on a bill whose due date has already passed.
+  bool get _isBalanceOverdue {
+    if (!_bill.isPartiallyPaid || _bill.remainingBalance <= 0.009) return false;
+    final now = DateTime.now();
+    return _bill.dueDate.isBefore(DateTime(now.year, now.month, now.day));
+  }
+
+  Future<void> _openInstallmentReceipt(PaymentModel payment) async {
+    final receipt = await _paymentRepo.getReceiptByPaymentId(payment.id);
+    if (!mounted) return;
+    if (receipt == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('bill_detail_receipt_not_found'))),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ReceiptPreviewScreen(receipt: receipt)),
+    );
   }
 
   Future<void> _recordPayment() async {
@@ -241,7 +276,9 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
       upiUri = UpiService.buildPaymentUri(
         upiId: gym.upiId!,
         payeeName: (gym.upiPayeeName != null && gym.upiPayeeName!.trim().isNotEmpty) ? gym.upiPayeeName! : gym.name,
-        amount: _bill.amount,
+        // Only ask for what's still owed — after a part payment the member
+        // must never be prompted to pay the full bill again.
+        amount: _amountToCollect,
         note: 'Bill ${_bill.billNumber}',
         transactionRefId: _bill.billNumber,
       );
@@ -324,17 +361,44 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                           const SizedBox(height: 8),
                           _RowInfo(
                             label: tr('bill_detail_bill_amount'),
-                            value: '₹${_bill.amount.toStringAsFixed(0)}',
+                            value: _money(_bill.amount),
                             isHighlight: _bill.paidAmount <= 0,
                           ),
                           if (_bill.paidAmount > 0) ...[
                             const SizedBox(height: 8),
-                            _RowInfo(label: tr('bill_detail_amount_paid'), value: '₹${_bill.paidAmount.toStringAsFixed(0)}'),
+                            _RowInfo(label: tr('bill_detail_amount_paid'), value: _money(_bill.paidAmount)),
                             const SizedBox(height: 8),
                             _RowInfo(
                               label: tr('bill_detail_balance_remaining'),
-                              value: '₹${_bill.remainingBalance.toStringAsFixed(0)}',
+                              value: _money(_bill.remainingBalance),
                               isHighlight: true,
+                            ),
+                          ],
+                          if (_isBalanceOverdue) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppTheme.statusOverdue.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppTheme.statusOverdue.withValues(alpha: 0.4)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.warning_amber_rounded, color: AppTheme.statusOverdue, size: 18),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      tr('bill_detail_balance_overdue', {
+                                        'amount': _money(_bill.remainingBalance),
+                                        'date': dateFormat.format(_bill.dueDate),
+                                      }),
+                                      style: const TextStyle(color: AppTheme.statusOverdue, fontSize: 12, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
 
@@ -350,7 +414,7 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    tr('bill_detail_scan_upi', {'amount': _bill.amount.toStringAsFixed(0)}),
+                                    tr('bill_detail_scan_upi', {'amount': _money(_amountToCollect).substring(1)}),
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
                                   ),
@@ -397,11 +461,63 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                         ],
                       ),
                     ),
+                    if (_installments.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          tr('bill_detail_installments_title', {'count': '${_installments.length}'}),
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: AppTheme.textMuted, letterSpacing: 1),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.darkSurface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppTheme.darkBorder),
+                        ),
+                        child: Column(
+                          children: [
+                            for (var i = 0; i < _installments.length; i++) ...[
+                              if (i > 0) const Divider(color: AppTheme.darkBorder, height: 1),
+                              ListTile(
+                                dense: true,
+                                onTap: () => _openInstallmentReceipt(_installments[i]),
+                                leading: CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: AppTheme.neonLime.withValues(alpha: 0.15),
+                                  child: Text(
+                                    '${i + 1}',
+                                    style: TextStyle(color: AppTheme.neonLime, fontWeight: FontWeight.w900, fontSize: 12),
+                                  ),
+                                ),
+                                title: Text(
+                                  _money(_installments[i].amount),
+                                  style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w800, fontSize: 14),
+                                ),
+                                subtitle: Text(
+                                  '${dateFormat.format(_installments[i].paymentDate)} • ${_installments[i].paymentMethod} • ${_installments[i].receiptNumber}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 11.5),
+                                ),
+                                trailing: Icon(Icons.chevron_right_rounded, color: AppTheme.neonLime),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
 
                     if (_bill.isDue)
                       NeonButton(
-                        text: _isRecordingPayment ? tr('common_loading') : tr('bill_detail_record_payment'),
+                        text: _isRecordingPayment
+                            ? tr('common_loading')
+                            : (_bill.paidAmount > 0
+                                ? tr('bill_detail_collect_balance', {'amount': _money(_bill.remainingBalance)})
+                                : tr('bill_detail_record_payment')),
                         icon: Icons.add_card_rounded,
                         width: double.infinity,
                         isLoading: _isRecordingPayment,

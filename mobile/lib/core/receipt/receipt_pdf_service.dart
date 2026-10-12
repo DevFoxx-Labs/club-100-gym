@@ -21,7 +21,10 @@ class ReceiptPdfService {
     final logo = await PdfLogoLoader.load(gymInfo.logoPath);
     final pdf = pw.Document(theme: theme);
     final dateFormat = DateFormat('dd MMM yyyy');
-    final hasPt = receipt.personalTrainingFee > 0;
+    // An installment covers only part of the bill, so splitting it into
+    // "base plan + PT" would be misleading; it's shown as one part payment
+    // line plus the bill total / balance summary instead.
+    final hasPt = receipt.personalTrainingFee > 0 && !receipt.isInstallment;
     final baseFee = hasPt ? (receipt.amount - receipt.personalTrainingFee) : receipt.amount;
 
     pdf.addPage(
@@ -179,7 +182,7 @@ class ReceiptPdfService {
                   pw.Padding(
                     padding: const pw.EdgeInsets.all(6),
                     child: pw.Text(
-                      hasPt ? '${receipt.planName} (Base Plan)' : receipt.planName,
+                      hasPt ? '${receipt.planName} (Base Plan)' : _planLine(receipt),
                       style: const pw.TextStyle(fontSize: 9),
                     ),
                   ),
@@ -237,6 +240,29 @@ class ReceiptPdfService {
           ),
           pw.SizedBox(height: 14),
 
+          if (receipt.isInstallment) ...[
+            pw.Container(
+              padding: const pw.EdgeInsets.all(8),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey400),
+                borderRadius: pw.BorderRadius.circular(4),
+              ),
+              child: pw.Column(
+                children: [
+                  _summaryRow('Bill Total', _money(receipt.billTotal!)),
+                  _summaryRow('Paid on this receipt', _money(receipt.amount)),
+                  pw.Divider(color: PdfColors.grey400, height: 8),
+                  _summaryRow(
+                    receipt.leavesBalance ? 'BALANCE DUE' : 'BALANCE DUE (BILL FULLY PAID)',
+                    _money(receipt.balanceDue ?? 0),
+                    bold: true,
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 14),
+          ],
+
           // QR Code & Status Footer
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -261,11 +287,18 @@ class ReceiptPdfService {
                   pw.Container(
                     padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: pw.BoxDecoration(
-                      color: PdfColors.green100,
+                      color: receipt.leavesBalance ? PdfColors.orange100 : PdfColors.green100,
                       borderRadius: pw.BorderRadius.circular(6),
-                      border: pw.Border.all(color: PdfColors.green700),
+                      border: pw.Border.all(color: receipt.leavesBalance ? PdfColors.orange700 : PdfColors.green700),
                     ),
-                    child: pw.Text('STATUS: PAID', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10, color: PdfColors.green900)),
+                    child: pw.Text(
+                      receipt.leavesBalance ? 'STATUS: PART PAYMENT' : 'STATUS: PAID',
+                      style: pw.TextStyle(
+                        fontWeight: pw.FontWeight.bold,
+                        fontSize: 10,
+                        color: receipt.leavesBalance ? PdfColors.orange900 : PdfColors.green900,
+                      ),
+                    ),
                   ),
                   pw.SizedBox(height: 8),
                   pw.Text('Thank you for choosing ${gymInfo.name}!', style: pw.TextStyle(fontSize: 9, fontStyle: pw.FontStyle.italic)),
@@ -320,18 +353,23 @@ class ReceiptPdfService {
         ThermalLayout.row('Phone', receipt.memberPhone, fontSize: 8),
         ThermalLayout.dashedDivider(),
 
-        ThermalLayout.row(hasPt ? '${receipt.planName} (Base)' : receipt.planName, '₹${baseFee.toStringAsFixed(0)}', fontSize: 8),
+        ThermalLayout.row(hasPt ? '${receipt.planName} (Base)' : _planLine(receipt), _money(baseFee), fontSize: 8),
         ThermalLayout.row('Validity', '${dateFormat.format(receipt.startDate)} - ${dateFormat.format(receipt.endDate)}', fontSize: 7),
         ThermalLayout.row('Payment Mode', receipt.paymentMethod, fontSize: 8),
         if (hasPt) ...[
           ThermalLayout.row('PT: ${receipt.trainerName ?? "Assigned Trainer"}', '₹${receipt.personalTrainingFee.toStringAsFixed(0)}', fontSize: 8),
         ],
         ThermalLayout.dashedDivider(),
-        ThermalLayout.row('TOTAL PAID', '₹${receipt.amount.toStringAsFixed(0)}', fontSize: 10, bold: true),
+        ThermalLayout.row('TOTAL PAID', _money(receipt.amount), fontSize: 10, bold: true),
         ThermalLayout.dashedDivider(),
+        if (receipt.isInstallment) ...[
+          ThermalLayout.row('Bill Total', _money(receipt.billTotal!), fontSize: 8),
+          ThermalLayout.row('BALANCE DUE', _money(receipt.balanceDue ?? 0), fontSize: 9, bold: true),
+          ThermalLayout.dashedDivider(),
+        ],
 
         pw.SizedBox(height: 4),
-        ThermalLayout.center('STATUS: PAID', fontSize: 8.5, fontWeight: pw.FontWeight.bold),
+        ThermalLayout.center(receipt.leavesBalance ? 'STATUS: PART PAYMENT' : 'STATUS: PAID', fontSize: 8.5, fontWeight: pw.FontWeight.bold),
         pw.SizedBox(height: 8),
         pw.Center(
           child: pw.BarcodeWidget(barcode: pw.Barcode.qrCode(), data: receipt.qrPayload, width: qrSize, height: qrSize),
@@ -381,6 +419,23 @@ class ReceiptPdfService {
     await Printing.sharePdf(
       bytes: pdfBytes,
       filename: '${_fileName(receipt)}.pdf',
+    );
+  }
+
+  static String _money(double v) =>
+      '₹${(v - v.roundToDouble()).abs() < 0.005 ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
+
+  static String _planLine(ReceiptModel receipt) =>
+      receipt.isInstallment ? 'Part payment - ${receipt.planName}' : receipt.planName;
+
+  static pw.Widget _summaryRow(String label, String value, {bool bold = false}) {
+    final style = pw.TextStyle(fontSize: bold ? 10 : 9, fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal);
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 2),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [pw.Text(label, style: style), pw.Text(value, style: style)],
+      ),
     );
   }
 }

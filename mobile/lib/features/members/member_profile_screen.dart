@@ -54,6 +54,10 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
   TrainerModel? _trainer;
   List<PaymentModel> _payments = [];
   List<BillModel> _bills = [];
+
+  /// Everything this member still owes across all open bills.
+  double get _totalOutstanding =>
+      _bills.where((b) => b.isDue).fold<double>(0.0, (sum, b) => sum + b.remainingBalance);
   List<MembershipChangeLogModel> _planChangeLogs = [];
   List<TrainerChangeLogModel> _trainerChangeLogs = [];
 
@@ -815,6 +819,49 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
               ),
               const SizedBox(height: 8),
 
+              if (_totalOutstanding > 0.009) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.statusOverdue.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.statusOverdue.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.account_balance_wallet_outlined, color: AppTheme.statusOverdue, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tr('member_profile_total_balance_due'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11.5, fontWeight: FontWeight.w700),
+                            ),
+                            Text(
+                              tr('member_profile_open_bills', {'count': '${_bills.where((b) => b.isDue).length}'}),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        BillModel.money(_totalOutstanding),
+                        style: const TextStyle(color: AppTheme.statusOverdue, fontWeight: FontWeight.w900, fontSize: 18),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
               if (_bills.isEmpty)
                 Container(
                   width: double.infinity,
@@ -852,14 +899,28 @@ class _MemberProfileScreenState extends State<MemberProfileScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Text(
-                                      '₹${(bill.paidAmount > 0 ? bill.remainingBalance : bill.amount).toStringAsFixed(0)}',
-                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.neonLime),
+                                    Flexible(
+                                      child: Text(
+                                        BillModel.money(bill.displayAmount),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppTheme.neonLime),
+                                      ),
                                     ),
                                     const SizedBox(width: 8),
                                     StatusBadge(status: bill.status, label: tr('bill_status_${bill.status.toLowerCase()}')),
                                   ],
                                 ),
+                                if (bill.isPartiallyPaid) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    tr('bills_paid_of_total', {
+                                      'paid': BillModel.money(bill.paidAmount),
+                                      'total': BillModel.money(bill.amount),
+                                    }),
+                                    style: const TextStyle(fontSize: 11.5, color: AppTheme.statusDueSoon, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
                                 const SizedBox(height: 2),
                                 Text(
                                   tr('member_profile_due_plan_row', {'date': dateFormat.format(bill.dueDate), 'plan': bill.planName}),

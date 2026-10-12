@@ -32,7 +32,8 @@ class BillPdfService {
         payeeName: (gymInfo.upiPayeeName != null && gymInfo.upiPayeeName!.trim().isNotEmpty)
             ? gymInfo.upiPayeeName!
             : gymInfo.name,
-        amount: bill.amount,
+        // After a part payment, only the remaining balance may be requested.
+        amount: _amountDue(bill),
         note: 'Bill ${bill.billNumber}',
         transactionRefId: bill.billNumber,
       );
@@ -166,16 +167,23 @@ class BillPdfService {
               pw.TableRow(
                 children: [
                   pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(bill.planName, style: const pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('₹${bill.amount.toStringAsFixed(0)}', style: const pw.TextStyle(fontSize: 9))),
+                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_money(bill.amount), style: const pw.TextStyle(fontSize: 9))),
                 ],
               ),
+              if (bill.paidAmount > 0 && !bill.isPaid)
+                pw.TableRow(
+                  children: [
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Less: Paid so far', style: const pw.TextStyle(fontSize: 9))),
+                    pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('- ${_money(bill.paidAmount)}', style: const pw.TextStyle(fontSize: 9))),
+                  ],
+                ),
               pw.TableRow(
                 decoration: const pw.BoxDecoration(color: PdfColors.grey100),
                 children: [
-                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('TOTAL DUE', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
+                  pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_totalLabel(bill), style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10))),
                   pw.Padding(
                     padding: const pw.EdgeInsets.all(6),
-                    child: pw.Text('₹${bill.amount.toStringAsFixed(0)}', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
+                    child: pw.Text(_money(_amountDue(bill)), style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 10)),
                   ),
                 ],
               ),
@@ -196,7 +204,7 @@ class BillPdfService {
                       pw.Text('SCAN TO PAY VIA UPI', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
                       pw.SizedBox(height: 3),
                       pw.Text('UPI ID: ${gymInfo.upiId}', style: const pw.TextStyle(fontSize: 9)),
-                      pw.Text('Amount ₹${bill.amount.toStringAsFixed(0)} will auto-fill in your UPI app.', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+                      pw.Text('Amount ${_money(_amountDue(bill))} will auto-fill in your UPI app.', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
                     ],
                   ),
                 ),
@@ -267,7 +275,11 @@ class BillPdfService {
         ThermalLayout.center('Phone: ${gymInfo.phone}', fontSize: 7.5),
         pw.SizedBox(height: 6),
         ThermalLayout.center(
-          bill.isPaid ? '*** PAID ***' : (bill.status == 'Overdue' ? '*** OVERDUE ***' : '*** PAYMENT DUE ***'),
+          bill.isPaid
+              ? '*** PAID ***'
+              : (bill.status == 'Overdue'
+                  ? '*** OVERDUE ***'
+                  : (bill.isPartiallyPaid ? '*** BALANCE DUE ***' : '*** PAYMENT DUE ***')),
           fontSize: 8.5,
           fontWeight: pw.FontWeight.bold,
         ),
@@ -282,9 +294,11 @@ class BillPdfService {
         ThermalLayout.row('Phone', bill.memberPhone, fontSize: 8),
         ThermalLayout.dashedDivider(),
 
-        ThermalLayout.row(bill.planName, '₹${bill.amount.toStringAsFixed(0)}', fontSize: 8),
+        ThermalLayout.row(bill.planName, _money(bill.amount), fontSize: 8),
+        if (bill.paidAmount > 0 && !bill.isPaid)
+          ThermalLayout.row('Paid so far', '- ${_money(bill.paidAmount)}', fontSize: 8),
         ThermalLayout.dashedDivider(),
-        ThermalLayout.row('TOTAL DUE', '₹${bill.amount.toStringAsFixed(0)}', fontSize: 10, bold: true),
+        ThermalLayout.row(_totalLabel(bill), _money(_amountDue(bill)), fontSize: 10, bold: true),
         ThermalLayout.dashedDivider(),
 
         if (showUpi && upiUri != null) ...[
@@ -296,7 +310,7 @@ class BillPdfService {
           ),
           pw.SizedBox(height: 6),
           ThermalLayout.center('UPI ID: ${gymInfo.upiId}', fontSize: 7.5),
-          ThermalLayout.center('Amount ₹${bill.amount.toStringAsFixed(0)} auto-fills in your UPI app', fontSize: 7),
+          ThermalLayout.center('Amount ${_money(_amountDue(bill))} auto-fills in your UPI app', fontSize: 7),
           ThermalLayout.dashedDivider(),
         ],
 
@@ -363,5 +377,18 @@ class BillPdfService {
       bytes: pdfBytes,
       filename: '${_fileName(bill: bill, periodStart: periodStart, periodEnd: periodEnd)}.pdf',
     );
+  }
+
+  static String _money(double v) =>
+      '₹${(v - v.roundToDouble()).abs() < 0.005 ? v.toStringAsFixed(0) : v.toStringAsFixed(2)}';
+
+  /// What the member still has to pay: the remaining balance on an open bill,
+  /// or the bill amount for a settled/cancelled one.
+  static double _amountDue(BillModel bill) => bill.isDue ? bill.remainingBalance : bill.amount;
+
+  static String _totalLabel(BillModel bill) {
+    if (bill.isPaid) return 'TOTAL (PAID)';
+    if (bill.paidAmount > 0) return 'BALANCE DUE';
+    return 'TOTAL DUE';
   }
 }
