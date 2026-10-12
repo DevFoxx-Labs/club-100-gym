@@ -37,12 +37,29 @@ cd mobile
 ```
 
 The script refuses to build if Supabase keys or the signing key are missing, runs
-`flutter analyze` + `flutter test`, and produces:
+`flutter analyze` + `flutter test`, and puts the APKs in `mobile/dist/`:
 
-- `build/app/outputs/bundle/release/app-release.aab` — upload to Play Store
-- `build/app/outputs/flutter-apk/app-release.apk` — direct install
+- `EliteFitness-v1.0.0-build1.apk` — give this one (modern phones, ~30 MB)
+- `EliteFitness-v1.0.0-build1-old-phones.apk` — only if the first one says "App not installed" on a very old phone
+
+`.\scripts\build_release.ps1 -Universal` builds a single ~90 MB APK that runs on every phone instead.
 
 For day-to-day development: `flutter run --dart-define-from-file=env/supabase.json`.
+
+### Shipping an update
+
+1. Increase `version:` in `pubspec.yaml` — the number after `+` **must go up** every time
+   (`1.0.0+1` → `1.0.1+2` → `1.0.2+3`), otherwise Android refuses to install over the old app.
+2. Build with the **same keystore**. A different key = "App not installed"; the client would have
+   to uninstall first (local data is gone, but signing in restores it from the cloud).
+3. Send the new APK; the client just installs it over the old one — data stays.
+
+### Installing on the client's phone
+
+1. Send the APK via WhatsApp (as a document), Google Drive, or USB cable.
+2. Open it → Android asks to allow "Install unknown apps" for that app (WhatsApp/Files/Chrome) → Allow.
+3. Play Protect may show "App scanned / unknown developer" → **More details → Install anyway**.
+   This is normal for apps not from the Play Store.
 
 ## 4. Device acceptance test (real Android phone, release APK)
 
