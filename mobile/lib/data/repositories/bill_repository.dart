@@ -3,6 +3,8 @@ import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/database/app_database.dart';
 import '../../core/sync/data_mode_service.dart';
+import '../../core/sync/device_code_service.dart';
+import '../../core/sync/document_numbering.dart';
 import '../../core/sync/mongo_collection_store.dart';
 import '../models/bill_model.dart';
 
@@ -16,37 +18,23 @@ class BillRepository {
     return '$membershipId|$d';
   }
 
+  /// Next bill number in this phone's series, e.g. `BILL-2026-A00012`
+  /// (see [DocumentNumbering] for why every phone has its own series).
   Future<String> generateNextBillNumber() async {
-    final year = DateTime.now().year;
-    final prefix = 'BILL-$year-';
-
-    if (await DataModeService.instance.isOnline) {
-      final bills = await MongoCollectionStore.all('bills');
-      final matching = bills
-          .map((b) => b['billNumber'] as String?)
-          .whereType<String>()
-          .where((no) => no.startsWith(prefix))
-          .toList();
-      if (matching.isEmpty) return '${prefix}00001';
-      matching.sort();
-      final lastNoStr = matching.last;
-      final numPart = int.tryParse(lastNoStr.replaceAll(prefix, '')) ?? 0;
-      final nextNum = numPart + 1;
-      return '$prefix${nextNum.toString().padLeft(5, '0')}';
-    }
-
+    final prefix = 'BILL-${DateTime.now().year}-';
+    final code = await DeviceCodeService.instance.currentCode();
     final db = await _db;
-    final result = await db.rawQuery(
-      "SELECT billNumber FROM bills WHERE billNumber LIKE '$prefix%' ORDER BY billNumber DESC LIMIT 1",
+    final rows = await db.query(
+      'bills',
+      columns: ['billNumber'],
+      where: 'billNumber LIKE ?',
+      whereArgs: ['$prefix${code ?? ''}%'],
     );
-
-    if (result.isNotEmpty) {
-      final lastNoStr = result.first['billNumber'] as String;
-      final numPart = int.tryParse(lastNoStr.replaceAll(prefix, '')) ?? 0;
-      final nextNum = numPart + 1;
-      return '$prefix${nextNum.toString().padLeft(5, '0')}';
-    }
-    return '${prefix}00001';
+    return DocumentNumbering.next(
+      prefix: prefix,
+      deviceCode: code,
+      existing: rows.map((r) => r['billNumber'] as String),
+    );
   }
 
   Future<void> createBill(BillModel bill) async {

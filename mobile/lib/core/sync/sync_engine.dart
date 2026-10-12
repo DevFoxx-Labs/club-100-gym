@@ -9,6 +9,7 @@ import '../config/supabase_config.dart';
 import '../database/app_database.dart';
 import '../services/app_state_service.dart';
 import 'cloud_mapper.dart';
+import 'device_code_service.dart';
 import 'media_sync.dart';
 import 'supabase_service.dart';
 import 'sync_schema.dart';
@@ -163,6 +164,8 @@ class SyncEngine {
 
       await _emit(SyncPhase.syncing);
       await _push(client, gymId, user.id);
+      // After the push, so a brand-new gym already exists in the cloud.
+      await DeviceCodeService.instance.ensureRegistered(gymId);
       final pulled = await _pull(client, gymId);
       await SupabaseConfig.setLastSyncAt(DateTime.now());
       _resetBackoff();
@@ -257,19 +260,31 @@ class SyncEngine {
   // Pull
   // ---------------------------------------------------------------------------
 
-  /// Returns the number of remote rows applied locally.
+  /// How far back each pull re-reads before its cursor. `server_updated_at`
+  /// is stamped when a row is written, so a write from one phone can commit a
+  /// moment after another phone's write yet carry an earlier timestamp; a
+  /// device that had already pulled past it would otherwise never see it.
+  /// Re-applying rows in this window is harmless (idempotent upserts; rows
+  /// with un-pushed local edits are skipped).
+  static const _pullOverlap = Duration(minutes: 2);
+
+  /// Returns the number of remote rows that were new to this phone.
   Future<int> _pull(SupabaseClient client, String gymId) async {
     final db = await AppDatabase.instance.database;
     var applied = 0;
+    final touchedBillIds = <String>{};
     for (final table in SyncTables.all) {
       final cursorKey = 'pull_cursor:${table.local}';
       final cursor = await _getMeta(db, cursorKey);
+      final cursorTime = cursor == null ? null : DateTime.tryParse(cursor);
 
       final rows = <Map<String, dynamic>>[];
       var from = 0;
       while (true) {
         var query = client.from(table.cloud).select().eq(table.isGym ? 'id' : 'gym_id', gymId);
-        if (cursor != null) query = query.gt('server_updated_at', cursor);
+        if (cursorTime != null) {
+          query = query.gt('server_updated_at', cursorTime.subtract(_pullOverlap).toUtc().toIso8601String());
+        }
         final page = await query
             .order('server_updated_at', ascending: true)
             .range(from, from + _pullPageSize - 1);
@@ -279,13 +294,68 @@ class SyncEngine {
       }
       if (rows.isEmpty) continue;
 
-      applied += await _applyRemoteRows(db, table, rows);
-      await _setMeta(db, cursorKey, rows.last['server_updated_at'] as String);
+      applied += await _applyRemoteRows(db, table, rows, newerThan: cursorTime);
+      // Never move the cursor backwards (the overlap re-reads older rows).
+      final lastSeen = DateTime.tryParse(rows.last['server_updated_at'] as String);
+      if (cursorTime == null || (lastSeen != null && lastSeen.isAfter(cursorTime))) {
+        await _setMeta(db, cursorKey, rows.last['server_updated_at'] as String);
+      }
+
+      if (table.local == 'bills') {
+        touchedBillIds.addAll(rows.map((r) => r['id']).whereType<String>());
+      } else if (table.local == 'payments') {
+        touchedBillIds.addAll(rows.map((r) => r['bill_id']).whereType<String>());
+      }
     }
+    await reconcileBillTotals(db, touchedBillIds);
     return applied;
   }
 
-  Future<int> _applyRemoteRows(Database db, SyncTable table, List<Map<String, dynamic>> rows) async {
+  /// Re-derives `paidAmount` / `status` of [billIds] from their payments.
+  ///
+  /// Both are cached sums: when two phones record installments on the same
+  /// bill while offline, each pushes its own total and the last push wins
+  /// (e.g. ₹1200 paid shown instead of ₹2000). The payments themselves are
+  /// separate rows and never lost, so recomputing from them after a pull
+  /// restores the truth. This runs as a normal local write (NOT muted), so the
+  /// corrected bill is pushed and every phone converges; the `ABS(...)` guard
+  /// only touches bills whose total actually differs, so it can't loop.
+  ///
+  /// Bills with no linked payment rows are left alone: bills settled before
+  /// payments were linked to bills have `paidAmount` but no `billId` payments.
+  static Future<int> reconcileBillTotals(Database db, Set<String> billIds) async {
+    if (billIds.isEmpty) return 0;
+    const paidSum = '(SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.billId = bills.id)';
+    var changed = 0;
+    final ids = billIds.toList();
+    for (var i = 0; i < ids.length; i += _inClauseChunk) {
+      final chunk = ids.sublist(i, math.min(i + _inClauseChunk, ids.length));
+      changed += await db.rawUpdate(
+        """
+        UPDATE bills SET
+          paidAmount = $paidSum,
+          status = CASE
+            WHEN status = 'Cancelled' THEN status
+            WHEN $paidSum >= amount - 0.01 THEN 'Paid'
+            ELSE 'Partially Paid'
+          END,
+          updatedAt = ?
+        WHERE id IN (${List.filled(chunk.length, '?').join(',')})
+          AND EXISTS (SELECT 1 FROM payments p WHERE p.billId = bills.id)
+          AND ABS(paidAmount - $paidSum) > 0.005
+        """,
+        [DateTime.now().toIso8601String(), ...chunk],
+      );
+    }
+    return changed;
+  }
+
+  Future<int> _applyRemoteRows(
+    Database db,
+    SyncTable table,
+    List<Map<String, dynamic>> rows, {
+    DateTime? newerThan,
+  }) async {
     // Download any remote media files before the transaction (network I/O must
     // not run inside a sqflite transaction).
     final downloadedRows = await _mapInBatches(rows, (r) => MediaSync.downloadIfRemote(table, r));
@@ -312,7 +382,10 @@ class SyncEngine {
           } else {
             await txn.insert(table.local, local, conflictAlgorithm: ConflictAlgorithm.replace);
           }
-          applied++;
+          // Rows re-read only because of the overlap window aren't news; counting
+          // them would refresh every screen on every sync.
+          final stamp = DateTime.tryParse(row['server_updated_at']?.toString() ?? '');
+          if (newerThan == null || stamp == null || stamp.isAfter(newerThan)) applied++;
         }
       });
     });
@@ -347,6 +420,7 @@ class SyncEngine {
       await SyncSchema.wipeLocalData(db); // also removes seeded default packages/plans
       await SupabaseConfig.setActiveGymId(gymId);
       final restored = await _pull(client, gymId);
+      await DeviceCodeService.instance.ensureRegistered(gymId);
       await SupabaseConfig.setLastSyncAt(DateTime.now());
       _resetBackoff();
       AppStateService.instance.notifyAll();

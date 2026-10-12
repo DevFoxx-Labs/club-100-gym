@@ -373,6 +373,14 @@ class _BillDetailScreenState extends State<BillDetailScreen> {
                               value: _money(_bill.remainingBalance),
                               isHighlight: true,
                             ),
+                            // Two phones both collected the balance while offline.
+                            if (_bill.paidAmount > _bill.amount + 0.01) ...[
+                              const SizedBox(height: 8),
+                              _RowInfo(
+                                label: tr('bill_detail_overpaid'),
+                                value: _money(_bill.paidAmount - _bill.amount),
+                              ),
+                            ],
                           ],
                           if (_isBalanceOverdue) ...[
                             const SizedBox(height: 10),

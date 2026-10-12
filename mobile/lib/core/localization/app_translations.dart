@@ -895,5 +895,7 @@ class AppTranslations {
     'mpin_setup_hint': {'en': 'Enter a 4-digit security MPIN to lock application data.', 'hi': 'ऐप डेटा लॉक करने के लिए 4 अंकों का सुरक्षा MPIN दर्ज करें।'},
     'mpin_must_be_4': {'en': 'MPIN must be exactly 4 digits', 'hi': 'MPIN ठीक 4 अंकों का होना चाहिए'},
     'mpin_upgrade_to_4': {'en': 'MPIN is now 4 digits. Please set a new 4-digit MPIN.', 'hi': 'MPIN अब 4 अंकों का होता है। कृपया नया 4 अंकों का MPIN सेट करें।'},
+    // ===== MULTI-PHONE SAFETY =====
+    'bill_detail_overpaid': {'en': 'Overpaid (collected twice — refund or adjust)', 'hi': 'ज़्यादा भुगतान (दो बार लिया गया — वापस करें या समायोजित करें)'},
   };
 }

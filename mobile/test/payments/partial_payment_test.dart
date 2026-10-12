@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -83,6 +84,8 @@ void main() {
   setUpAll(() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+    // Own folder: test files run in parallel and must not share the DB file.
+    await databaseFactory.setDatabasesPath((await Directory.systemTemp.createTemp('partial_payment_test')).path);
   });
 
   group('BillModel display helpers', () {

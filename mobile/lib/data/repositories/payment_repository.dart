@@ -1,6 +1,8 @@
 import 'package:sqflite/sqflite.dart';
 import '../../core/database/app_database.dart';
 import '../../core/sync/data_mode_service.dart';
+import '../../core/sync/device_code_service.dart';
+import '../../core/sync/document_numbering.dart';
 import '../../core/sync/mongo_collection_store.dart';
 import '../models/bill_model.dart';
 import '../models/membership_model.dart';
@@ -205,38 +207,23 @@ class PaymentRepository {
     return maps.map((map) => PaymentModel.fromMap(map)).toList();
   }
 
+  /// Next receipt number in this phone's series, e.g. `GYM-2026-A00012`
+  /// (see [DocumentNumbering] for why every phone has its own series).
   Future<String> generateNextReceiptNumber() async {
-    final year = DateTime.now().year;
-    final prefix = 'GYM-$year-';
-
-    if (await DataModeService.instance.isOnline) {
-      final receipts = await MongoCollectionStore.all('receipts');
-      final matching = receipts
-          .map((r) => r['receiptNumber'] as String?)
-          .whereType<String>()
-          .where((no) => no.startsWith(prefix))
-          .toList();
-      if (matching.isEmpty) return '${prefix}00001';
-      matching.sort();
-      final lastNoStr = matching.last;
-      final numPart = int.tryParse(lastNoStr.replaceAll(prefix, '')) ?? 0;
-      final nextNum = numPart + 1;
-      return '$prefix${nextNum.toString().padLeft(5, '0')}';
-    }
-
+    final prefix = 'GYM-${DateTime.now().year}-';
+    final code = await DeviceCodeService.instance.currentCode();
     final db = await AppDatabase.instance.database;
-    final List<Map<String, dynamic>> result = await db.rawQuery(
-      "SELECT receiptNumber FROM receipts WHERE receiptNumber LIKE '$prefix%' ORDER BY receiptNumber DESC LIMIT 1"
+    final rows = await db.query(
+      'receipts',
+      columns: ['receiptNumber'],
+      where: 'receiptNumber LIKE ?',
+      whereArgs: ['$prefix${code ?? ''}%'],
     );
-
-    if (result.isNotEmpty) {
-      final lastNoStr = result.first['receiptNumber'] as String;
-      final numPart = int.tryParse(lastNoStr.replaceAll(prefix, '')) ?? 0;
-      final nextNum = numPart + 1;
-      return '$prefix${nextNum.toString().padLeft(5, '0')}';
-    } else {
-      return '${prefix}00001';
-    }
+    return DocumentNumbering.next(
+      prefix: prefix,
+      deviceCode: code,
+      existing: rows.map((r) => r['receiptNumber'] as String),
+    );
   }
 
   Future<void> addPayment(PaymentModel payment, ReceiptModel receipt) async {

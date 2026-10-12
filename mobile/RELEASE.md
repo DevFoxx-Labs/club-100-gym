@@ -7,7 +7,8 @@ Follow these steps in order before handing a build to the client.
 1. Create a project at https://supabase.com (region close to the client, e.g. Mumbai).
 2. **SQL Editor → New query**: paste and run `supabase/migrations/001_offline_sync_schema.sql`.
    If 001 was already run on this project before, also run `002_harden_device_tokens.sql` and
-   **`003_receipt_balance_snapshot.sql`** (without 003, receipts stop syncing).
+   **`003_receipt_balance_snapshot.sql`** (without 003, receipts stop syncing) and
+   **`004_multi_device_safety.sql`** (needed for per-phone bill/receipt numbers).
 3. **Authentication → Sign In / Providers → Email**: enabled.
    - "Confirm email": turn **OFF** for the smoothest signup. If you keep it ON, the app tells the
      admin to confirm their email and then sign in — that works too.
@@ -94,6 +95,8 @@ For day-to-day development: `flutter run --dart-define-from-file=env/supabase.js
 | 16 | Forgot MPIN? → account password | New MPIN + confirm → dashboard opens; old MPIN no longer works |
 | 17 | Forgot MPIN? in airplane mode, fingerprint enabled | Fingerprint option works offline |
 | 18 | Sign-in screen → Forgot password? with the client's real email | 6-digit code arrives (custom SMTP), new password works |
+| 19 | Same account on 2 phones, both offline: each takes a payment, then both go online | Receipt numbers differ (`GYM-2026-A…` / `GYM-2026-B…`), both receipts visible on both phones, none missing |
+| 20 | Both phones offline, ₹500 installment each on the same ₹2000 bill, then online | Within a few minutes both phones show the bill with ₹1000 paid, ₹1000 balance |
 
 ## 5. Known limits (tell the client)
 

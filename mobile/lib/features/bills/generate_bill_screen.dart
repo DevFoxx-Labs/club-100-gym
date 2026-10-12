@@ -73,7 +73,9 @@ class _GenerateBillScreenState extends State<GenerateBillScreen> {
 
     final bill = BillModel(
       id: uuid.v4(),
-      billNumber: _generatedBillNo,
+      // Re-generated at save time: the previewed number may have been used
+      // meanwhile (e.g. by a bill synced from another phone).
+      billNumber: await _billRepo.generateNextBillNumber(),
       memberId: widget.member.id,
       memberName: widget.member.name,
       memberPhone: widget.member.phone,
