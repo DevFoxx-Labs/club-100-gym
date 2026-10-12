@@ -82,12 +82,16 @@ class ClientSupabaseService {
   }
 
   /// Streams real-time announcements from Supabase.
-  Stream<List<Map<String, dynamic>>>? streamAnnouncements() {
+  Stream<List<Map<String, dynamic>>>? streamAnnouncements({String? gymId}) {
     final c = client;
     if (c == null) return null;
 
     try {
-      return c.from('announcements').stream(primaryKey: ['id']).order('created_at', ascending: false);
+      var stream = c.from('announcements').stream(primaryKey: ['gym_id', 'id']);
+      if (gymId != null && gymId.isNotEmpty) {
+        stream = stream.eq('gym_id', gymId);
+      }
+      return stream.order('created_at', ascending: false);
     } catch (e) {
       debugPrint('[ClientSupabaseService] streamAnnouncements error: $e');
       return null;

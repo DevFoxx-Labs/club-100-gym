@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
+import '../sync/sync_schema.dart';
 import 'db_tables.dart';
 
 class AppDatabase {
@@ -21,7 +22,7 @@ class AppDatabase {
 
     final db = await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -135,6 +136,12 @@ class AppDatabase {
     try {
       await db.execute("UPDATE bills SET paidAmount = amount WHERE status = 'Paid' AND paidAmount = 0;");
     } catch (_) {}
+
+    // Offline-first sync bookkeeping + change-capture triggers. Created last
+    // so the default packages/plans seeded by _createDB are not queued for
+    // upload on their own — they are queued explicitly (SyncSchema.enqueueAll)
+    // only when a brand-new gym is registered in the cloud.
+    await SyncSchema.ensure(db);
 
     return db;
   }
@@ -455,26 +462,14 @@ class AppDatabase {
     _database = null;
   }
 
+  /// Clears every local table. Uses SyncSchema.wipeLocalData for the synced
+  /// tables so a local reset never deletes the gym's cloud backup.
   Future<void> clearAllData() async {
     final db = await instance.database;
-    await db.delete('gym');
-    await db.delete('admins');
-    await db.delete('membership_packages');
-    await db.delete('membership_plans');
-    await db.delete('trainers');
-    await db.delete('trainer_payouts');
-    await db.delete('trainer_change_logs');
-    await db.delete('events');
-    await db.delete('members');
-    await db.delete('memberships');
-    await db.delete('membership_change_logs');
-    await db.delete('payments');
-    await db.delete('receipts');
+    await SyncSchema.wipeLocalData(db);
     await db.delete('notifications');
-    await db.delete('announcements');
-    await db.delete('expenses');
-    await db.delete('bills');
-    await db.delete('app_settings');
+    await db.delete('dismissed_notifications');
+    await db.delete('notification_fire_markers');
   }
 }
 

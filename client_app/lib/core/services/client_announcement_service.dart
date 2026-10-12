@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/client_supabase_config.dart';
 import '../models/client_announcement_model.dart';
 import 'client_notification_service.dart';
 import 'client_supabase_service.dart';
@@ -25,16 +26,17 @@ class ClientAnnouncementService {
     await _loadReadState();
     try {
       await ClientSupabaseService.instance.initialize();
-      _setupRealtimeListener();
+      await _setupRealtimeListener();
     } catch (e) {
       debugPrint('[ClientAnnouncementService] Supabase init warning: $e');
     }
     await fetchAnnouncements(triggerNotificationsForNew: false);
   }
 
-  void _setupRealtimeListener() {
+  Future<void> _setupRealtimeListener() async {
     _realtimeSub?.cancel();
-    final stream = ClientSupabaseService.instance.streamAnnouncements();
+    final gymId = await ClientSupabaseConfig.getGymId();
+    final stream = ClientSupabaseService.instance.streamAnnouncements(gymId: gymId);
     if (stream != null) {
       _realtimeSub = stream.listen((_) async {
         await fetchAnnouncements(triggerNotificationsForNew: true);

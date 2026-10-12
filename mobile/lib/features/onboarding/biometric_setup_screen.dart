@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/auth/auth_service.dart';
+import '../../core/localization/app_translations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/security/security_service.dart';
 import '../../core/security/biometric_service.dart';
@@ -11,15 +13,16 @@ import '../../shared/navigation/main_navigation_screen.dart';
 
 class BiometricSetupScreen extends StatefulWidget {
   final String gymName;
-  final String ownerName;
-  final String gymPhone;
-  final String email;
+  final String? ownerName;
+  final String? gymPhone;
+  final String? email;
   final String? website;
-  final String address;
-  final String city;
-  final String currency;
+  final String? address;
+  final String? city;
+  final String? currency;
   final String adminName;
-  final String adminPhone;
+  final String? adminPhone;
+  final bool restoreMode;
 
   const BiometricSetupScreen({
     super.key,
@@ -33,7 +36,22 @@ class BiometricSetupScreen extends StatefulWidget {
     required this.currency,
     required this.adminName,
     required this.adminPhone,
+    this.restoreMode = false,
   });
+
+  const BiometricSetupScreen.restore({
+    super.key,
+    required this.gymName,
+    required this.adminName,
+  })  : ownerName = null,
+        gymPhone = null,
+        email = null,
+        website = null,
+        address = null,
+        city = null,
+        currency = null,
+        adminPhone = null,
+        restoreMode = true;
 
   @override
   State<BiometricSetupScreen> createState() => _BiometricSetupScreenState();
@@ -76,16 +94,40 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
 
       final repo = SettingsRepository();
 
+      if (widget.restoreMode) {
+        final admin = await repo.getAdminInfo();
+        final updatedAdmin = AdminModel(
+          id: admin.id,
+          name: admin.name,
+          phone: admin.phone,
+          isBiometricEnabled: enableBiometric,
+          createdAt: admin.createdAt,
+          updatedAt: DateTime.now(),
+        );
+        await repo.saveAdminInfo(updatedAdmin);
+
+        final security = SecurityService();
+        await security.setSetupComplete(true);
+
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+          (route) => false,
+        );
+        return;
+      }
+
       final gym = GymInfoModel(
         id: 'default',
         name: widget.gymName,
-        ownerName: widget.ownerName,
-        phone: widget.gymPhone,
-        email: widget.email,
+        ownerName: widget.ownerName ?? '',
+        phone: widget.gymPhone ?? '',
+        email: widget.email ?? '',
         website: widget.website,
-        address: widget.address,
-        city: widget.city,
-        currency: widget.currency,
+        address: widget.address ?? '',
+        city: widget.city ?? '',
+        currency: widget.currency ?? '₹',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
@@ -93,7 +135,7 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
       final admin = AdminModel(
         id: 'default',
         name: widget.adminName,
-        phone: widget.adminPhone,
+        phone: widget.adminPhone ?? '',
         isBiometricEnabled: enableBiometric,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -101,6 +143,12 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
 
       await repo.saveGymInfo(gym);
       await repo.saveAdminInfo(admin);
+
+      // Bind this new gym to the signed-in account (if any) and queue all
+      // data — including the seeded default packages/plans — for upload.
+      if (AuthService.instance.isSignedIn) {
+        await AuthService.instance.registerNewGym();
+      }
 
       AppStateService.instance.notifyGymInfoChanged();
 
@@ -124,7 +172,7 @@ class _BiometricSetupScreenState extends State<BiometricSetupScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('STEP 4 OF 4: BIOMETRICS'),
+        title: Text(widget.restoreMode ? tr('restore_step_biometric') : 'STEP 4 OF 4: BIOMETRICS'),
       ),
       body: SafeArea(
         child: LayoutBuilder(

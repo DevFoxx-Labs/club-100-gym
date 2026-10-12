@@ -14,6 +14,7 @@ import '../events/events_calendar_screen.dart';
 import '../receipts/receipt_preview_screen.dart';
 import '../../core/services/app_state_service.dart';
 import '../../core/localization/app_translations.dart';
+import '../../shared/widgets/sync_status_badge.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(String filter) onNavigateToMembers;
@@ -208,6 +209,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
+          const SyncStatusBadge(),
           Padding(
             padding: const EdgeInsets.only(right: 14),
             child: Material(

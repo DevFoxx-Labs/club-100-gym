@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_translations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/security/security_service.dart';
 import '../../shared/widgets/neon_button.dart';
@@ -6,15 +7,16 @@ import 'biometric_setup_screen.dart';
 
 class MpinSetupScreen extends StatefulWidget {
   final String gymName;
-  final String ownerName;
-  final String gymPhone;
-  final String email;
+  final String? ownerName;
+  final String? gymPhone;
+  final String? email;
   final String? website;
-  final String address;
-  final String city;
-  final String currency;
+  final String? address;
+  final String? city;
+  final String? currency;
   final String adminName;
-  final String adminPhone;
+  final String? adminPhone;
+  final bool restoreMode;
 
   const MpinSetupScreen({
     super.key,
@@ -28,7 +30,22 @@ class MpinSetupScreen extends StatefulWidget {
     required this.currency,
     required this.adminName,
     required this.adminPhone,
+    this.restoreMode = false,
   });
+
+  const MpinSetupScreen.restore({
+    super.key,
+    required this.gymName,
+    required this.adminName,
+  })  : ownerName = null,
+        gymPhone = null,
+        email = null,
+        website = null,
+        address = null,
+        city = null,
+        currency = null,
+        adminPhone = null,
+        restoreMode = true;
 
   @override
   State<MpinSetupScreen> createState() => _MpinSetupScreenState();
@@ -83,23 +100,35 @@ class _MpinSetupScreenState extends State<MpinSetupScreen> {
       await security.setMPIN(_mpin);
 
       if (!mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BiometricSetupScreen(
-            gymName: widget.gymName,
-            ownerName: widget.ownerName,
-            gymPhone: widget.gymPhone,
-            email: widget.email,
-            website: widget.website,
-            address: widget.address,
-            city: widget.city,
-            currency: widget.currency,
-            adminName: widget.adminName,
-            adminPhone: widget.adminPhone,
+      if (widget.restoreMode) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BiometricSetupScreen.restore(
+              gymName: widget.gymName,
+              adminName: widget.adminName,
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BiometricSetupScreen(
+              gymName: widget.gymName,
+              ownerName: widget.ownerName ?? '',
+              gymPhone: widget.gymPhone ?? '',
+              email: widget.email ?? '',
+              website: widget.website,
+              address: widget.address ?? '',
+              city: widget.city ?? '',
+              currency: widget.currency ?? '₹',
+              adminName: widget.adminName,
+              adminPhone: widget.adminPhone ?? '',
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -111,7 +140,7 @@ class _MpinSetupScreenState extends State<MpinSetupScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('STEP 3 OF 4: MPIN SETUP'),
+        title: Text(widget.restoreMode ? tr('restore_step_mpin') : 'STEP 3 OF 4: MPIN SETUP'),
       ),
       body: SafeArea(
         child: LayoutBuilder(

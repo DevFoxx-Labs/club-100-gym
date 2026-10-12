@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/security/security_service.dart';
 import '../../core/security/biometric_service.dart';
+import '../../core/sync/sync_engine.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/navigation/main_navigation_screen.dart';
 
@@ -92,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateToDashboard() {
+    SyncEngine.instance.requestSync();
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const MainNavigationScreen()),

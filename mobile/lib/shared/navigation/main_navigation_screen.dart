@@ -9,6 +9,7 @@ import '../../features/settings/settings_screen.dart';
 import '../../core/notifications/reminder_scheduler.dart';
 import '../../core/notifications/notification_service.dart';
 import '../../core/services/app_state_service.dart';
+import '../../core/sync/sync_engine.dart';
 import '../../core/theme/app_theme.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -57,9 +58,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Widget
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      SyncEngine.instance.requestSync(immediate: true);
       ReminderScheduler().runDailyScan();
       NotificationService().syncAllUpcomingEventNotifications();
       NotificationService().syncAllMembershipNotifications();
+    } else if (state == AppLifecycleState.paused) {
+      SyncEngine.instance.requestSync(immediate: true);
     }
   }
 

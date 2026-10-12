@@ -57,13 +57,16 @@ dependencies:
   mongo_dart: ^0.10.9
   country_code_picker: ^3.0.0
   supabase_flutter: ^2.17.2
+  connectivity_plus: ^6.1.0
 
 dependency_overrides:
   flutter_plugin_android_lifecycle: 2.0.20
+  sqlite3: 2.4.6
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  sqflite_common_ffi: ^2.3.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/auth/auth_service.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/database/app_database.dart';
-import '../../core/security/security_service.dart';
 import '../../core/services/app_state_service.dart';
-import '../../core/sync/data_mode.dart';
-import '../../core/sync/data_mode_service.dart';
 import '../../core/localization/app_language.dart';
 import '../../core/localization/locale_service.dart';
 import '../../core/localization/app_translations.dart';
 import '../../data/models/admin_model.dart';
 import '../../data/repositories/settings_repository.dart';
-import '../../shared/widgets/confirmation_dialog.dart';
-import '../onboarding/welcome_screen.dart';
 import 'data_connection_screen.dart';
+import 'sign_out_flow.dart';
 import 'edit_gym_screen.dart';
 import 'payment_settings_screen.dart';
 import 'print_format_settings_screen.dart';
@@ -40,7 +36,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final _settingsRepo = SettingsRepository();
   AdminModel? _admin;
-  DataMode _dataMode = DataMode.offline;
   bool _isLoading = true;
 
   @override
@@ -65,12 +60,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadSettings() async {
     setState(() => _isLoading = true);
     final admin = await _settingsRepo.getAdminInfo();
-    final mode = await DataModeService.instance.getMode();
 
     if (mounted) {
       setState(() {
         _admin = admin;
-        _dataMode = mode;
         _isLoading = false;
       });
     }
@@ -91,24 +84,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _resetData() async {
-    showDialog(
-      context: context,
-      builder: (context) => ConfirmationDialog(
-        title: tr('settings_reset_title'),
-        message: tr('settings_reset_message'),
-        confirmText: tr('settings_reset_confirm'),
-        isDestructive: true,
-        onConfirm: () async {
-          final nav = Navigator.of(context);
-          await AppDatabase.instance.clearAllData();
-          await SecurityService().clearSecurityData();
-
-          nav.pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-            (route) => false,
-          );
-        },
-      ),
+    await runSignOutFlow(
+      context,
+      title: tr('settings_reset_title'),
+      message: tr('settings_reset_message'),
+      confirmLabel: tr('settings_reset_confirm'),
     );
   }
 
@@ -240,14 +220,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  // Data & Sync Section
-                  _SectionHeader(title: tr('settings_section_data_sync')),
+                  // Cloud & Sync Section
+                  _SectionHeader(title: tr('cloud_sync_card')),
                   _SettingsTile(
-                    icon: _dataMode == DataMode.online ? Icons.cloud_rounded : Icons.smartphone_rounded,
-                    title: tr('settings_data_storage_mode'),
-                    subtitle: _dataMode == DataMode.online
-                        ? tr('settings_data_storage_mode_online')
-                        : tr('settings_data_storage_mode_offline'),
+                    icon: Icons.cloud_sync_rounded,
+                    title: tr('cloud_account_title'),
+                    subtitle: AuthService.instance.isAuthenticated
+                        ? (AuthService.instance.currentEmail ?? tr('sync_status_idle'))
+                        : tr('cloud_not_linked_desc'),
                     onTap: () async {
                       await Navigator.push(context, MaterialPageRoute(builder: (context) => const DataConnectionScreen()));
                       _loadSettings();

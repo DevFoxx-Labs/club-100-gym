@@ -50,6 +50,8 @@ class BackupService {
     return file;
   }
 
+  /// Restores a local encrypted file. The changes are captured by SQLite
+  /// triggers so the cloud mirrors the restored file.
   Future<bool> importBackup(File backupFile) async {
     try {
       final encryptedData = await backupFile.readAsString();

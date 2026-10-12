@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import '../../core/auth/auth_service.dart';
 import '../../core/config/supabase_config.dart';
-import '../../core/sync/supabase_service.dart';
-import '../../core/sync/supabase_sync_service.dart';
+import '../../core/localization/app_translations.dart';
+import '../../core/sync/sync_engine.dart';
 import '../../core/theme/app_theme.dart';
-import '../../data/repositories/settings_repository.dart';
 import '../../shared/widgets/confirmation_dialog.dart';
-import '../../shared/widgets/custom_text_field.dart';
 import '../../shared/widgets/neon_button.dart';
+import '../auth/account_auth_screen.dart';
+import 'sign_out_flow.dart';
 
 class DataConnectionScreen extends StatefulWidget {
   const DataConnectionScreen({super.key});
@@ -16,17 +17,8 @@ class DataConnectionScreen extends StatefulWidget {
 }
 
 class _DataConnectionScreenState extends State<DataConnectionScreen> {
-  final _urlController = TextEditingController();
-  final _anonKeyController = TextEditingController();
-  bool _obscureKey = true;
-  bool _isLoading = true;
-  bool _isTesting = false;
-  bool _isSyncing = false;
-  bool _isConnected = false;
-  String? _connectionMessage;
-
-  DateTime? _lastSyncAt;
-  String _gymId = 'default';
+  String? _cloudGymId;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -34,312 +26,534 @@ class _DataConnectionScreenState extends State<DataConnectionScreen> {
     _load();
   }
 
-  @override
-  void dispose() {
-    _urlController.dispose();
-    _anonKeyController.dispose();
-    super.dispose();
-  }
-
   Future<void> _load() async {
-    final url = await SupabaseConfig.getUrl();
-    final anonKey = await SupabaseConfig.getAnonKey();
-    final lastSync = await SupabaseConfig.getLastSyncAt();
-    final gymInfo = await SettingsRepository().getGymInfo();
-
+    final gymId = await SupabaseConfig.getActiveGymId();
     if (!mounted) return;
     setState(() {
-      _urlController.text = url ?? '';
-      _anonKeyController.text = anonKey ?? '';
-      _lastSyncAt = lastSync;
-      _gymId = gymInfo.id;
-      _isLoading = false;
+      _cloudGymId = gymId;
     });
-
-    if (url != null && anonKey != null && url.isNotEmpty && anonKey.isNotEmpty) {
-      _testConnection(silent: true);
-    }
   }
 
-  Future<void> _testConnection({bool silent = false}) async {
-    if (!silent) setState(() => _isTesting = true);
+  String _formatLastSync(DateTime? dt) {
+    if (dt == null) return tr('sync_never');
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 60) return tr('sync_just_now');
+    if (diff.inMinutes < 60) return tr('sync_minutes_ago', {'n': '${diff.inMinutes}'});
+    if (diff.inHours < 24) return tr('sync_hours_ago', {'n': '${diff.inHours}'});
+    return tr('sync_days_ago', {'n': '${diff.inDays}'});
+  }
 
-    final res = await SupabaseService.instance.testConnection(
-      customUrl: _urlController.text.trim(),
-      customAnonKey: _anonKeyController.text.trim(),
+  Future<void> _handleSyncNow() async {
+    setState(() => _isLoading = true);
+    final ok = await SyncEngine.instance.syncNow();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok ? tr('sync_completed') : tr('sync_deferred')),
+        backgroundColor: ok ? AppTheme.neonLime : AppTheme.darkCard,
+      ),
+    );
+  }
+
+  Future<void> _handleReDownload() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => ConfirmationDialog(
+        title: tr('cloud_redownload_confirm_title'),
+        message: tr('cloud_redownload_confirm_desc'),
+        confirmLabel: tr('cloud_redownload'),
+        isDestructive: true,
+      ),
     );
 
-    if (!mounted) return;
-    setState(() {
-      _isTesting = false;
-      _isConnected = res.success;
-      _connectionMessage = res.error;
-    });
+    if (confirmed != true || !mounted) return;
 
-    if (!silent) {
+    final gymId = _cloudGymId ?? await AuthService.instance.findMyGymId();
+    if (!mounted) return;
+    if (gymId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('cloud_no_gym_found'))),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: AppTheme.darkSurface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          content: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: AppTheme.neonLime),
+                const SizedBox(height: 20),
+                Text(
+                  tr('authRestoreLoading'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppTheme.textWhite,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  tr('cloud_replacing_local'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final res = await SyncEngine.instance.restoreFromCloud(gymId);
+
+    if (!mounted) return;
+    Navigator.pop(context); // Dismiss loading dialog
+
+    if (res.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(res.success ? 'Connected to Supabase Cloud successfully!' : 'Connection error: ${res.error}'),
-          backgroundColor: res.success ? AppTheme.neonLime : AppTheme.statusOverdue,
+          content: Text(tr('authRestoreSuccess')),
+          backgroundColor: AppTheme.neonLime,
+        ),
+      );
+      _load();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${tr('authRestoreFailed')}: ${res.error}'),
+          backgroundColor: Colors.redAccent,
         ),
       );
     }
   }
 
-  Future<void> _saveCredentials() async {
-    final url = _urlController.text.trim();
-    final key = _anonKeyController.text.trim();
-
-    if (url.isEmpty || key.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter both Supabase Project URL and Anon Key.')),
-      );
-      return;
-    }
-
-    await SupabaseConfig.saveCredentials(url: url, anonKey: key);
-    await SupabaseService.instance.init(force: true);
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: const Text('Supabase credentials saved securely!'), backgroundColor: AppTheme.neonLime),
-    );
-
-    await _testConnection();
-  }
-
-  Future<void> _confirmPushLocalData() async {
-    showDialog(
-      context: context,
-      builder: (ctx) => ConfirmationDialog(
-        title: 'SYNC LOCAL TO SUPABASE CLOUD?',
-        message: 'This will upload all local members, plans, payments, and receipts to your Supabase PostgreSQL cloud database. Existing cloud records with matching IDs will be safely updated without duplicates.',
-        confirmText: 'Sync to Cloud Now',
-        onConfirm: _pushLocalData,
-      ),
-    );
-  }
-
-  Future<void> _pushLocalData() async {
-    setState(() => _isSyncing = true);
-    final res = await SupabaseSyncService.instance.pushAllLocalDataToSupabase(_gymId);
-    if (!mounted) return;
-    setState(() {
-      _isSyncing = false;
-      _lastSyncAt = DateTime.now();
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(res.success ? 'Synced ${res.totalPushed} records to Supabase!' : 'Sync failed: ${res.error}'),
-        backgroundColor: res.success ? AppTheme.neonLime : AppTheme.statusOverdue,
-      ),
-    );
-  }
-
-  Future<void> _confirmRestoreFromCloud() async {
-    showDialog(
-      context: context,
-      builder: (ctx) => ConfirmationDialog(
-        title: 'RESTORE FROM SUPABASE CLOUD?',
-        message: 'This will download all records from Supabase into your local app. Local records will be updated to match the cloud records.',
-        confirmText: 'Restore from Cloud',
-        onConfirm: _restoreFromCloud,
-      ),
-    );
-  }
-
-  Future<void> _restoreFromCloud() async {
-    setState(() => _isSyncing = true);
-    final res = await SupabaseSyncService.instance.restoreAllGymData(_gymId);
-    if (!mounted) return;
-    setState(() {
-      _isSyncing = false;
-      _lastSyncAt = DateTime.now();
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(res.success ? 'Restored ${res.totalRecordsRestored} records from Supabase!' : 'Restore failed: ${res.error}'),
-        backgroundColor: res.success ? AppTheme.neonLime : AppTheme.statusOverdue,
-      ),
+  Future<void> _handleSignOut() async {
+    await runSignOutFlow(
+      context,
+      title: tr('cloud_sign_out'),
+      message: tr('cloud_sign_out_desc'),
+      confirmLabel: tr('cloud_sign_out'),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // "Connected" means signed in AND this phone is bound to a cloud gym; a
+    // session without a binding can't sync anything.
+    final isAuth = AuthService.instance.isAuthenticated && _cloudGymId != null;
+    final email = AuthService.instance.currentEmail;
     final safeBottom = MediaQuery.paddingOf(context).bottom;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('SUPABASE CLOUD SYNC')),
+      backgroundColor: AppTheme.darkBackground,
+      appBar: AppBar(
+        title: Text(tr('cloud_account_title')),
+      ),
       body: SafeArea(
-        child: _isLoading
-            ? Center(child: CircularProgressIndicator(color: AppTheme.neonLime))
-            : SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(20, 20, 20, 24 + safeBottom),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + safeBottom),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // CARD 1: ACCOUNT
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.darkSurface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isAuth
+                        ? AppTheme.neonLime.withValues(alpha: 0.3)
+                        : AppTheme.darkBorder,
+                  ),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Cloud Status Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.darkSurface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: _isConnected ? AppTheme.neonLime : AppTheme.darkBorder,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: (_isConnected ? AppTheme.neonLime : Colors.white24).withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              _isConnected ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
-                              color: _isConnected ? AppTheme.neonLime : Colors.white54,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _isConnected ? 'Connected to Supabase' : 'Offline / Not Connected',
-                                  style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 15),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  _lastSyncAt != null
-                                      ? 'Last synced: ${_lastSyncAt!.day}/${_lastSyncAt!.month}/${_lastSyncAt!.year} at ${_lastSyncAt!.hour.toString().padLeft(2, '0')}:${_lastSyncAt!.minute.toString().padLeft(2, '0')}'
-                                      : 'Never synced with cloud',
-                                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                                ),
-                                if (_connectionMessage != null && _connectionMessage!.isNotEmpty) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    _connectionMessage!,
-                                    style: TextStyle(
-                                      color: _isConnected ? AppTheme.neonLime : AppTheme.statusOverdue,
-                                      fontSize: 11,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    Text('SUPABASE CREDENTIALS', style: TextStyle(color: AppTheme.neonLime, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Enter your Supabase Project URL and public Anon API Key below. These credentials are saved securely on your device.',
-                      style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
-                    ),
-                    const SizedBox(height: 16),
-
-                    CustomTextField(
-                      label: 'Project URL',
-                      hint: 'https://xxxxxxxxxxxx.supabase.co',
-                      controller: _urlController,
-                      keyboardType: TextInputType.url,
-                    ),
-                    const SizedBox(height: 14),
-
-                    CustomTextField(
-                      label: 'Anon Public API Key',
-                      hint: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-                      controller: _anonKeyController,
-                      obscureText: _obscureKey,
-                      suffixIcon: IconButton(
-                        icon: Icon(_obscureKey ? Icons.visibility_rounded : Icons.visibility_off_rounded, color: AppTheme.textMuted, size: 20),
-                        onPressed: () => setState(() => _obscureKey = !_obscureKey),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
                     Row(
                       children: [
-                        Expanded(
-                          child: NeonButton(
-                            text: 'Save Credentials',
-                            onPressed: _saveCredentials,
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isAuth
+                                ? AppTheme.neonLime.withValues(alpha: 0.15)
+                                : AppTheme.darkCard,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            isAuth ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
+                            color: isAuth ? AppTheme.neonLime : AppTheme.textMuted,
+                            size: 22,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: NeonButton(
-                            text: 'Test Ping',
-                            isSecondary: true,
-                            isLoading: _isTesting,
-                            onPressed: () => _testConnection(silent: false),
+                          child: Text(
+                            tr('cloud_account_card'),
+                            style: const TextStyle(
+                              color: AppTheme.textWhite,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isAuth
+                                ? AppTheme.neonLime.withValues(alpha: 0.15)
+                                : AppTheme.darkCard,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isAuth ? AppTheme.neonLime : AppTheme.darkBorder,
+                            ),
+                          ),
+                          child: Text(
+                            isAuth ? tr('cloud_connected') : tr('cloud_disconnected'),
+                            style: TextStyle(
+                              color: isAuth ? AppTheme.neonLime : AppTheme.textMuted,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 16),
 
-                    Text('CLOUD DATA SYNCHRONIZATION', style: TextStyle(color: AppTheme.neonLime, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                    const SizedBox(height: 12),
-
-                    NeonButton(
-                      text: 'Push Local Data to Supabase',
-                      icon: Icons.cloud_upload_rounded,
-                      width: double.infinity,
-                      isLoading: _isSyncing,
-                      onPressed: _confirmPushLocalData,
-                    ),
-                    const SizedBox(height: 12),
-
-                    NeonButton(
-                      text: 'Restore All Data from Supabase',
-                      icon: Icons.cloud_download_rounded,
-                      isSecondary: true,
-                      width: double.infinity,
-                      isLoading: _isSyncing,
-                      onPressed: _confirmRestoreFromCloud,
-                    ),
-                    const SizedBox(height: 20),
-
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.darkSurface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppTheme.darkBorder),
+                    if (isAuth) ...[
+                      _InfoRow(
+                        label: tr('cloud_linked_as'),
+                        value: email ?? '-',
+                        icon: Icons.person_outline,
                       ),
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.shield_outlined, color: Colors.cyanAccent, size: 18),
-                              SizedBox(width: 8),
-                              Text('Offline-First Architecture', style: TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.bold, fontSize: 13)),
-                            ],
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            'Your gym operations always function instantly on your device via local SQLite. When internet is connected, records sync with Supabase Cloud so multiple devices, reception desks, and client apps stay updated in real time.',
-                            style: TextStyle(color: AppTheme.textMuted, fontSize: 11.5, height: 1.4),
-                          ),
-                        ],
+                      const SizedBox(height: 10),
+                      _InfoRow(
+                        label: tr('cloud_gym_id'),
+                        value: _cloudGymId ?? '-',
+                        icon: Icons.fitness_center_rounded,
                       ),
-                    ),
+                    ] else ...[
+                      Text(
+                        tr('cloud_not_linked_desc'),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 13,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      NeonButton(
+                        text: tr('cloud_link_button'),
+                        icon: Icons.link_rounded,
+                        width: double.infinity,
+                        onPressed: () async {
+                          final linked = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AccountAuthScreen(
+                                initialMode: AccountAuthMode.signIn,
+                                linkExistingLocalData: true,
+                              ),
+                            ),
+                          );
+                          if (linked == true) {
+                            _load();
+                          }
+                        },
+                      ),
+                    ],
                   ],
                 ),
               ),
+
+              const SizedBox(height: 20),
+
+              // CARD 2: SYNC STATUS
+              ValueListenableBuilder<SyncStatus>(
+                valueListenable: SyncEngine.instance.status,
+                builder: (context, status, _) {
+                  final isSyncing = status.phase == SyncPhase.syncing;
+                  final isOffline = status.phase == SyncPhase.offline;
+                  final isError = status.phase == SyncPhase.error;
+                  final pendingCount = status.pendingChanges;
+                  final lastSync = status.lastSyncedAt;
+                  final lastError = status.error;
+
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppTheme.darkSurface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.darkBorder),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.darkCard,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                isSyncing
+                                    ? Icons.sync_rounded
+                                    : (isOffline
+                                        ? Icons.wifi_off_rounded
+                                        : (isError
+                                            ? Icons.error_outline_rounded
+                                            : Icons.cloud_sync_rounded)),
+                                color: isError
+                                    ? Colors.redAccent
+                                    : (isOffline ? AppTheme.textMuted : AppTheme.neonLime),
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                tr('cloud_sync_card'),
+                                style: const TextStyle(
+                                  color: AppTheme.textWhite,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            if (isSyncing)
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppTheme.neonLime,
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Pending changes count
+                        _InfoRow(
+                          label: tr('sync_pending_label'),
+                          value: pendingCount == 0
+                              ? tr('sync_status_idle')
+                              : tr('sync_pending_changes', {'count': '$pendingCount'}),
+                          icon: Icons.pending_actions_rounded,
+                          highlight: pendingCount > 0,
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Last sync time
+                        _InfoRow(
+                          label: tr('sync_last_label'),
+                          value: _formatLastSync(lastSync),
+                          icon: Icons.access_time_rounded,
+                        ),
+
+                        // Error message if present
+                        if (lastError != null && lastError.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.redAccent.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.info_outline,
+                                    color: Colors.redAccent,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      lastError,
+                                      style: const TextStyle(
+                                        color: Colors.redAccent,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 20),
+
+                        // Sync Now Action
+                        NeonButton(
+                          text: tr('cloud_sync_now'),
+                          icon: Icons.sync_rounded,
+                          width: double.infinity,
+                          isLoading: _isLoading || isSyncing,
+                          onPressed: _handleSyncNow,
+                        ),
+
+                        if (isAuth) ...[
+                          const SizedBox(height: 10),
+                          Center(
+                            child: TextButton.icon(
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppTheme.textMuted,
+                              ),
+                              icon: const Icon(Icons.cloud_download_outlined, size: 16),
+                              label: Text(
+                                tr('cloud_redownload'),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              onPressed: _handleReDownload,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
+
+              // CARD 3: SIGN OUT (Only if authenticated)
+              if (isAuth) ...[
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppTheme.darkSurface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.redAccent.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.logout_rounded,
+                              color: Colors.redAccent,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              tr('cloud_sign_out'),
+                              style: const TextStyle(
+                                color: AppTheme.textWhite,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        tr('cloud_sign_out_desc'),
+                        style: const TextStyle(
+                          color: AppTheme.textMuted,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: const BorderSide(color: Colors.redAccent),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: _handleSignOut,
+                        child: Center(
+                          child: Text(
+                            tr('cloud_sign_out'),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final bool highlight;
+
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.highlight = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppTheme.textMuted),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+            color: highlight ? AppTheme.neonLime : AppTheme.textWhite,
+            fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

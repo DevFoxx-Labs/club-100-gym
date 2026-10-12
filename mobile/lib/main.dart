@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'core/theme/app_theme.dart';
 import 'core/security/security_service.dart';
 import 'core/services/app_state_service.dart';
+import 'core/sync/sync_engine.dart';
 import 'core/utils/phone_utils.dart';
 import 'core/localization/locale_service.dart';
 import 'core/notifications/notification_service.dart';
@@ -69,8 +71,12 @@ void main() async {
     debugPrint('Failed to load saved language: $e');
   }
 
- // Pre-select the admin's own country code in phone fields
+  // Pre-select the admin's own country code in phone fields
   await PhoneUtils.init();
+
+  // Start background offline-first sync (no-op until an account is linked)
+  unawaited(SyncEngine.instance.start());
+
   runApp(Club100GymApp(isSetupComplete: isComplete));
 }
 
