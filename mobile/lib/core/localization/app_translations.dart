@@ -176,7 +176,7 @@ class AppTranslations {
     'settings_view_active_alerts_sub': {'en': 'Scheduled fee due and membership expiry alerts', 'hi': 'निर्धारित फीस देय और सदस्यता समाप्ति अलर्ट'},
     'settings_section_security': {'en': 'SECURITY & AUTHENTICATION', 'hi': 'सुरक्षा और प्रमाणीकरण'},
     'settings_change_mpin': {'en': 'Change Security MPIN', 'hi': 'सुरक्षा MPIN बदलें'},
-    'settings_change_mpin_sub': {'en': 'Update your 4 to 6 digit login MPIN', 'hi': 'अपना 4 से 6 अंकों का लॉगिन MPIN अपडेट करें'},
+    'settings_change_mpin_sub': {'en': 'Update your 4-digit login MPIN', 'hi': 'अपना 4 अंकों का लॉगिन MPIN अपडेट करें'},
     'settings_biometric_login': {'en': 'Fingerprint / Biometric Login', 'hi': 'फिंगरप्रिंट / बायोमेट्रिक लॉगिन'},
     'settings_biometric_login_sub': {'en': 'Unlock app using device biometrics', 'hi': 'डिवाइस बायोमेट्रिक्स का उपयोग कर ऐप अनलॉक करें'},
     'settings_section_backup': {'en': 'DATA BACKUP & RECOVERY', 'hi': 'डेटा बैकअप और रिकवरी'},
@@ -472,13 +472,13 @@ class AppTranslations {
     'help_cat_getting_started_desc': {'en': 'First-time setup, login & security basics', 'hi': 'पहली बार सेटअप, लॉगिन और सुरक्षा की बुनियादी बातें'},
     'help_topic_setup_wizard_title': {'en': 'The first-time setup wizard', 'hi': 'पहली बार सेटअप विज़ार्ड'},
     'help_topic_setup_wizard_body': {
-      'en': 'When you install the app for the first time it walks you through a 4-step wizard: Gym Setup (name, phone, address, currency), Admin Setup (your name and mobile number), MPIN Setup (a 4–6 digit PIN you enter twice to confirm), and Biometric Setup (optional fingerprint login, only shown if your device supports it). Everything is saved to the database on the final step.\n\nThis app currently supports a single admin account per install — there is no multi-staff login system yet.',
-      'hi': 'जब आप ऐप को पहली बार इंस्टॉल करते हैं, तो यह आपको 4-चरण के विज़ार्ड से गुज़ारता है: जिम सेटअप (नाम, फ़ोन, पता, मुद्रा), एडमिन सेटअप (आपका नाम और मोबाइल नंबर), MPIN सेटअप (4–6 अंकों का PIN जिसे आप पुष्टि के लिए दो बार दर्ज करते हैं), और बायोमेट्रिक सेटअप (वैकल्पिक फिंगरप्रिंट लॉगिन, केवल तभी दिखाया जाता है जब आपका डिवाइस इसे सपोर्ट करता हो)। अंतिम चरण में सब कुछ डेटाबेस में सहेज लिया जाता है।\n\nयह ऐप फ़िलहाल प्रति इंस्टॉल केवल एक एडमिन अकाउंट को सपोर्ट करता है — अभी तक कोई मल्टी-स्टाफ लॉगिन सिस्टम नहीं है।',
+      'en': 'When you install the app for the first time it walks you through a 4-step wizard: Gym Setup (name, phone, address, currency), Admin Setup (your name and mobile number), MPIN Setup (a 4-digit PIN you enter twice to confirm), and Biometric Setup (optional fingerprint login, only shown if your device supports it). Everything is saved to the database on the final step.\n\nThis app currently supports a single admin account per install — there is no multi-staff login system yet.',
+      'hi': 'जब आप ऐप को पहली बार इंस्टॉल करते हैं, तो यह आपको 4-चरण के विज़ार्ड से गुज़ारता है: जिम सेटअप (नाम, फ़ोन, पता, मुद्रा), एडमिन सेटअप (आपका नाम और मोबाइल नंबर), MPIN सेटअप (4 अंकों का PIN जिसे आप पुष्टि के लिए दो बार दर्ज करते हैं), और बायोमेट्रिक सेटअप (वैकल्पिक फिंगरप्रिंट लॉगिन, केवल तभी दिखाया जाता है जब आपका डिवाइस इसे सपोर्ट करता हो)। अंतिम चरण में सब कुछ डेटाबेस में सहेज लिया जाता है।\n\nयह ऐप फ़िलहाल प्रति इंस्टॉल केवल एक एडमिन अकाउंट को सपोर्ट करता है — अभी तक कोई मल्टी-स्टाफ लॉगिन सिस्टम नहीं है।',
     },
     'help_topic_login_mpin_title': {'en': 'Logging in & MPIN recovery', 'hi': 'लॉगिन करना और MPIN रिकवरी'},
     'help_topic_login_mpin_body': {
-      'en': 'Day-to-day login uses your MPIN only (a 6-dot keypad that auto-submits once you enter enough digits). If you enabled fingerprint login during setup, the fingerprint prompt appears automatically when you open the app.\n\nImportant: there is no "Forgot MPIN" reset flow. The "Need Help?" button on the login screen only shows your own saved admin contact details — it does not reset your PIN. Make sure you remember your MPIN, or rely on biometric login as a backup.',
-      'hi': 'रोज़मर्रा का लॉगिन केवल आपके MPIN से होता है (एक 6-डॉट कीपैड जो पर्याप्त अंक दर्ज करते ही अपने आप सबमिट हो जाता है)। यदि आपने सेटअप के दौरान फिंगरप्रिंट लॉगिन सक्षम किया था, तो ऐप खोलते ही फिंगरप्रिंट प्रॉम्प्ट अपने आप दिखाई देता है।\n\nज़रूरी: कोई "MPIN भूल गए" रीसेट फ़्लो नहीं है। लॉगिन स्क्रीन पर "Need Help?" बटन केवल आपके अपने सहेजे गए एडमिन संपर्क विवरण दिखाता है — यह आपका PIN रीसेट नहीं करता। सुनिश्चित करें कि आपको अपना MPIN याद रहे, या बैकअप के रूप में बायोमेट्रिक लॉगिन पर भरोसा करें।',
+      'en': 'Day-to-day login uses your 4-digit MPIN — it unlocks automatically as soon as the 4th digit is entered. If you enabled fingerprint login during setup, the fingerprint prompt appears automatically when you open the app.\n\nAfter 5 wrong attempts the keypad locks for 30 seconds (longer with every further wrong attempt).\n\nForgot your MPIN? Tap "Forgot MPIN?" on the login screen and verify yourself with your cloud account password or your fingerprint, then set a new MPIN. If neither is possible you can sign out and reset the phone — with a cloud account all data comes back when you sign in again.',
+      'hi': 'रोज़मर्रा का लॉगिन आपके 4 अंकों के MPIN से होता है — चौथा अंक डालते ही ऐप अपने आप खुल जाता है। यदि आपने सेटअप के दौरान फिंगरप्रिंट लॉगिन सक्षम किया था, तो ऐप खोलते ही फिंगरप्रिंट प्रॉम्प्ट अपने आप दिखाई देता है।\n\n5 बार गलत MPIN डालने पर कीपैड 30 सेकंड के लिए लॉक हो जाता है (हर अगली गलती पर ज़्यादा देर)।\n\nMPIN भूल गए? लॉगिन स्क्रीन पर "Forgot MPIN?" दबाएं और अपने क्लाउड अकाउंट पासवर्ड या फिंगरप्रिंट से पहचान साबित करके नया MPIN सेट करें। अगर दोनों संभव न हों तो साइन आउट करके फोन रीसेट करें — क्लाउड अकाउंट हो तो दोबारा साइन इन करने पर सारा डेटा वापस आ जाता है।',
     },
 
     'help_cat_members_title': {'en': 'Members', 'hi': 'सदस्य'},
@@ -891,5 +891,9 @@ class AppTranslations {
     'forgot_mpin_reset_msg_cloud': {'en': 'This phone\'s data and MPIN will be removed. Sign in again with your account to restore everything.', 'hi': 'इस फोन का डेटा और MPIN हटा दिया जाएगा। सब कुछ वापस पाने के लिए अपने अकाउंट से दोबारा साइन इन करें।'},
     'forgot_mpin_reset_msg_local': {'en': 'ALL gym data on this phone will be permanently deleted. There is no cloud backup. This cannot be undone.', 'hi': 'इस फोन का सारा जिम डेटा हमेशा के लिए मिट जाएगा। कोई क्लाउड बैकअप नहीं है। यह वापस नहीं हो सकता।'},
     'forgot_mpin_reset_confirm': {'en': 'Sign Out & Reset', 'hi': 'साइन आउट और रीसेट'},
+    // ===== 4-DIGIT MPIN =====
+    'mpin_setup_hint': {'en': 'Enter a 4-digit security MPIN to lock application data.', 'hi': 'ऐप डेटा लॉक करने के लिए 4 अंकों का सुरक्षा MPIN दर्ज करें।'},
+    'mpin_must_be_4': {'en': 'MPIN must be exactly 4 digits', 'hi': 'MPIN ठीक 4 अंकों का होना चाहिए'},
+    'mpin_upgrade_to_4': {'en': 'MPIN is now 4 digits. Please set a new 4-digit MPIN.', 'hi': 'MPIN अब 4 अंकों का होता है। कृपया नया 4 अंकों का MPIN सेट करें।'},
   };
 }

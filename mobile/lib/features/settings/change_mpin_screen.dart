@@ -23,19 +23,35 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
   String _newMpin = '';
   String _confirmMpin = '';
   late int _step = widget.resetMode ? 1 : 0; // 0: Old MPIN, 1: New MPIN, 2: Confirm
+
+  // The CURRENT MPIN may still be a 5/6-digit one from an older version;
+  // every new MPIN is exactly 4 digits.
+  bool _legacyMpin = false;
+  int get _maxLen => (_step == 0 && _legacyMpin) ? SecurityService.legacyMaxLength : SecurityService.mpinLength;
+
+  @override
+  void initState() {
+    super.initState();
+    _security.isLegacyMpin().then((legacy) {
+      if (mounted && legacy) setState(() => _legacyMpin = true);
+    });
+  }
   String? _errorMsg;
 
   void _onKeyPress(String digit) {
     setState(() {
       _errorMsg = null;
       if (_step == 0) {
-        if (_oldMpin.length < 6) _oldMpin += digit;
+        if (_oldMpin.length < _maxLen) _oldMpin += digit;
       } else if (_step == 1) {
-        if (_newMpin.length < 6) _newMpin += digit;
+        if (_newMpin.length < _maxLen) _newMpin += digit;
       } else {
-        if (_confirmMpin.length < 6) _confirmMpin += digit;
+        if (_confirmMpin.length < _maxLen) _confirmMpin += digit;
       }
     });
+    // All digits entered: move on without an extra tap.
+    final current = _step == 0 ? _oldMpin : (_step == 1 ? _newMpin : _confirmMpin);
+    if (current.length == _maxLen) _proceed();
   }
 
   void _onBackspace() {
@@ -115,7 +131,7 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(6, (index) {
+                          children: List.generate(_maxLen, (index) {
                             final isFilled = index < currentInput.length;
                             return Container(
                               margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -170,7 +186,9 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
                         NeonButton(
                           text: _step == 0 ? 'Verify MPIN →' : (_step == 1 ? tr('common_next') : tr('mpin_save_new')),
                           width: double.infinity,
-                          onPressed: currentInput.length >= 4 ? _proceed : null,
+                          onPressed: (_step == 0 ? currentInput.length >= SecurityService.mpinLength : currentInput.length == SecurityService.mpinLength)
+                              ? _proceed
+                              : null,
                         ),
                       ],
                     ),

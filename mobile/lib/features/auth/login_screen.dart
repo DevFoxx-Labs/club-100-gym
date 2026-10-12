@@ -7,6 +7,7 @@ import '../../core/security/biometric_service.dart';
 import '../../core/sync/sync_engine.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/navigation/main_navigation_screen.dart';
+import '../settings/change_mpin_screen.dart';
 import 'forgot_mpin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -28,10 +29,18 @@ class _LoginScreenState extends State<LoginScreen> {
   Duration? _lockLeft;
   Timer? _lockTimer;
 
+  // MPIN saved by an older version that allowed 4–6 digits: accept up to 6
+  // once, then require a new 4-digit MPIN.
+  bool _legacyMpin = false;
+  int get _maxLen => _legacyMpin ? SecurityService.legacyMaxLength : SecurityService.mpinLength;
+
   @override
   void initState() {
     super.initState();
     _loadGymAndBiometrics();
+    _securityService.isLegacyMpin().then((legacy) {
+      if (mounted && legacy) setState(() => _legacyMpin = true);
+    });
     _securityService.getLockRemaining().then((left) {
       if (left != null) _startLockCountdown(left);
     });
@@ -93,13 +102,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _onKeyPress(String digit) {
-    if (_lockLeft != null || _mpin.length >= 6) return;
+    if (_lockLeft != null || _mpin.length >= _maxLen) return;
     setState(() {
       _errorMsg = null;
       _mpin += digit;
     });
 
-    if (_mpin.length == 6) {
+    if (_mpin.length == _maxLen) {
       _verifyMpin();
     }
   }
@@ -131,6 +140,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _navigateToDashboard() {
     SyncEngine.instance.requestSync();
+    if (_legacyMpin) {
+      // Old 5/6-digit MPIN: switch to the 4-digit format before continuing.
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('mpin_upgrade_to_4'))));
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const ChangeMpinScreen(resetMode: true)),
+        (route) => false,
+      );
+      return;
+    }
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
@@ -438,7 +457,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             // MPIN Indicator Rings
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(6, (index) {
+                              children: List.generate(_maxLen, (index) {
                                 final isFilled = index < _mpin.length;
                                 return AnimatedContainer(
                                   duration: const Duration(milliseconds: 180),

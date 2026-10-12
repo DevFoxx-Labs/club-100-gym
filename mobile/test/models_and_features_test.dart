@@ -183,7 +183,8 @@ void main() {
       expect(FormValidators.validateMpin('12'), isNotNull);
       expect(FormValidators.validateMpin('abcd'), isNotNull);
       expect(FormValidators.validateMpin('1234'), isNull);
-      expect(FormValidators.validateMpin('123456'), isNull);
+      expect(FormValidators.validateMpin('123456'), isNotNull);
+      expect(FormValidators.validateMpin('12345'), isNotNull);
     });
   });
 

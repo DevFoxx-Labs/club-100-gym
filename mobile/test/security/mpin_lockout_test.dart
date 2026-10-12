@@ -29,6 +29,24 @@ void main() {
     expect(applied.last, 900);
   });
 
+  test('a 4-digit MPIN is current; an old 6-digit one is legacy until replaced', () async {
+    final security = SecurityService();
+    expect(await security.isLegacyMpin(), isFalse); // no MPIN yet
+
+    await security.setMPIN('1234');
+    expect(await security.isLegacyMpin(), isFalse);
+
+    // MPIN saved by an older app version: hash present, length never recorded.
+    FlutterSecureStorage.setMockInitialValues({
+      'admin_mpin_hash': 'old-hash',
+      'admin_mpin_salt': 'old-salt',
+    });
+    expect(await security.isLegacyMpin(), isTrue);
+
+    await security.setMPIN('9876');
+    expect(await security.isLegacyMpin(), isFalse);
+  });
+
   test('setting a new MPIN (forgot-MPIN reset) clears the lock', () async {
     final security = SecurityService();
     for (var i = 0; i < SecurityService.freeAttempts; i++) {

@@ -149,14 +149,14 @@ class FormValidators {
     return null;
   }
 
-  /// Validates 4-digit or 6-digit MPIN.
+  /// Validates an MPIN: exactly 4 numeric digits.
   static String? validateMpin(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'MPIN is required';
     }
     final trimmed = value.trim();
-    if (!RegExp(r'^\d{4,6}$').hasMatch(trimmed)) {
-      return 'MPIN must be 4 or 6 numeric digits';
+    if (!RegExp(r'^\d{4}$').hasMatch(trimmed)) {
+      return 'MPIN must be exactly 4 digits';
     }
     return null;
   }

@@ -7,6 +7,14 @@ class SecurityService {
   static const String _mpinHashKey = 'admin_mpin_hash';
   static const String _mpinSaltKey = 'admin_mpin_salt';
   static const String _isSetupCompleteKey = 'is_setup_complete';
+  static const String _mpinLengthKey = 'admin_mpin_length';
+
+  /// Every MPIN is exactly this many digits.
+  static const int mpinLength = 4;
+
+  /// Longest MPIN older app versions allowed (they accepted 4–6 digits).
+  /// Only used so such admins can still unlock once and switch to 4 digits.
+  static const int legacyMaxLength = 6;
 
   Future<void> setMPIN(String mpin) async {
     final salt = DateTime.now().microsecondsSinceEpoch.toString();
@@ -14,6 +22,7 @@ class SecurityService {
 
     await _storage.write(key: _mpinSaltKey, value: salt);
     await _storage.write(key: _mpinHashKey, value: hash);
+    await _storage.write(key: _mpinLengthKey, value: '${mpin.length}');
     await clearFailedAttempts();
   }
 
@@ -64,6 +73,15 @@ class SecurityService {
   Future<void> clearFailedAttempts() async {
     await _storage.delete(key: _failedAttemptsKey);
     await _storage.delete(key: _lockedUntilKey);
+  }
+
+  /// True when the saved MPIN may not be 4 digits: set by an older version
+  /// (which allowed 4–6 digits and didn't record the length). Such an admin
+  /// can still type up to [legacyMaxLength] digits to unlock, and is then
+  /// asked to set a new 4-digit MPIN.
+  Future<bool> isLegacyMpin() async {
+    if (!await hasMPIN()) return false;
+    return await _storage.read(key: _mpinLengthKey) != '$mpinLength';
   }
 
   Future<bool> hasMPIN() async {

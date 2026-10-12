@@ -61,11 +61,14 @@ class _MpinSetupScreenState extends State<MpinSetupScreen> {
     setState(() {
       _errorMsg = null;
       if (!_isConfirming) {
-        if (_mpin.length < 6) _mpin += digit;
+        if (_mpin.length < SecurityService.mpinLength) _mpin += digit;
       } else {
-        if (_confirmMpin.length < 6) _confirmMpin += digit;
+        if (_confirmMpin.length < SecurityService.mpinLength) _confirmMpin += digit;
       }
     });
+    // All 4 digits entered: move on without an extra tap.
+    final current = _isConfirming ? _confirmMpin : _mpin;
+    if (current.length == SecurityService.mpinLength) _proceed();
   }
 
   void _onBackspace() {
@@ -81,8 +84,8 @@ class _MpinSetupScreenState extends State<MpinSetupScreen> {
 
   Future<void> _proceed() async {
     if (!_isConfirming) {
-      if (_mpin.length < 4) {
-        setState(() => _errorMsg = 'MPIN must be at least 4 digits');
+      if (_mpin.length != SecurityService.mpinLength) {
+        setState(() => _errorMsg = tr('mpin_must_be_4'));
         return;
       }
       setState(() => _isConfirming = true);
@@ -164,7 +167,7 @@ class _MpinSetupScreenState extends State<MpinSetupScreen> {
                         Text(
                           _isConfirming
                               ? 'Re-enter your MPIN to confirm authentication credentials.'
-                              : 'Enter a 4 to 6 digit security MPIN to lock application data.',
+                              : tr('mpin_setup_hint'),
                           textAlign: TextAlign.center,
                           style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
                         ),
@@ -173,7 +176,7 @@ class _MpinSetupScreenState extends State<MpinSetupScreen> {
                         // MPIN Indicator Dots
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(6, (index) {
+                          children: List.generate(SecurityService.mpinLength, (index) {
                             final isFilled = index < currentInput.length;
                             return Container(
                               margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -253,7 +256,7 @@ class _MpinSetupScreenState extends State<MpinSetupScreen> {
                         NeonButton(
                           text: _isConfirming ? 'Confirm & Next →' : 'Continue →',
                           width: double.infinity,
-                          onPressed: currentInput.length >= 4 ? _proceed : null,
+                          onPressed: currentInput.length == SecurityService.mpinLength ? _proceed : null,
                         ),
                       ],
                     ),
