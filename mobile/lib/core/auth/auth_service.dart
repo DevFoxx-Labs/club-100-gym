@@ -53,6 +53,14 @@ class AuthService {
     }
   }
 
+  /// Re-checks the signed-in owner's account password (identity proof for
+  /// resetting a forgotten MPIN). Returns null on success, or an error.
+  Future<String?> verifyPassword(String password) async {
+    final email = currentUser?.email;
+    if (_client == null || email == null) return 'No cloud account is linked on this phone.';
+    return signIn(email, password);
+  }
+
   Future<String?> sendPasswordResetCode(String email) async {
     try {
       await _client!.auth.resetPasswordForEmail(email.trim());

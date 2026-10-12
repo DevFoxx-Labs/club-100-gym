@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_translations.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/security/security_service.dart';
+import '../../shared/navigation/main_navigation_screen.dart';
 import '../../shared/widgets/neon_button.dart';
 
 class ChangeMpinScreen extends StatefulWidget {
-  const ChangeMpinScreen({super.key});
+  /// Forgot-MPIN flow: identity was already verified (account password or
+  /// fingerprint), so the current MPIN is skipped and, once saved, the admin
+  /// goes straight to the dashboard.
+  final bool resetMode;
+
+  const ChangeMpinScreen({super.key, this.resetMode = false});
 
   @override
   State<ChangeMpinScreen> createState() => _ChangeMpinScreenState();
@@ -14,7 +21,8 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
   final _security = SecurityService();
   String _oldMpin = '';
   String _newMpin = '';
-  int _step = 0; // 0: Old MPIN, 1: New MPIN
+  String _confirmMpin = '';
+  late int _step = widget.resetMode ? 1 : 0; // 0: Old MPIN, 1: New MPIN, 2: Confirm
   String? _errorMsg;
 
   void _onKeyPress(String digit) {
@@ -22,8 +30,10 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
       _errorMsg = null;
       if (_step == 0) {
         if (_oldMpin.length < 6) _oldMpin += digit;
-      } else {
+      } else if (_step == 1) {
         if (_newMpin.length < 6) _newMpin += digit;
+      } else {
+        if (_confirmMpin.length < 6) _confirmMpin += digit;
       }
     });
   }
@@ -33,8 +43,10 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
       _errorMsg = null;
       if (_step == 0) {
         if (_oldMpin.isNotEmpty) _oldMpin = _oldMpin.substring(0, _oldMpin.length - 1);
-      } else {
+      } else if (_step == 1) {
         if (_newMpin.isNotEmpty) _newMpin = _newMpin.substring(0, _newMpin.length - 1);
+      } else {
+        if (_confirmMpin.isNotEmpty) _confirmMpin = _confirmMpin.substring(0, _confirmMpin.length - 1);
       }
     });
   }
@@ -51,10 +63,26 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
           _oldMpin = '';
         });
       }
+    } else if (_step == 1) {
+      setState(() => _step = 2);
     } else {
+      if (_confirmMpin != _newMpin) {
+        setState(() {
+          _errorMsg = tr('mpin_mismatch');
+          _confirmMpin = '';
+        });
+        return;
+      }
       await _security.setMPIN(_newMpin);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Security MPIN updated successfully!')));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('mpin_updated'))));
+      if (widget.resetMode) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+          (route) => false,
+        );
+      } else {
         Navigator.pop(context);
       }
     }
@@ -62,11 +90,11 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentInput = _step == 0 ? _oldMpin : _newMpin;
+    final currentInput = _step == 0 ? _oldMpin : (_step == 1 ? _newMpin : _confirmMpin);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('CHANGE SECURITY MPIN'),
+        title: Text(widget.resetMode ? tr('mpin_reset_title') : 'CHANGE SECURITY MPIN'),
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -81,7 +109,7 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
                     Column(
                       children: [
                         Text(
-                          _step == 0 ? 'Enter Current MPIN' : 'Enter New MPIN',
+                          _step == 0 ? 'Enter Current MPIN' : (_step == 1 ? tr('mpin_enter_new') : tr('mpin_confirm_new')),
                           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: AppTheme.textWhite),
                         ),
                         const SizedBox(height: 16),
@@ -140,7 +168,7 @@ class _ChangeMpinScreenState extends State<ChangeMpinScreen> {
                           ),
                         const SizedBox(height: 16),
                         NeonButton(
-                          text: _step == 0 ? 'Verify MPIN →' : 'Save New MPIN',
+                          text: _step == 0 ? 'Verify MPIN →' : (_step == 1 ? tr('common_next') : tr('mpin_save_new')),
                           width: double.infinity,
                           onPressed: currentInput.length >= 4 ? _proceed : null,
                         ),

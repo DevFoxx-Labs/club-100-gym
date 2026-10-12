@@ -11,9 +11,20 @@ Follow these steps in order before handing a build to the client.
 3. **Authentication → Sign In / Providers → Email**: enabled.
    - "Confirm email": turn **OFF** for the smoothest signup. If you keep it ON, the app tells the
      admin to confirm their email and then sign in — that works too.
-4. **Authentication → Email Templates → Reset Password**: make sure the template contains
-   `{{ .Token }}` (the app's "Forgot password" flow uses the 6-digit code).
-5. **Project Settings → API**: copy the Project URL and the `anon` public key into
+4. **Authentication → Email Templates → Reset Password**: replace the body so it contains the
+   6-digit code — the app asks for a code, not a link:
+   ```html
+   <h2>Reset your Elite Fitness password</h2>
+   <p>Your code is: <strong>{{ .Token }}</strong></p>
+   <p>Enter this code in the app. It expires in 1 hour.</p>
+   ```
+5. **Custom SMTP (required for real users)** — **Project Settings → Authentication → SMTP Settings**.
+   Supabase's built-in mailer only delivers to your own team's email addresses and only a few
+   emails per hour, so without this the client will **never receive** the password-reset code.
+   Any SMTP provider works (Brevo / Resend free tier, or Gmail with an App Password:
+   host `smtp.gmail.com`, port `465`, user = your Gmail, password = the 16-character App Password).
+   Then test "Forgot password?" in the app with the client's real email.
+6. **Connect** button (top of the dashboard) or **Project Settings → Data API / API Keys**: copy the Project URL and the `anon` (legacy) or publishable key — never the secret / service_role key — into
    `env/supabase.json` (copy from `env/supabase.example.json`). This file is gitignored.
 
 > The anon key is safe inside the app: every table is protected by row-level security, so a
@@ -79,6 +90,10 @@ For day-to-day development: `flutter run --dart-define-from-file=env/supabase.js
 | 12 | Same bill → bill detail | Button reads "Collect Balance ₹800", UPI QR asks for ₹800 (not ₹2000), installment #1 listed |
 | 13 | Pay ₹800 | Bill becomes Paid, both installments listed, receipt shows "bill fully paid" |
 | 14 | Member with no open bill → Add Payment, enter less than the fee | Note says a bill will be created; after saving the balance shows in Bills & Dues |
+| 15 | Lock screen: enter wrong MPIN 5 times | "attempts left" countdown, then 30 s lock; closing/reopening the app keeps the lock |
+| 16 | Forgot MPIN? → account password | New MPIN + confirm → dashboard opens; old MPIN no longer works |
+| 17 | Forgot MPIN? in airplane mode, fingerprint enabled | Fingerprint option works offline |
+| 18 | Sign-in screen → Forgot password? with the client's real email | 6-digit code arrives (custom SMTP), new password works |
 
 ## 5. Known limits (tell the client)
 

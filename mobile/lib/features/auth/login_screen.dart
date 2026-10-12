@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/security/security_service.dart';
+import '../../core/localization/app_translations.dart';
 import '../../core/security/biometric_service.dart';
 import '../../core/sync/sync_engine.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../shared/navigation/main_navigation_screen.dart';
+import 'forgot_mpin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,14 +23,46 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMsg;
   bool _isBiometricEnabled = false;
   String _gymName = 'Elite Fitness Gym';
-  String? _gymPhone;
-  String? _gymEmail;
-  String? _ownerName;
+
+  // Wrong-MPIN lockout countdown (null when entry is allowed).
+  Duration? _lockLeft;
+  Timer? _lockTimer;
 
   @override
   void initState() {
     super.initState();
     _loadGymAndBiometrics();
+    _securityService.getLockRemaining().then((left) {
+      if (left != null) _startLockCountdown(left);
+    });
+  }
+
+  @override
+  void dispose() {
+    _lockTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startLockCountdown(Duration lock) {
+    _lockTimer?.cancel();
+    final until = DateTime.now().add(lock);
+    void tick() {
+      final left = until.difference(DateTime.now());
+      if (!mounted) return;
+      setState(() {
+        if (left.isNegative || left.inSeconds == 0) {
+          _lockLeft = null;
+          _errorMsg = null;
+          _lockTimer?.cancel();
+        } else {
+          _lockLeft = left;
+          _errorMsg = tr('mpin_locked', {'seconds': '${left.inSeconds + 1}'});
+        }
+      });
+    }
+
+    tick();
+    _lockTimer = Timer.periodic(const Duration(seconds: 1), (_) => tick());
   }
 
   Future<void> _loadGymAndBiometrics() async {
@@ -38,9 +73,6 @@ class _LoginScreenState extends State<LoginScreen> {
     if (mounted) {
       setState(() {
         _gymName = gym.name.isNotEmpty ? gym.name : 'The Elite Fitness Gym';
-        _gymPhone = gym.phone;
-        _gymEmail = gym.email;
-        _ownerName = gym.ownerName;
         _isBiometricEnabled = admin.isBiometricEnabled;
       });
     }
@@ -55,12 +87,13 @@ class _LoginScreenState extends State<LoginScreen> {
       localizedReason: 'Scan fingerprint to unlock $_gymName',
     );
     if (authenticated && mounted) {
+      await _securityService.clearFailedAttempts();
       _navigateToDashboard();
     }
   }
 
   void _onKeyPress(String digit) {
-    if (_mpin.length >= 6) return;
+    if (_lockLeft != null || _mpin.length >= 6) return;
     setState(() {
       _errorMsg = null;
       _mpin += digit;
@@ -79,17 +112,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _verifyMpin() async {
+    if (_lockLeft != null) return;
     final valid = await _securityService.verifyMPIN(_mpin);
     if (valid) {
+      await _securityService.clearFailedAttempts();
       _navigateToDashboard();
-    } else {
-      if (mounted) {
-        setState(() {
-          _errorMsg = 'Incorrect MPIN. Please try again.';
-          _mpin = '';
-        });
-      }
+      return;
     }
+    final lock = await _securityService.registerFailedAttempt();
+    final left = await _securityService.remainingFreeAttempts();
+    if (!mounted) return;
+    setState(() {
+      _mpin = '';
+      _errorMsg = tr('mpin_incorrect_attempts', {'count': '$left'});
+    });
+    if (lock != null) _startLockCountdown(lock);
   }
 
   void _navigateToDashboard() {
@@ -101,98 +138,10 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _showNeedHelpModal() {
-    showModalBottomSheet(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.darkSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        final safeBottom = MediaQuery.paddingOf(ctx).bottom;
-        return Padding(
-          padding: EdgeInsets.fromLTRB(24, 20, 24, 20 + safeBottom),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkBorder,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Icon(Icons.help_outline_rounded, color: AppTheme.neonLime, size: 24),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Need Help Logging In?',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: AppTheme.textWhite,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'If you forgot your MPIN, you can log in using registered device fingerprint biometrics or contact your gym administrator.',
-                style: TextStyle(fontSize: 13, color: AppTheme.textMuted.withValues(alpha: 0.9), height: 1.4),
-              ),
-              const SizedBox(height: 20),
-              if (_ownerName != null && _ownerName!.isNotEmpty)
-                _buildHelpItem(Icons.person_outline_rounded, 'Administrator', _ownerName!),
-              if (_gymPhone != null && _gymPhone!.isNotEmpty)
-                _buildHelpItem(Icons.phone_outlined, 'Contact Phone', _gymPhone!),
-              if (_gymEmail != null && _gymEmail!.isNotEmpty)
-                _buildHelpItem(Icons.email_outlined, 'Contact Email', _gymEmail!),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.neonLime,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildHelpItem(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, color: AppTheme.neonLime, size: 18),
-          const SizedBox(width: 12),
-          Text('$label: ', style: const TextStyle(color: AppTheme.textMuted, fontSize: 13)),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(color: AppTheme.textWhite, fontWeight: FontWeight.w700, fontSize: 13),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
+  void _openForgotMpin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ForgotMpinScreen()),
     );
   }
 
@@ -370,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                                 TextButton(
-                                  onPressed: _showNeedHelpModal,
+                                  onPressed: _openForgotMpin,
                                   style: TextButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                   ),
@@ -637,7 +586,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
 
                             TextButton(
-                              onPressed: _showNeedHelpModal,
+                              onPressed: _openForgotMpin,
                               child: Text(
                                 'Forgot MPIN?',
                                 style: TextStyle(

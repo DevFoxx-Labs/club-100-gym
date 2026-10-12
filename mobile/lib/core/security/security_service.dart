@@ -14,6 +14,7 @@ class SecurityService {
 
     await _storage.write(key: _mpinSaltKey, value: salt);
     await _storage.write(key: _mpinHashKey, value: hash);
+    await clearFailedAttempts();
   }
 
   Future<bool> verifyMPIN(String mpin) async {
@@ -24,6 +25,45 @@ class SecurityService {
 
     final hash = _hashMpin(mpin, salt);
     return hash == storedHash;
+  }
+
+  // --- Wrong-MPIN lockout ---------------------------------------------------
+  // Stored in secure storage (not memory) so killing and reopening the app
+  // doesn't reset the counter and allow unlimited guesses of a 4-digit PIN.
+  static const String _failedAttemptsKey = 'mpin_failed_attempts';
+  static const String _lockedUntilKey = 'mpin_locked_until';
+  static const int freeAttempts = 5;
+
+  /// Time left before MPIN entry is allowed again, or null if not locked.
+  Future<Duration?> getLockRemaining() async {
+    final value = await _storage.read(key: _lockedUntilKey);
+    final until = value == null ? null : DateTime.tryParse(value);
+    if (until == null) return null;
+    final left = until.difference(DateTime.now());
+    return left.isNegative ? null : left;
+  }
+
+  /// Records a wrong MPIN. After [freeAttempts] failures entry is locked for
+  /// 30 seconds, doubling with every further failure (max 15 minutes).
+  /// Returns the lock duration, or null if the admin may simply retry.
+  Future<Duration?> registerFailedAttempt() async {
+    final attempts = int.parse(await _storage.read(key: _failedAttemptsKey) ?? '0') + 1;
+    await _storage.write(key: _failedAttemptsKey, value: '$attempts');
+    if (attempts < freeAttempts) return null;
+    final seconds = (30 * (1 << (attempts - freeAttempts).clamp(0, 5))).clamp(30, 900);
+    final lock = Duration(seconds: seconds);
+    await _storage.write(key: _lockedUntilKey, value: DateTime.now().add(lock).toIso8601String());
+    return lock;
+  }
+
+  Future<int> remainingFreeAttempts() async {
+    final attempts = int.parse(await _storage.read(key: _failedAttemptsKey) ?? '0');
+    return (freeAttempts - attempts).clamp(0, freeAttempts);
+  }
+
+  Future<void> clearFailedAttempts() async {
+    await _storage.delete(key: _failedAttemptsKey);
+    await _storage.delete(key: _lockedUntilKey);
   }
 
   Future<bool> hasMPIN() async {
