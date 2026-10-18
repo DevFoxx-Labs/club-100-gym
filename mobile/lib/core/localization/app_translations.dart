@@ -879,7 +879,7 @@ class AppTranslations {
     'forgot_mpin_option_password': {'en': 'Use your account password', 'hi': 'अकाउंट पासवर्ड से'},
     'forgot_mpin_option_password_sub': {'en': 'Enter the password of {email} (needs internet).', 'hi': '{email} का पासवर्ड दर्ज करें (इंटरनेट ज़रूरी)।'},
     'forgot_mpin_verify': {'en': 'Verify & Set New MPIN', 'hi': 'जांचें और नया MPIN सेट करें'},
-    'forgot_mpin_password_hint': {'en': 'Forgot the password too? Use "Sign out & reset this phone" below, then "Forgot password?" on the sign-in screen.', 'hi': 'पासवर्ड भी भूल गए? नीचे "साइन आउट करके फोन रीसेट करें" दबाएं, फिर साइन-इन स्क्रीन पर "Forgot password?" इस्तेमाल करें।'},
+    'forgot_mpin_password_hint': {'en': 'Forgot the password too? Use "Sign out & reset this phone" below, then tap "Forgot password?" on the sign-in screen to contact support.', 'hi': 'पासवर्ड भी भूल गए? नीचे "साइन आउट करके फोन रीसेट करें" दबाएं, फिर साइन-इन स्क्रीन पर "Forgot password?" इस्तेमाल करें।'},
     'forgot_mpin_option_biometric': {'en': 'Use fingerprint / face', 'hi': 'फिंगरप्रिंट / फेस से'},
     'forgot_mpin_option_biometric_sub': {'en': 'Works offline, using the biometric login you enabled for this app.', 'hi': 'इस ऐप के लिए चालू किए गए बायोमेट्रिक लॉगिन से, बिना इंटरनेट के भी।'},
     'forgot_mpin_scan': {'en': 'Scan to Verify', 'hi': 'स्कैन करके जांचें'},
@@ -897,5 +897,14 @@ class AppTranslations {
     'mpin_upgrade_to_4': {'en': 'MPIN is now 4 digits. Please set a new 4-digit MPIN.', 'hi': 'MPIN अब 4 अंकों का होता है। कृपया नया 4 अंकों का MPIN सेट करें।'},
     // ===== MULTI-PHONE SAFETY =====
     'bill_detail_overpaid': {'en': 'Overpaid (collected twice — refund or adjust)', 'hi': 'ज़्यादा भुगतान (दो बार लिया गया — वापस करें या समायोजित करें)'},
+    // ===== PASSWORD WITHOUT EMAIL =====
+    'auth_support_reset_desc': {'en': 'Contact support to reset your password. Support sets a new password for your account, then you sign in with it. Your gym data stays safe in the cloud.', 'hi': 'पासवर्ड रीसेट करने के लिए सपोर्ट से संपर्क करें। सपोर्ट आपके अकाउंट का नया पासवर्ड सेट करेगा, फिर उसी से साइन इन करें। आपका जिम डेटा क्लाउड में सुरक्षित रहेगा।'},
+    'auth_support_whatsapp': {'en': 'Message Support on WhatsApp', 'hi': 'WhatsApp पर सपोर्ट को मैसेज करें'},
+    'auth_support_call': {'en': 'Call {phone}', 'hi': '{phone} पर कॉल करें'},
+    'auth_support_no_contact': {'en': 'Please contact the person who installed this app for you.', 'hi': 'कृपया उस व्यक्ति से संपर्क करें जिसने आपके लिए यह ऐप इंस्टॉल किया था।'},
+    'auth_support_whatsapp_msg': {'en': 'Hi, I forgot my gym app password. My account email is {email}. Please reset it.', 'hi': 'नमस्ते, मैं जिम ऐप का पासवर्ड भूल गया हूँ। मेरा अकाउंट ईमेल {email} है। कृपया रीसेट कर दें।'},
+    'cloud_change_password': {'en': 'Change Account Password', 'hi': 'अकाउंट पासवर्ड बदलें'},
+    'cloud_current_password': {'en': 'Current password', 'hi': 'मौजूदा पासवर्ड'},
+    'cloud_password_changed': {'en': 'Password changed. Use the new password next time you sign in.', 'hi': 'पासवर्ड बदल गया। अगली बार साइन इन के लिए नया पासवर्ड इस्तेमाल करें।'},
   };
 }

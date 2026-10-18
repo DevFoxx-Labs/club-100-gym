@@ -9,24 +9,30 @@ Follow these steps in order before handing a build to the client.
    If 001 was already run on this project before, also run `002_harden_device_tokens.sql` and
    **`003_receipt_balance_snapshot.sql`** (without 003, receipts stop syncing) and
    **`004_multi_device_safety.sql`** (needed for per-phone bill/receipt numbers).
-3. **Authentication → Sign In / Providers → Email**: enabled.
-   - "Confirm email": turn **OFF** for the smoothest signup. If you keep it ON, the app tells the
-     admin to confirm their email and then sign in — that works too.
-4. **Authentication → Email Templates → Reset Password**: replace the body so it contains the
-   6-digit code — the app asks for a code, not a link:
-   ```html
-   <h2>Reset your Elite Fitness password</h2>
-   <p>Your code is: <strong>{{ .Token }}</strong></p>
-   <p>Enter this code in the app. It expires in 1 hour.</p>
-   ```
-5. **Custom SMTP (required for real users)** — **Project Settings → Authentication → SMTP Settings**.
-   Supabase's built-in mailer only delivers to your own team's email addresses and only a few
-   emails per hour, so without this the client will **never receive** the password-reset code.
-   Any SMTP provider works (Brevo / Resend free tier, or Gmail with an App Password:
-   host `smtp.gmail.com`, port `465`, user = your Gmail, password = the 16-character App Password).
-   Then test "Forgot password?" in the app with the client's real email.
+3. **Authentication → Sign In / Providers → Email**: enabled, **"Confirm email" OFF** (required —
+   without custom SMTP a confirmation email would never arrive and the client could not sign in).
+4. **No email setup is needed.** The app never sends email by default:
+   - Signed in → password is changed in-app (Cloud Account & Sync → Change Account Password).
+   - Forgot MPIN → verified with the account password or fingerprint (no email).
+   - Forgot password (new phone / reinstall) → the app shows your `SUPPORT_PHONE` (WhatsApp / call);
+     you reset it from the dashboard — **SQL Editor**:
+     ```sql
+     update auth.users
+        set encrypted_password = extensions.crypt('NewPassword123', extensions.gen_salt('bf')),
+            updated_at = now()
+      where email = 'client@example.com';
+     ```
+     Tell the client the new password; they sign in and can change it in the app.
+   - Optional later: configure custom SMTP (Project Settings → Authentication → SMTP), put
+     `{{ .Token }}` in the Reset Password template and build with `"EMAIL_PASSWORD_RESET": "true"` to
+     switch "Forgot password?" to the self-service 6-digit email code.
+5. Free plan note: Supabase pauses a free project after ~7 days with **no** app activity. Daily gym use
+   keeps it awake; if the gym is closed longer, the app keeps working offline and syncs again once you
+   press **Restore project** in the dashboard. Free projects have no automatic backups (every phone
+   still holds a full copy). Upgrade to Pro if the client needs guaranteed uptime/backups.
 6. **Connect** button (top of the dashboard) or **Project Settings → Data API / API Keys**: copy the Project URL and the `anon` (legacy) or publishable key — never the secret / service_role key — into
-   `env/supabase.json` (copy from `env/supabase.example.json`). This file is gitignored.
+   `env/supabase.json` (copy from `env/supabase.example.json`), and set `SUPPORT_PHONE` to your own
+   WhatsApp number. This file is gitignored.
 
 > The anon key is safe inside the app: every table is protected by row-level security, so a
 > signed-in owner can only ever see their own gym.
@@ -94,7 +100,7 @@ For day-to-day development: `flutter run --dart-define-from-file=env/supabase.js
 | 15 | Lock screen: enter wrong MPIN 5 times | "attempts left" countdown, then 30 s lock; closing/reopening the app keeps the lock |
 | 16 | Forgot MPIN? → account password | New MPIN + confirm → dashboard opens; old MPIN no longer works |
 | 17 | Forgot MPIN? in airplane mode, fingerprint enabled | Fingerprint option works offline |
-| 18 | Sign-in screen → Forgot password? with the client's real email | 6-digit code arrives (custom SMTP), new password works |
+| 18 | Sign-in screen → Forgot password? | WhatsApp / Call buttons open with your support number; after you reset it via SQL the new password works |
 | 19 | Same account on 2 phones, both offline: each takes a payment, then both go online | Receipt numbers differ (`GYM-2026-A…` / `GYM-2026-B…`), both receipts visible on both phones, none missing |
 | 20 | Both phones offline, ₹500 installment each on the same ₹2000 bill, then online | Within a few minutes both phones show the bill with ₹1000 paid, ₹1000 balance |
 

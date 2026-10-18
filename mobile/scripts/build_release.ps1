@@ -25,6 +25,12 @@ if ($cfg.SUPABASE_ANON_KEY -like 'sb_secret_*') {
     throw 'SUPABASE_ANON_KEY is a SECRET key. Use the anon / publishable key — never ship the secret key.'
 }
 
+if ([string]::IsNullOrWhiteSpace($cfg.SUPPORT_PHONE) -or $cfg.SUPPORT_PHONE -eq '+919876543210') {
+    Write-Warning "SUPPORT_PHONE is not set in $envFile. 'Forgot password?' will only say 'contact the person who installed this app'."
+    $answer = Read-Host 'Continue without a support number? (y/N)'
+    if ($answer -ne 'y') { throw 'Add "SUPPORT_PHONE": "+91XXXXXXXXXX" to env/supabase.json and run again.' }
+}
+
 # 2. Release keystore (same key for every build, otherwise updates can't install over the old app)
 if (-not (Test-Path 'android/key.properties')) {
     throw 'android/key.properties not found. See RELEASE.md section 2 to create the signing keystore.'

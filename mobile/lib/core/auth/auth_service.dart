@@ -61,6 +61,22 @@ class AuthService {
     return signIn(email, password);
   }
 
+  /// Changes the signed-in owner's password after re-checking the current one.
+  /// Needs internet but no email. Returns null on success, or an error.
+  Future<String?> changePassword(String currentPassword, String newPassword) async {
+    final error = await verifyPassword(currentPassword);
+    if (error != null) return error;
+    try {
+      await _client!.auth.updateUser(UserAttributes(password: newPassword));
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      debugPrint('[AuthService] changePassword error: $e');
+      return 'Could not reach the server. Check your internet connection.';
+    }
+  }
+
   Future<String?> sendPasswordResetCode(String email) async {
     try {
       await _client!.auth.resetPasswordForEmail(email.trim());

@@ -12,6 +12,16 @@ class SupabaseConfig {
 
   static bool get isConfigured => url.isNotEmpty && anonKey.isNotEmpty;
 
+  /// Phone / WhatsApp number of whoever supports this install (e.g. the
+  /// developer). Shown on "Forgot password?" when email reset is off.
+  static const String supportPhone = String.fromEnvironment('SUPPORT_PHONE');
+
+  /// Email-code password reset needs a custom SMTP server in Supabase (the
+  /// built-in mailer only delivers to the project team's own addresses).
+  /// Off by default: "Forgot password?" then asks the admin to contact
+  /// [supportPhone], who resets the password from the Supabase dashboard.
+  static const bool emailPasswordReset = bool.fromEnvironment('EMAIL_PASSWORD_RESET');
+
   static const _storage = FlutterSecureStorage();
   static const String _keyGymId = 'supabase_active_gym_id';
   static const String _keyLastSyncAt = 'supabase_last_sync_at';

@@ -138,6 +138,17 @@ class _DataConnectionScreenState extends State<DataConnectionScreen> {
     }
   }
 
+  void _showChangePasswordSheet() {
+    showModalBottomSheet(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.darkSurface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => const _ChangePasswordSheet(),
+    );
+  }
+
   Future<void> _handleSignOut() async {
     await runSignOutFlow(
       context,
@@ -435,6 +446,22 @@ class _DataConnectionScreenState extends State<DataConnectionScreen> {
                 },
               ),
 
+              // Change account password — no email needed while signed in.
+              if (isAuth) ...[
+                const SizedBox(height: 20),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.textWhite,
+                    side: const BorderSide(color: AppTheme.darkBorder),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  icon: const Icon(Icons.password_rounded, size: 18),
+                  label: Text(tr('cloud_change_password'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  onPressed: _showChangePasswordSheet,
+                ),
+              ],
+
               // CARD 3: SIGN OUT (Only if authenticated)
               if (isAuth) ...[
                 const SizedBox(height: 20),
@@ -554,6 +581,101 @@ class _InfoRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ChangePasswordSheet extends StatefulWidget {
+  const _ChangePasswordSheet();
+
+  @override
+  State<_ChangePasswordSheet> createState() => _ChangePasswordSheetState();
+}
+
+class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentController = TextEditingController();
+  final _newController = TextEditingController();
+  final _confirmController = TextEditingController();
+  bool _isSaving = false;
+  bool _obscure = true;
+
+  @override
+  void dispose() {
+    _currentController.dispose();
+    _newController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSaving = true);
+    final error = await AuthService.instance.changePassword(_currentController.text, _newController.text);
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    final messenger = ScaffoldMessenger.of(context);
+    if (error != null) {
+      messenger.showSnackBar(SnackBar(content: Text(error), backgroundColor: Colors.redAccent));
+      return;
+    }
+    Navigator.pop(context);
+    messenger.showSnackBar(SnackBar(content: Text(tr('cloud_password_changed')), backgroundColor: AppTheme.neonLime));
+  }
+
+  Widget _field(String label, TextEditingController controller, String? Function(String?) validator) {
+    return TextFormField(
+      controller: controller,
+      obscureText: _obscure,
+      validator: validator,
+      style: const TextStyle(color: AppTheme.textWhite),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: AppTheme.textMuted),
+        filled: true,
+        fillColor: AppTheme.darkBackground,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+        suffixIcon: IconButton(
+          icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined, color: AppTheme.textMuted, size: 20),
+          onPressed: () => setState(() => _obscure = !_obscure),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.viewInsetsOf(context).bottom + MediaQuery.paddingOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(24, 20, 24, 16 + (bottom > 0 ? bottom : 10)),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                tr('cloud_change_password'),
+                style: const TextStyle(color: AppTheme.textWhite, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              _field(tr('cloud_current_password'), _currentController, (v) => (v == null || v.isEmpty) ? tr('cloud_current_password') : null),
+              const SizedBox(height: 12),
+              _field(tr('authNewPasswordLabel'), _newController, (v) => (v == null || v.length < 6) ? tr('auth_password_min') : null),
+              const SizedBox(height: 12),
+              _field(tr('authConfirmPasswordLabel'), _confirmController, (v) => v != _newController.text ? tr('auth_passwords_dont_match') : null),
+              const SizedBox(height: 20),
+              NeonButton(
+                text: tr('authResetButton'),
+                width: double.infinity,
+                isLoading: _isSaving,
+                onPressed: _save,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

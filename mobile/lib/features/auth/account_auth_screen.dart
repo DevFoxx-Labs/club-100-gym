@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/auth/auth_service.dart';
 import '../../core/config/supabase_config.dart';
 import '../../core/localization/app_translations.dart';
@@ -381,6 +382,10 @@ class _AccountAuthScreenState extends State<AccountAuthScreen> {
   }
 
   void _showForgotPasswordSheet() {
+    if (!SupabaseConfig.emailPasswordReset) {
+      _showSupportResetSheet();
+      return;
+    }
     showModalBottomSheet(
       context: context,
       useSafeArea: true,
@@ -392,6 +397,69 @@ class _AccountAuthScreenState extends State<AccountAuthScreen> {
           _passwordController.text = newPassword;
         },
       ),
+    );
+  }
+
+  /// Forgot password without email: the support person resets it from the
+  /// Supabase dashboard (see RELEASE.md), then the admin signs in with the new
+  /// password.
+  void _showSupportResetSheet() {
+    final phone = SupabaseConfig.supportPhone.trim();
+    final digits = phone.replaceAll(RegExp(r'[^\d]'), '');
+    final email = _emailController.text.trim();
+    final message = Uri.encodeComponent(tr('auth_support_whatsapp_msg', {'email': email.isEmpty ? '-' : email}));
+
+    showModalBottomSheet(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.darkSurface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        final bottomInset = MediaQuery.paddingOf(ctx).bottom;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(24, 20, 24, 16 + (bottomInset > 0 ? bottomInset : 10)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                tr('authResetPasswordTitle'),
+                style: const TextStyle(color: AppTheme.textWhite, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                tr('auth_support_reset_desc'),
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 20),
+              if (digits.isNotEmpty) ...[
+                NeonButton(
+                  text: tr('auth_support_whatsapp'),
+                  icon: Icons.chat_rounded,
+                  width: double.infinity,
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://wa.me/$digits?text=$message'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                NeonButton(
+                  text: tr('auth_support_call', {'phone': phone}),
+                  icon: Icons.call_rounded,
+                  width: double.infinity,
+                  isSecondary: true,
+                  onPressed: () => launchUrl(Uri.parse('tel:$phone')),
+                ),
+              ] else
+                Text(
+                  tr('auth_support_no_contact'),
+                  style: const TextStyle(color: AppTheme.textWhite, fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
